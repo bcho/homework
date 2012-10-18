@@ -1,0 +1,15 @@
+# Cprogramming
+
+Most code is written for my homework from the lecture `程序设计(1) (2)`.
+
+## File Naming
+
+Take `3.1.c` as example:
+
+3 is the chapter number, and 1 is the problem number.
+
+How about 3.1/1.c ?
+
+Sometimes I may finish a problem with one more approachs, so all the source
+code will be placed under a directory called `chapter_num.problem_num`. (Of
+course, 0 comes the first.)
