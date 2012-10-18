@@ -10,5 +10,6 @@ Where my homework happens...
 There are some code I wrote for the lecture `程序设计(1) (2)`.
 
 
-Though the student book [《C 程序设计》 谭浩强 清华大学出版社]() is suck and
+Though the student book [《C 程序设计》 谭浩强
+清华大学出版社](http://book.douban.com/subject/4864940/) is suck and
 expensive, but I still have to do the homework.
