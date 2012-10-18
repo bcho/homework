@@ -1,0 +1,30 @@
+## Description:
+
+假如我国国民生产总值的年增长率为 9% ,计算 10 年后我国国民生产总值与现在相比增长
+多少百分比。计算公式为
+
+    p = (1 + r) ^ n
+
+r 为年增长率，n 为年数，p 为与现在相比的倍数
+
+## Solutions:
+
+### 0
+
+use `pow()` from `math.h`
+
+notes:
+
+When compling the program, you should use `-lm` to link the library.
+
+([ref](http://gcc.gnu.org/ml/gcc-help/2000-01/msg00084.html))
+
+
+### 1
+
+use loops
+
+
+### 2
+
+use `快速幂`
