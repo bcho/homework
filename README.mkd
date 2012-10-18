@@ -1,0 +1,14 @@
+# homework
+
+codename `hoo`
+
+Where my homework happens...
+
+
+## Cprogramming
+
+There are some code I wrote for the lecture `程序设计(1) (2)`.
+
+
+Though the student book [《C 程序设计》 谭浩强 清华大学出版社]() is suck and
+expensive, but I still have to do the homework.
