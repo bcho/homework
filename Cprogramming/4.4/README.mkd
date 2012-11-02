@@ -1,0 +1,15 @@
+## Description:
+
+有 3 个整数 a, b, c, 由键盘输入，输出其中最大的数
+
+
+## Solutions:
+
+### 0
+
+max with `preprocessor`
+
+
+### 1
+
+using `reduce`
