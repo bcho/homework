@@ -1,4 +1,0 @@
-# Singly Linked List
-
-An `SLlist` implements the `Statck` and `(FIFO) Queue` interfaces. The
-`push(x)`, `pop()` and `remove()` operations run in `O(1)` time per operation.
