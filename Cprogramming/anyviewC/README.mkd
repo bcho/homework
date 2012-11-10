@@ -1,3 +1,7 @@
 # AnyviewC Problem Set
 
 Rush!
+
+Don't use the code because some of them are wrong.
+
+Don't use the code if you want to learn something.
