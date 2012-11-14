@@ -3,7 +3,9 @@
 
 #define sep printf("\n")
 
+/* time complexity: O(m) (m is p's length.) */
 void print_lots(list_t l, list_t p);
+
 list_t create_ascending_list(int limit);
 void print_node(node_t *e);
 
