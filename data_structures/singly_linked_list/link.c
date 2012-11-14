@@ -17,93 +17,75 @@ void free_node(node_t *node)
 
 list_t make_list(void)
 {
-    list_t l = malloc(sizeof(list_t));
-    if (l == NULL) {
-        printf("Out of memory!");
-    } else {
-        l->header = new_node();
-        l->header->next = NULL;
-        l->current = l->header;
-    }
+    list_t l = new_node();
+    l->next = NULL;
     return l;
+}
+
+void destory(list_t l) {
+    pos_t children;
+    node_t *tmp;
+    for (children = header(l)->next;children != NULL;) {
+        tmp = children;
+        children = children->next;
+        free_node(tmp);
+    }
+    free_node(header(l));
 }
 
 int is_empty(list_t l)
 {
-    return (l->current == l->header);
+    return (l->next == NULL);
 }
 
-int is_last(pos_t p, list_t l)
+int is_last(pos_t p)
 {
-    return p->next == NULL;
+    return (p->next == NULL);
 }
 
 pos_t find(element_t x, list_t l)
 {
-    pos_t cur = l->current;
-    for (;cur && cur->e != x;cur = cur->next)
+    pos_t cur;
+    for (cur = header(l);!is_last(cur) && retrieve(cur) != x;cur = cur->next)
         ;
-    return cur;
+    if (retrieve(cur) == x)
+        return cur;
+    return NULL;
 }
 
 node_t *pop(element_t x, list_t l)
 {
-    pos_t previous;
-    node_t *tmp;
-
-    previous = find_previous(x, l);
-
-    if (!is_last(previous, l)) {
-        tmp = previous->next;
-        previous->next = tmp->next;
-        return tmp;
+    node_t *p = find(x, l);
+    pos_t prev;
+    if (p) {
+        prev = find_previous(p, l);
+        printf("%c\n", retrieve(prev));
+        prev->next = p->next;
     }
+    return p;
+}
 
+pos_t find_previous(node_t *x, list_t l)
+{
+    pos_t cur;
+    for (cur = header(l);cur->next && cur->next != x; cur = cur->next)
+        ;
+    if (cur->next == x)
+        return cur;
     return NULL;
 }
 
-pos_t find_previous(element_t x, list_t l)
+void insert(element_t x, pos_t p)
 {
-    pos_t cur = l->header->next;
-    for (;cur && cur->next->e != x;cur = cur->next)
-        ;
-    return cur;
-}
-
-void insert(element_t x, list_t l, pos_t p)
-{
-    node_t *tmp = new_node();
-    tmp->e = x;
-    tmp->next = p->next;
-    p->next = tmp;
-}
-
-void destory(list_t l)
-{
-    pos_t cur = header(l)->next;
-    pos_t tmp;
-    for (;cur;) {
-        tmp = cur;
-        cur = cur->next;
-        free_node(tmp);
-    }
-    free_node(l->header);
-    free(l);
+    node_t *c = new_node();
+    c->e = x;
+    c->next = p->next;
+    p->next = c;
 }
 
 pos_t header(list_t l)
 {
-    return l->header;
-}
-
-pos_t current(list_t l)
-{
-    return l->current;
-}
-
-pos_t advance(pos_t p, list_t l)
-{
-    return find_previous(p->e, l);
+    return l;
 }
 
 element_t retrieve(pos_t p)
@@ -113,7 +95,7 @@ element_t retrieve(pos_t p)
 
 void traversal(void (*visit)(node_t *p), list_t l)
 {
-    pos_t f = header(l)->next;
-    for (;f;f = f->next)
-        visit(f);
+    pos_t cur;
+    for (cur = header(l)->next;cur;cur = cur->next)
+        visit(cur);
 }

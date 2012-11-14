@@ -12,19 +12,19 @@ int main()
     char _[] = "deadbeef";
     char *msg = _;
     for (;*msg != '\0';msg++) {
-        insert(*msg, l, header(l));
+        insert(*msg, header(l));
     }
     traversal(print_node, l);
     sep;
     printf("%c", find('a', l)->e);
     sep;
-    insert('v', l, find('a', l));
+    insert('v', find('a', l));
     traversal(print_node, l);
     sep;
-    printf("%c", retrieve(pop('e', l)));
+    traversal(print_node, pop('e', l));
     sep;
     destory(l);
-    printf("%d %d", is_empty(l), is_last(header(l), l));
+    printf("%d %d", is_empty(l), is_last(header(l)));
     sep;
 
     return 0;
