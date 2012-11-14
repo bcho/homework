@@ -16,7 +16,7 @@ int main()
     }
     traversal(print_node, l);
     sep;
-    traversal(print_node, find('a', l));
+    printf("%c", find('a', l)->e);
     sep;
     insert('v', l, find('a', l));
     traversal(print_node, l);

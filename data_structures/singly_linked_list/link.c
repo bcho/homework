@@ -17,14 +17,20 @@ void free_node(node_t *node)
 
 list_t make_list(void)
 {
-    node_t *header = new_node();
-    header->next = NULL;
-    return header;
+    list_t l = malloc(sizeof(list_t));
+    if (l == NULL) {
+        printf("Out of memory!");
+    } else {
+        l->header = new_node();
+        l->header->next = NULL;
+        l->current = l->header;
+    }
+    return l;
 }
 
 int is_empty(list_t l)
 {
-    return (l->next == NULL);
+    return (l->current == l->header);
 }
 
 int is_last(pos_t p, list_t l)
@@ -34,9 +40,10 @@ int is_last(pos_t p, list_t l)
 
 pos_t find(element_t x, list_t l)
 {
-    for (;l && l->e != x;l = l->next)
+    pos_t cur = l->current;
+    for (;cur && cur->e != x;cur = cur->next)
         ;
-    return l;
+    return cur;
 }
 
 node_t *pop(element_t x, list_t l)
@@ -57,9 +64,10 @@ node_t *pop(element_t x, list_t l)
 
 pos_t find_previous(element_t x, list_t l)
 {
-    for (;l && l->next->e != x;l = l->next)
+    pos_t cur = l->header->next;
+    for (;cur && cur->next->e != x;cur = cur->next)
         ;
-    return l;
+    return cur;
 }
 
 void insert(element_t x, list_t l, pos_t p)
@@ -72,20 +80,25 @@ void insert(element_t x, list_t l, pos_t p)
 
 void destory(list_t l)
 {
-    pos_t head = l;
-    for (l = l->next;l;l = l->next)
-        free_node(l);
-    head->next = NULL;
+    pos_t cur = header(l)->next;
+    pos_t tmp;
+    for (;cur;) {
+        tmp = cur;
+        cur = cur->next;
+        free_node(tmp);
+    }
+    free_node(l->header);
+    free(l);
 }
 
 pos_t header(list_t l)
 {
-    return l;
+    return l->header;
 }
 
-pos_t first(list_t l)
+pos_t current(list_t l)
 {
-    return header(l)->next;
+    return l->current;
 }
 
 pos_t advance(pos_t p, list_t l)
@@ -100,7 +113,7 @@ element_t retrieve(pos_t p)
 
 void traversal(void (*visit)(node_t *p), list_t l)
 {
-    pos_t f = first(l);
+    pos_t f = header(l)->next;
     for (;f;f = f->next)
         visit(f);
 }
