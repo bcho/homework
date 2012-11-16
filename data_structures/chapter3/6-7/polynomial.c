@@ -63,7 +63,7 @@ pos_t find_pos(element_t exp, polynomials_t a)
 }
 
 /* time complexity: O(M * (M + N)) = O(M^2 + MN) ~ O(M^2)
- * (M is shorter one's length)*/
+ * (M is shorter one's length)
 polynomials_t add(polynomials_t a, polynomials_t b)
 {
     pos_t cur, exp;
@@ -80,6 +80,38 @@ polynomials_t add(polynomials_t a, polynomials_t b)
             insert(retrieve_exp(cur), retrieve_coe(cur), exp);
         }
     }
+    return l;
+}
+*/
+
+/* time complexity: ~ O(M + N) */
+polynomials_t add(polynomials_t a, polynomials_t b)
+{
+    polynomials_t l = make_list();
+    pos_t cur = l;
+
+    a = a->next;
+    b = b->next;
+    for (;a && b;) {
+       if (retrieve_exp(a) == retrieve_exp(b)) {
+           insert(retrieve_exp(a), retrieve_coe(a) + retrieve_coe(b), cur);
+           a = a->next;
+           b = b->next;
+       } else if (retrieve_exp(a) > retrieve_exp(b)) {
+           insert(retrieve_exp(a), retrieve_coe(a), cur);
+           a = a->next;
+       } else {
+           insert(retrieve_exp(b), retrieve_coe(b), cur);
+           b = b->next;
+       }
+       cur = cur->next;
+    }
+    if (a)
+        for (;a;a = a->next, cur = cur->next)
+            insert(retrieve_exp(a), retrieve_coe(a), cur);
+    if (b)
+        for (;b;b = b->next, cur = cur->next)
+            insert(retrieve_exp(b), retrieve_coe(b), cur);
     return l;
 }
 
