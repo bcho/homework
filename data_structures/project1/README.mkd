@@ -1,0 +1,7 @@
+# Project 1: Performance Measurement
+
+[full description](http://acm.zju.edu.cn/dsaa/DS1/P1.pdf)
+
+## result
+
+See result.txt
