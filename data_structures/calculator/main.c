@@ -15,12 +15,9 @@ int main(int argc, char *argv[])
     length = parse_formula("1+2*(3+5555)", formula);
     postfix_length = infix2postfix(formula, postfix, length);
 
-    /* FIXME BUG tree create error
-    postfix2tree(postfix, t, postfix_length);
-    printf("%d\n", t->value->value);
+    postfix2tree(postfix, &t, postfix_length);
     inorder_traversal(t, print_tree_node);
     printf("\n");
-    */
 
     print_formula(formula, length);
     print_formula(postfix, postfix_length);

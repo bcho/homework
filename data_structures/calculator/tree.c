@@ -29,8 +29,8 @@ void inorder_traversal(tree_t t, void (*visit)(tree_t t))
     if (t == NULL)
         return;
     if (t->left)
-        inorder_traversal(t, visit);
+        inorder_traversal(t->left, visit);
     visit(t);
     if (t->right)
-        inorder_traversal(t, visit);
+        inorder_traversal(t->right, visit);
 }

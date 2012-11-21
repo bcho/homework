@@ -35,7 +35,7 @@ int infix2postfix(token_t src[], token_t dest[], int length)
     return tail + 1;
 }
 
-void postfix2tree(token_t src[], tree_t dest, int length)
+void postfix2tree(token_t src[], tree_t *dest, int length)
 {
     tree_t stack[MAX_OP], op1, op2;
     int top, i;
@@ -51,5 +51,5 @@ void postfix2tree(token_t src[], tree_t dest, int length)
     }
     /* top should be at the bottom (0) */
     assert(top == 0);
-    dest = stack[top];
+    *dest = stack[top];
 }
