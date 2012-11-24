@@ -1,0 +1,120 @@
+## 定义
+
+计算机科学是研究 **信息** 和 **计算** 的理论基础，以及它们在计算机系统上实现和应用的实践技术。
+
+Computer science is the study of the theoretical foundations of information and computation, and of practical techniques for their implementation and application in computer systems.
+
+研究计算机的设计、制造和应用（利用计算机进行信息获取、表示、存储、处理、控制等）的理论、方法和技术的学科。
+
+## 基本问题
+
+什么能（有效地）自动化？
+
+什么不能（有效地）自动化？
+
+
+## 核心内容
+
+描述和变换信息的算法过程（包括其理论、分析、设计、效率分析、实现和应用系统）。
+
+### 几点原则和方法
+
+(from Computing Curricula 1991)
+
+1. Bindings
+
+2. Complexity of Large Problems
+
+3. Conceptual and Format Models
+
+4. Consistency and Completeness
+
+5. Efficiency
+
+6. Evolution
+
+7. Levels of Abstraction
+
+8. Ordering in Space
+
+9. Ordering in Time
+
+10. Reuse
+
+11. Security
+
+12. Tradeoff and Consequences
+
+#### 算法
+
+计算学科的灵魂。算法设计的优劣决定软件系统的性能。对算法进行研究能使我们深刻理解问题本质以及可能的求解技术。
+
+##### 定义及特性
+
+- 非形式化定义
+- 有穷性
+- 确定性
+- 0或多个输入
+- 1或多个输出
+- 可行性
+
+
+#### 数据结构
+
+Good programmers worry about data structures and their relationships.  (Linus Torvalds)
+
+属于定性模型，具有非数值性。由数据的逻辑结构、储存（物理）结构及运算三部分组成。
+
+
+#### 程序
+
+= 算法 + 数据结构 (Nikiklaus Wirth)
+
+广义： 一种行动方案或工作步骤。
+计算机程序： 按照工作步骤事先编排好的，具有特殊功能的指令序列。
+
+
+#### 程序设计
+
+算法是程序的核心；数据结构是程序加工的对象，是对松散的数据的整合。然而还包括相关的程序设计方法、相应的语言工具及计算环境。
+
+
+#### 软件
+
+一般指计算机系统中的程序及其文档，也可以指在研究、开发、维护以及使用上述含义下的软件所涉及的理论、方法、技术所构成的分支科学。
+
+* 系统软件
+* 支撑软件
+* 应用软件
+
+
+## 学科三种形态
+
+- 理论： 基于相关数学基础和本学科理论，广泛应用数学的研究方法。
+    1. 对研究对象的概念抽象
+    2. 假设对象的基本性质和对象之间可能存在的关系（定理）
+    3. 确定这些性质和关系是否正确（证明）
+    4. 解释结果
+
+- 抽象： 基于本学科的实验方法，广泛采用物理学的研究方法。
+    1. 确定可能世界（环境）并形成假设
+    2. 构造模型并做出预言
+    3. 设计实验并收集数据
+    4. 分析结果
+
+- 设计： 基于工程，广泛采用工程科学（例如建筑工程、机械工程）的研究方法。
+    1. 叙述要求
+    2. 给定技术条件
+    3. 设计并实现该系统或装置
+    4. 测试和分析该系统
+
+
+## Outline
+
+通过半个学期的学习，我对计算机科学有了新的了解……
+
+- 基本定义
+- 研究的基本问题
+- 核心概念
+
+所以不难看出……（引出总体理解）
