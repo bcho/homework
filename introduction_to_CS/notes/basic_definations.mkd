@@ -1,10 +1,14 @@
 ## 定义
 
-计算机科学是研究 **信息** 和 **计算** 的理论基础，以及它们在计算机系统上实现和应用的实践技术。
+计算机科学是研究 **信息** 和 **计算** 的理论基础，以及它们在计算机系统上实现和
+应用的实践技术。
 
-Computer science is the study of the theoretical foundations of information and computation, and of practical techniques for their implementation and application in computer systems.
+Computer science is the study of the theoretical foundations of information and
+computation, and of practical techniques for their implementation and
+application in computer systems.
 
-研究计算机的设计、制造和应用（利用计算机进行信息获取、表示、存储、处理、控制等）的理论、方法和技术的学科。
+研究计算机的设计、制造和应用（利用计算机进行信息获取、表示、存储、处理、控制等
+）的理论、方法和技术的学科。
 
 ## 基本问题
 
@@ -47,7 +51,8 @@ Computer science is the study of the theoretical foundations of information and 
 
 #### 算法
 
-计算学科的灵魂。算法设计的优劣决定软件系统的性能。对算法进行研究能使我们深刻理解问题本质以及可能的求解技术。
+计算学科的灵魂。算法设计的优劣决定软件系统的性能。对算法进行研究能使我们深刻理
+解问题本质以及可能的求解技术。
 
 ##### 定义及特性
 
@@ -61,7 +66,8 @@ Computer science is the study of the theoretical foundations of information and 
 
 #### 数据结构
 
-Good programmers worry about data structures and their relationships.  (Linus Torvalds)
+Good programmers worry about data structures and their relationships.  (Linus
+Torvalds)
 
 属于定性模型，具有非数值性。由数据的逻辑结构、储存（物理）结构及运算三部分组成。
 
@@ -76,12 +82,14 @@ Good programmers worry about data structures and their relationships.  (Linus To
 
 #### 程序设计
 
-算法是程序的核心；数据结构是程序加工的对象，是对松散的数据的整合。然而还包括相关的程序设计方法、相应的语言工具及计算环境。
+算法是程序的核心；数据结构是程序加工的对象，是对松散的数据的整合。然而还包括相
+关的程序设计方法、相应的语言工具及计算环境。
 
 
 #### 软件
 
-一般指计算机系统中的程序及其文档，也可以指在研究、开发、维护以及使用上述含义下的软件所涉及的理论、方法、技术所构成的分支科学。
+一般指计算机系统中的程序及其文档，也可以指在研究、开发、维护以及使用上述含义下
+的软件所涉及的理论、方法、技术所构成的分支科学。
 
 * 系统软件
 * 支撑软件
