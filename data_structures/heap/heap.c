@@ -60,7 +60,8 @@ void build_heap(heap_t q)
 {
     int i;
     assert(!is_empty(q));
-    for (i = 1;i < q->size / 2;i++)
+    /* ensure the smallest node will swim to the top */
+    for (i = q->size;i > 0;i--)
         sink(i, q);
 }
 
