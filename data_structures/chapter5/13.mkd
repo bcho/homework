@@ -1,0 +1,14 @@
+# 5.13
+
+If a d-heap is stored as an array, for an entry locoated in position i, where
+are the parents and children?
+
+A:
+
+parents:
+
+    parent = i / d + (i % d > 1)
+
+children:
+
+    [(i - 1) * d + 2, i * d + 1]
