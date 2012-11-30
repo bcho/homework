@@ -1,0 +1,27 @@
+# Introduction
+
+## Recursion
+
+> An algorithm is recursion if it calls itself to do part of its work. To use
+> recursion effetively, it is necessary to train yourself to stop anlayzing the
+> recursive process beyond the recursive call. ... You just worry about the base
+> cases and how to recombine the subproblems.
+
+(from __A Practical Introduction to Data Structures and Algorithm Analysis__
+written by Clifford A. Shaffer .)
+
+### Four basic rules of recursion
+
+1. Base cases. You mus always have some base cases, which can be solved without
+   recursion.
+
+2. Making progress. For the caes that are to be solved recursively, the
+   recursive call must always be to a case that makes progress toward a base
+   case.
+   (what does it mean about **makes progress toward a base case**? we should
+   reduce the non-base cases to base cases?)
+
+3. Design rule. Assume tha all the recursive calls work.
+
+4. Compound interest rule. Never duplicate work by solving the same instance of
+   a problem in separate recursive calls.

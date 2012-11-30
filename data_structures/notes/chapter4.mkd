@@ -1,0 +1,69 @@
+# Trees
+
+## Definations of Trees
+
+A tree is a **collection** of nodes. The collection can be empty; otherwise,
+a tree consits of a distinguished node `r`, called the `root`, and zero or
+more nonempty (sub)trees T1, T2, ... , Tk, each of whose roots are connected by
+a directed `edge` from `r`.
+
+
+## Exoression Trees
+
+The leaves of an expression tree are `operands`, and the other nodes contain
+`operators`. ... We can evaluate an expression tree, T, by applying the
+operator at the root to the values obtained by recursively evaluation the left
+and right subtrees.
+
+### Construction an Expression Tree
+
+__use stack to build an expression tree from postfix evaluation__
+
+We read our expression one symbol at a time. If the symbol is an operator, we
+pop pointers to two trees T1 and T2 from the stack (T1 is poped first) and form
+a new tree whose root is the operator and whose left and right children point
+to T2 and T1, respectively. A pointer to this new tree is then pushed onto the
+stack.
+
+## Threaded Binary Trees
+
+Since a binary tree with N nodes has N + 1 NULL pointers, half the space
+allocated in a binary tree for pointer information is wasted. ... if a node has
+a NULL left child, we make its left child point to its **inorder predecessor**,
+and if a node has a NULL right child, we make its right child point to its
+**inorder successor**.
+
+__question: how to get a node's inorder predecessor / successor ?__
+
+
+## Binary Search Tree
+
+### Delete Operations
+
+There are 3 case of this operation:
+
+* node is leaf (i.e., node without any child)
+* node has one child
+* node has two child
+
+
+#### is leaf (has no child)
+
+it can be deleted immediately
+
+
+#### has one child
+
+make its parent adjusts a pointer to bypass the node, then delete the node
+(make its parent point to its child)
+
+
+#### has two child
+
+use the smallest node in its right subtree to replace itself, then delete this
+smallest node in its right subtree. 
+
+Because the smallest node in right subtree (call A) has no left child (that is,
+this node can only have one or no child), and this node is bigger than the
+biggest node in left subtree. After replacing, the operation become deleting
+a leaf or a one-child node, which is much easier.

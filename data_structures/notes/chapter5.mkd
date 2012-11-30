@@ -1,0 +1,35 @@
+# Priority Queues (Heaps)
+
+## Insert
+
+__swim operation (or percolate up)__
+To insert an element X into the heap, we create a hole in the next available
+location since otherwise the tree will not be complete. If X can be palced in
+the hol without violating heap order, then we do so and are done. Otherwise we
+slide the element that is in the hole's parent node into the hole, thus
+bubbling the hole up toward the root. We continue this process until X can be
+placed in the hole.
+
+
+## DeleteMin (or DeleteMax)
+
+__sink operation (or percolate down)__
+Use the last element X to replace the root (in array implementation, its index is
+1). If X can be placed in the hole, then we are done. Otherwise, we slide the
+smaller of the hole's children into the hole, thus pushing the hole down one
+level. We repeat this step until X can be placed in the hole.
+
+
+## BuildHeap
+
+Use N successive `Insert` the total running time would be O(N) but O(N log N)
+worst-case.
+
+The general algorithm is to place the N keys into the tree in any order,
+maintaing the structure property. Then, use PercolateDown(i) percolates down
+from node N / 2. (Why is N / 2? Because from N / 2 + 1 to N are all leaves,
+without children, so needn't being percolated down, but in order to let the
+smallest node **swim** to the top, we should start from N / 2.)
+
+The running time of this algorithm is O(N).
+__question: proof?__

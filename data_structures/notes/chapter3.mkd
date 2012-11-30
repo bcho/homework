@@ -1,0 +1,29 @@
+# Lists, Stacks and Queues
+
+## Abstract Data Types (ADTs)
+
+An abstract data type (ADT) si set of operations. Abstract data types are
+mathematical abstraactions; nowhere in an ADT's definition is there any mention
+of how the set of operations is implemented. (hide details, just provide
+interfaces.)
+
+
+## Dummy Node / Sentinel Node
+
+... sentinel node, which is sometimes referred to as a `header` or `dummy`
+node.
+
+
+## Delete Operations
+
+__used in linked list__
+
+use a routine `FindPrevious` which will return the position of the predecessor
+of the cell we wish to delete
+
+
+## Seperate Implementation
+
+The primary objective is to separate the implementation of the abstract data
+types from their function. The program must know what the operations do. but it
+is actuall better off not knowing how it is done.
