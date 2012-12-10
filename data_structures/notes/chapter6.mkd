@@ -1,0 +1,45 @@
+# Sorting
+
+## Comparisons
+
+Any general-purpose sorting alogrimthm requires Omega(N log N) comparisons.
+
+## A lower bound for simple sorting algoritms
+
+An **inversion** in an array of numbers is any ordered pair (i, j) having the
+property that i < j but A[i] > A[j].
+
+
+### THEOREM 6.1
+
+The average number of inversions in an array of N distinct numbers is N(N-1)/4.
+
+proof:
+
+For any list, L, of numbers, consider Lr, the list in reverse order. Consider
+any pair of two numbers in the list (x, y), with y > x. Clearly, in exactly one
+of L and Lr this ordered pair represents an inversion. The total number of
+these pairs in a list L and its reverse Lr is N(N-1)/2. Thus, an average list
+has half this amount, or N(N-1)/4 inversions.
+
+__that is we join the two list together, so the total inversions is C(N, 2)__
+
+### THEOREM 6.2
+
+Any algorithm that sorts by exchanging adjacent elements requires Omega(N^2)
+time on average.
+
+proof:
+
+The average number of inversion is initially N(N-1)/4 = Omega(N^2). Each swap
+removes only one inversion, so Omega(N^2) swaps are required.
+
+
+## Heapsort
+
+### Heapsort in one array
+
+__sort ascending__
+
+1. Build a heap which the root is the max element.
+2. Delete the root for N times, and move the root to the tail.
