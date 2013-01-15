@@ -1,0 +1,7 @@
+# Hashing
+
+## The size of the hash table
+
+... it is usually a good idea to ensure that the table size is prime. When the
+input keys are random integers, then this function (the hash function) is not
+only very simple to compute but also distributes the keys evenly.
