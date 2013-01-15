@@ -5,3 +5,34 @@
 ... it is usually a good idea to ensure that the table size is prime. When the
 input keys are random integers, then this function (the hash function) is not
 only very simple to compute but also distributes the keys evenly.
+
+
+## Quadratic Probing
+
+Quadratic probing is a collision resplution method that eliminates the primary
+clustering problem of linear probing. ... the collision function is quadratic.
+
+For linear probing it is a bad idea to let the hash table get nearly full,
+because performance degrades. For quadratic probing ... there is no guarantee
+of finding an empty cell once the table gets more than half full, or even
+before the table gets half full if the table size is not prime. This is because
+at most half of the table can be used as alternative locations to resolve
+collisions.
+
+### Therorem 7.1
+
+> If quadratic probing is used, and the table size is prime, then a new element
+> can always be inserted if the table is at least half empty.
+
+
+Standard deletion cannot be performed in an open addressing hashing table,
+because the cell might have caused a collision to go past it. ... Thus, open
+addressing hash tables require lazy deletion.
+
+
+## Rehashing
+
+Rehashing can be implemented in several ways with quadratic probing. One
+alternative is to rehash as soon as the table is half full. The other extreme
+is to rehash only when an insertion fails. A thrid, ... is to rehash when the
+table reaches a certain load factor.
