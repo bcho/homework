@@ -107,7 +107,7 @@ def compose1(f, g):
     def h(x):
         return f(g(x))
     return h
-'''
+
 
 # Q5.
 
@@ -131,6 +131,7 @@ def two(f):
     return successor(one)
 
 
+'''
 def church_to_int(n):
     """Convert the Church numeral n to a Python integer.
 
@@ -142,7 +143,7 @@ def church_to_int(n):
     2
     """
     "*** YOUR CODE HERE ***"
-
+    return n(lambda x: x + 1)(0)  # ?
 
 def add_church(m, n):
     """Return the Church numeral for m + n, for Church numerals m and n.
