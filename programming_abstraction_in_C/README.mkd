@@ -1,0 +1,4 @@
+# Programming Abstractions in C
+
+Some solutions of the `programming exercises` from the book [Programming
+Abstraction in C](http://book.douban.com/subject/1171842/)
