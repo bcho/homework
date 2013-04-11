@@ -36,9 +36,9 @@ int func(char *c, char (*w)[10])
     int i, start, end;
     char *cur;
 
-    for (start = 0;!_isalpha(c[start]);start++)
+    for (start = 0;!_isalpha(c[start]) && c[start] != 0;start++)
         ;
-    for (cur = c + start, end = start, i = 0;c[end];end++) {
+    for (cur = c + start, end = start, i = 0;c[end] != 0;end++) {
         if (!_isalpha(c[end]) && _isalpha(c[end - 1])) {
             _strncpy(w[i++], cur, end - start);
         } else if (_isalpha(c[end]) && !_isalpha(c[end - 1])) {
