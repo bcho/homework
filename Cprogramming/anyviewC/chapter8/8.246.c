@@ -3,15 +3,22 @@
 int func(char *c, char (*w)[10]);
 void _strncpy(char *dest, char *src, int n);
 
-int main()
+int main(int argc, char **argv)
 {
     int i, count;
     char w[10][10];
 
-    printf("%d\n", (count = func("def abc cde", w)));
+    printf("%d\n", (count = func(argv[1], w)));
     for (i = 0;i < count;i++)
         printf("%s ", w[i]);
 
+    return 0;
+}
+
+int _isalpha(char c)
+{
+    if ((c <= 'z' && c >= 'a') || (c <= 'Z' && c >= 'A'))
+        return 1;
     return 0;
 }
 
@@ -27,17 +34,21 @@ void _strncpy(char *dest, char *src, int n)
 int func(char *c, char (*w)[10])
 {
     int i, start, end;
+    char *cur;
 
-    for (start = 0;c[start] == ' ';start++)
+    for (start = 0;!_isalpha(c[start]);start++)
         ;
-    for (end = start, i = 0;c[end];end++) {
-        if (c[end] == ' ') {
-            _strncpy(w[i++], c + start, end - start);
-        }
-        if (c[end] != ' ' && c[end - 1] == ' ')
+    for (cur = c + start, end = start, i = 0;c[end];end++) {
+        if (!_isalpha(c[end]) && _isalpha(c[end - 1])) {
+            _strncpy(w[i++], cur, end - start);
+        } else if (_isalpha(c[end]) && !_isalpha(c[end - 1])) {
             start = end;
+            cur = c + start;
+        }
     }
-    _strncpy(w[i++], c + start, end - start);
+    if (_isalpha(c[end - 1])) {
+        _strncpy(w[i++], cur, end - start);
+    }
 
     return i;
 }
