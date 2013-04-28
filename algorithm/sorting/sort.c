@@ -39,6 +39,10 @@ int main()
     BEGIN;
     heap_sort(array, n, cmp);
     END("heap");
+    
+    BEGIN;
+    heap_sort_no_recur(array, n, cmp);
+    END("heap no recurison");
 
     /*
     print(sorted, n);

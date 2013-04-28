@@ -37,12 +37,41 @@ static void bubble_down(element_t *array, int cur, int size,
     }
 }
 
+static void bubble_down_no_recur(element_t *array, int cur, int size,
+                                 int (*compar)(void *a, void *b))
+{
+    int child;
+
+    while (1) {
+        child = lchild(cur, size);
+        if (child == -1)
+            break;
+        if (child + 1 < size && compar(&array[child], &array[child + 1]) == -1)
+            child += 1;
+        if (compar(&array[cur], &array[child]) == -1) {
+            swap(&array[cur], &array[child]);
+            cur = child;
+        }
+        else
+            break;
+    }
+}
+
 static void build_heap(element_t *array, int n, int (*compar)(void *a, void *b))
 {
     int i;
 
     for (i = n / 2;i >= 0;i--)
         bubble_down(array, i, n, compar);
+}
+
+static void build_heap_no_recur(element_t *array, int n,
+                                int (*compar)(void *a, void *b))
+{
+    int i;
+
+    for (i = n / 2;i >= 0;i--)
+        bubble_down_no_recur(array, i, n, compar);
 }
 
 void heap_sort(element_t *array, int n, int (*compar)(void *a, void *b))
@@ -55,5 +84,19 @@ void heap_sort(element_t *array, int n, int (*compar)(void *a, void *b))
         swap(&array[0], &array[size - 1]);
         size--;
         bubble_down(array, 0, size, compar);
+    }
+}
+
+void heap_sort_no_recur(element_t *array, int n,
+                        int (*compar)(void *a, void *b))
+{
+    int i;
+    int size;
+
+    build_heap_no_recur(array, n, compar);
+    for (i = 0, size = n;i < n;i++) {
+        swap(&array[0], &array[size - 1]);
+        size--;
+        bubble_down_no_recur(array, 0, size, compar);
     }
 }
