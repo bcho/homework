@@ -2,7 +2,7 @@
 
 CFLAGS=-g
 
-sort: sort.c select.o heap.o
+sort: sort.c select.o heap.o qsort.o
 
 clean:
 	rm -rf sort
