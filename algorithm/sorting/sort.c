@@ -4,6 +4,7 @@
 
 #include "select.h"
 #include "heap.h"
+#include "qsort.h"
 
 #define PRINT_ELEMENT(a) printf("%lf ", a)
 #define PRINT_LAST_ELEMENT(a) printf("%lf\n", a)
@@ -17,7 +18,7 @@ static void read(element_t *array, int n);
 static int check(element_t *array, element_t *sorted, int n);
 static void copy(element_t *dest, const element_t *src, int n);
 
-static int cmp(void *a, void *b);
+static int cmp(const void *a, const void *b);
 
 int main()
 {
@@ -32,9 +33,11 @@ int main()
     read(raw, n);
     read(sorted, n);
 
+    /*
     BEGIN;
     select_sort(array, n, cmp);
     END("select");
+    */
 
     BEGIN;
     heap_sort(array, n, cmp);
@@ -43,6 +46,14 @@ int main()
     BEGIN;
     heap_sort_no_recur(array, n, cmp);
     END("heap no recurison");
+    
+    BEGIN;
+    quick_sort(array, n, cmp);
+    END("qsort");
+
+    BEGIN;
+    quick_sort_std(array, n, cmp);
+    END("qsort from stdlib");
 
     /*
     print(sorted, n);
@@ -90,7 +101,7 @@ static void copy(element_t *dest, const element_t *src, int n)
         dest[i] = src[i];
 }
 
-static int cmp(void *a, void *b)
+static int cmp(const void *a, const void *b)
 {
     element_t va, vb;
     va = *((element_t *) a);

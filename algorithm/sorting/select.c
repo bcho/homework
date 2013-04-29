@@ -1,6 +1,7 @@
 #include "select.h"
 
-void select_sort(element_t *array, int n, int (*compar)(void *a, void *b))
+void select_sort(element_t *array, int n,
+                 int (*compar)(const void *a, const void *b))
 {
     int i, j, select;
 
