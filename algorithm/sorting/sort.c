@@ -5,6 +5,7 @@
 #include "select.h"
 #include "heap.h"
 #include "qsort.h"
+#include "merge.h"
 
 #define PRINT_ELEMENT(a) printf("%lf ", a)
 #define PRINT_LAST_ELEMENT(a) printf("%lf\n", a)
@@ -54,6 +55,10 @@ int main()
     BEGIN;
     quick_sort_std(array, n, cmp);
     END("qsort from stdlib");
+    
+    BEGIN;
+    merge_sort(array, n, cmp);
+    END("merge");
 
     /*
     print(sorted, n);
