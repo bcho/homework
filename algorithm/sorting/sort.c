@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <time.h>
 
 #include "select.h"
@@ -14,7 +15,6 @@
 #define END(name) end = clock(); printf(name ": %d %lfs\n",\
                   check(array, sorted, n), (end - start) / 1e6)
 
-static void print(element_t *array, int n);
 static void read(element_t *array, int n);
 static int check(element_t *array, element_t *sorted, int n);
 static void copy(element_t *dest, const element_t *src, int n);
@@ -71,7 +71,7 @@ int main()
     return 0;
 }
 
-static void print(element_t *array, int n)
+void print(element_t *array, int n)
 {
     int i;
 
@@ -125,4 +125,15 @@ void swap(element_t *a, element_t *b)
     tmp = *a;
     *a = *b;
     *b = tmp;
+}
+
+void DEBUG(char *fmt, ...)
+{
+    va_list list;
+
+    printf("DEBUG: ");
+    va_start(list, fmt);
+    vprintf(fmt, list);
+    va_end(list);
+    printf("\n");
 }
