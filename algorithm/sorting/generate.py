@@ -19,8 +19,11 @@ def main():
     else:
         sample = generate(int(sys.argv[1]))
         print len(sample)
-        print_sample(sample)
         sample.sort()
+        sample.reverse()
+        print_sample(sample)
+        sample.reverse()
+       # sample.sort()
         print_sample(sample)
 
 

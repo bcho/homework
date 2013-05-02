@@ -119,7 +119,7 @@ static int cmp(const void *a, const void *b)
     return 0;
 }
 
-void swap(element_t *a, element_t *b)
+inline void swap(element_t *a, element_t *b)
 {
     element_t tmp;
     tmp = *a;
