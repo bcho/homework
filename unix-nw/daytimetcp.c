@@ -39,18 +39,28 @@ main()
         socklen_t size = sizeof(clientaddr);
         char buff[MAXLINE];
         time_t ticks;
+        int pid;
 
         clientfd = accept(serverfd, (struct sockaddr *) &clientaddr, &size);
         if (clientfd < 0)
             perror("accept");
 
-        printf("connect from %s, port %d\n",
-                inet_ntop(AF_INET, &clientaddr.sin_addr, buff, sizeof(buff)),
-                ntohs(clientaddr.sin_port));
+        if ((pid = fork()) == 0) { // child process
+            close(serverfd);
 
-        ticks = time(NULL);
-        snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
-        write(clientfd, buff, strlen(buff));
+            printf("connect from %s, port %d\n",
+                    inet_ntop(AF_INET, &clientaddr.sin_addr, buff, sizeof(buff)),
+                    ntohs(clientaddr.sin_port));
+
+            ticks = time(NULL);
+            snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
+            write(clientfd, buff, strlen(buff));
+            close(clientfd);
+
+            return 0;
+        } else {
+            printf("fork to %d\n", pid);
+        }
 
         close(clientfd);
     }
