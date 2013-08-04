@@ -1,0 +1,43 @@
+## Numbers
+
+The number type represents a floating point (fractional) numer. There is no
+separate integer (non-fractional) type.
+
+### coercion
+
+Lua will automatically convert string and number types to the correct format in
+order to perform calculations.
+
+## String
+
+concatenate strings using the .. op
+
+### double square buckets
+
+1. escape sequences are not recognized when using double brackets
+
+1. double square brackets can be used to enclose literal strings which traverse
+   several lines.
+
+
+
+## nil
+
+nil indicates the lack of a useful value.
+
+
+## boolean
+
+0 is not a false value
+
+
+## table
+
+table value are references
+
+
+## scope
+
+### local
+
+local variables only exist in the block they were created in.
