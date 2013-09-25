@@ -15,5 +15,21 @@ CHIP RAM8 {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // 当前周期，选出需要的寄存器 (如果 load 为 0，则不会选出任何一个)
+    DMux8Way(in=load, sel=address,
+             a=o1, b=o2, c=o3, d=o4, e=o5, f=o6, g=o7, h=o8);
+
+    // 写入到指定寄存器中
+    Register(in=in, load=o1, out=out1);
+    Register(in=in, load=o2, out=out2);
+    Register(in=in, load=o3, out=out3);
+    Register(in=in, load=o4, out=out4);
+    Register(in=in, load=o5, out=out5);
+    Register(in=in, load=o6, out=out6);
+    Register(in=in, load=o7, out=out7);
+    Register(in=in, load=o8, out=out8);
+
+    // (下一周期) 输出到 out
+    Mux8Way16(a=out1, b=out2, c=out3, d=out4, e=out5, f=out6, g=out7, h=out8,
+              sel=address, out=out);
 }

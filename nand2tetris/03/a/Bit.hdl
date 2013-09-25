@@ -14,5 +14,10 @@ CHIP Bit {
     OUT out;
 
     PARTS:
-    // Put your code here:
+    // 选择
+    Mux(a=dffout, b=in, sel=load, out=t);
+    // 放入下一循环
+    DFF(in=t, out=dffout);
+    // 输出到 out (or 起复制作用)
+    Or(a=dffout, b=dffout, out=out);
 }

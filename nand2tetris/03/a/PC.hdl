@@ -16,9 +16,13 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+
+    Xor16(a=in, b=in, out=_zero16);
+    Not16(in=_zero16, out=zero16);
+
+    Mux16(a=out2, b=in, sel=load, out=out1);
+    Mux16(a=out1, b=zero16, sel=reset, out=out_t);
+
+    DFF(in=out_t, out=out_t);
+    Or(a=out_t, b=out_t, out=out);
 }
-
-
-
-
