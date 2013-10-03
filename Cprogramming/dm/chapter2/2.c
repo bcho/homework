@@ -125,5 +125,5 @@ void Merge(LinkList la, LinkList lb, LinkList *lc)
         lb = t;
     }
 
-    *lc = dummy.next;
+    (*lc)->next = dummy.next;
 }
