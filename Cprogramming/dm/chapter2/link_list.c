@@ -76,8 +76,9 @@ char *link_list_to_string(LinkList list)
             buf[i++] = list->data;
     buf[i] = 0;
 
-    str = malloc(sizeof(char) * strlen(buf));
-    strncpy(str, buf, i);
+    str = malloc(sizeof(char) * (strlen(buf) + 1));
+    strncpy(str, buf, i + 1);
+    str[i] = 0;
 
     return str;
 }
