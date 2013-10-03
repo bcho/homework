@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../vendor/miniunit.h"
 #include "../link_list.h"
@@ -9,27 +10,39 @@ int tests_run = 0;
 static char *test_create_link_list()
 {
     char *str = "hello world";
+    char *converted;
     LinkList l = create_link_list_from_string(str);
 
     mu_assert("head", l->data == 'h');
     mu_assert("head+5", get_nth_from_link_list(l, 5)->data == ' ');
     mu_assert("head+6", get_nth_from_link_list(l, 6)->data == 'w');
     mu_assert("head+11", get_nth_from_link_list(l, 10)->next == NULL);
+    converted = link_list_to_string(l);
+    mu_assert("convert to string", strcmp(converted, str) == 0);
+    free(converted);
 
     destory_link_list(l);
+
+    return 0;
 }
 
 static char *test_create_link_list_with_dummy()
 {
     char *str = "hello world";
+    char *converted;
     LinkList l = create_link_list_from_string_with_dummy(str);
 
     mu_assert("head", get_nth_from_link_list(l, 1)->data == 'h');
     mu_assert("head+5", get_nth_from_link_list(l, 6)->data == ' ');
     mu_assert("head+6", get_nth_from_link_list(l, 7)->data == 'w');
     mu_assert("head+11", get_nth_from_link_list(l, 11)->next == NULL);
+    converted = link_list_to_string(l);
+    mu_assert("convert to string", strcmp(converted, str) == 0);
+    free(converted);
 
     destory_link_list(l);
+
+    return 0;
 }
 
 static char *run()

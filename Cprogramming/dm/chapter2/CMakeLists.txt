@@ -6,6 +6,7 @@ set(CMAKE_C_FLAGS "-Wall -g")
 include_directories(.)
 
 add_library(link_list link_list.c)
+add_library(chapter2 2.c)
 
 
 add_subdirectory(tests)

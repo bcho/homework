@@ -102,6 +102,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named chapter2
+
+# Build rule for target.
+chapter2: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 chapter2
+.PHONY : chapter2
+
+# fast build rule for target.
+chapter2/fast:
+	$(MAKE) -f CMakeFiles/chapter2.dir/build.make CMakeFiles/chapter2.dir/build
+.PHONY : chapter2/fast
+
+#=============================================================================
 # Target rules for targets named link_list
 
 # Build rule for target.
@@ -115,6 +128,19 @@ link_list/fast:
 .PHONY : link_list/fast
 
 #=============================================================================
+# Target rules for targets named test.test
+
+# Build rule for target.
+test.test: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test.test
+.PHONY : test.test
+
+# fast build rule for target.
+test.test/fast:
+	$(MAKE) -f tests/CMakeFiles/test.test.dir/build.make tests/CMakeFiles/test.test.dir/build
+.PHONY : test.test/fast
+
+#=============================================================================
 # Target rules for targets named test_link_list.test
 
 # Build rule for target.
@@ -126,6 +152,30 @@ test_link_list.test: cmake_check_build_system
 test_link_list.test/fast:
 	$(MAKE) -f tests/CMakeFiles/test_link_list.test.dir/build.make tests/CMakeFiles/test_link_list.test.dir/build
 .PHONY : test_link_list.test/fast
+
+2.o: 2.c.o
+.PHONY : 2.o
+
+# target to build an object file
+2.c.o:
+	$(MAKE) -f CMakeFiles/chapter2.dir/build.make CMakeFiles/chapter2.dir/2.c.o
+.PHONY : 2.c.o
+
+2.i: 2.c.i
+.PHONY : 2.i
+
+# target to preprocess a source file
+2.c.i:
+	$(MAKE) -f CMakeFiles/chapter2.dir/build.make CMakeFiles/chapter2.dir/2.c.i
+.PHONY : 2.c.i
+
+2.s: 2.c.s
+.PHONY : 2.s
+
+# target to generate assembly for a file
+2.c.s:
+	$(MAKE) -f CMakeFiles/chapter2.dir/build.make CMakeFiles/chapter2.dir/2.c.s
+.PHONY : 2.c.s
 
 link_list.o: link_list.c.o
 .PHONY : link_list.o
@@ -157,10 +207,15 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
+	@echo "... chapter2"
 	@echo "... edit_cache"
 	@echo "... link_list"
 	@echo "... rebuild_cache"
+	@echo "... test.test"
 	@echo "... test_link_list.test"
+	@echo "... 2.o"
+	@echo "... 2.i"
+	@echo "... 2.s"
 	@echo "... link_list.o"
 	@echo "... link_list.i"
 	@echo "... link_list.s"

@@ -37,6 +37,7 @@ LinkList create_link_list_from_string_with_dummy(char *str)
 
     dummy = malloc(_SIZE);
     assert(dummy != NULL);
+    dummy->data = 0;
     dummy->next = create_link_list_from_string(str);
 
     return dummy;
@@ -61,4 +62,22 @@ LNode *get_nth_from_link_list(LinkList list, int n)
     }
 
     return list;
+}
+
+char *link_list_to_string(LinkList list)
+{
+    // quick & dirty
+    char buf[1024];
+    int i;
+    char *str;
+
+    for (i = 0;list;list = list->next)
+        if (list->data != 0)
+            buf[i++] = list->data;
+    buf[i] = 0;
+
+    str = malloc(sizeof(char) * strlen(buf));
+    strncpy(str, buf, i);
+
+    return str;
 }

@@ -13,5 +13,6 @@ LinkList create_link_list_from_string(char *str);
 LinkList create_link_list_from_string_with_dummy(char *str);
 void destory_link_list(LinkList list);
 LNode *get_nth_from_link_list(LinkList list, int n);
+char *link_list_to_string(LinkList list);
 
 #endif

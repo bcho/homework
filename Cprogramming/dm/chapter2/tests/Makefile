@@ -102,6 +102,20 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+tests/CMakeFiles/test.test.dir/rule:
+	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f CMakeFiles/Makefile2 tests/CMakeFiles/test.test.dir/rule
+.PHONY : tests/CMakeFiles/test.test.dir/rule
+
+# Convenience name for target.
+test.test: tests/CMakeFiles/test.test.dir/rule
+.PHONY : test.test
+
+# fast build rule for target.
+test.test/fast:
+	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f tests/CMakeFiles/test.test.dir/build.make tests/CMakeFiles/test.test.dir/build
+.PHONY : test.test/fast
+
+# Convenience name for target.
 tests/CMakeFiles/test_link_list.test.dir/rule:
 	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f CMakeFiles/Makefile2 tests/CMakeFiles/test_link_list.test.dir/rule
 .PHONY : tests/CMakeFiles/test_link_list.test.dir/rule
@@ -114,6 +128,30 @@ test_link_list.test: tests/CMakeFiles/test_link_list.test.dir/rule
 test_link_list.test/fast:
 	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f tests/CMakeFiles/test_link_list.test.dir/build.make tests/CMakeFiles/test_link_list.test.dir/build
 .PHONY : test_link_list.test/fast
+
+test.o: test.c.o
+.PHONY : test.o
+
+# target to build an object file
+test.c.o:
+	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f tests/CMakeFiles/test.test.dir/build.make tests/CMakeFiles/test.test.dir/test.c.o
+.PHONY : test.c.o
+
+test.i: test.c.i
+.PHONY : test.i
+
+# target to preprocess a source file
+test.c.i:
+	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f tests/CMakeFiles/test.test.dir/build.make tests/CMakeFiles/test.test.dir/test.c.i
+.PHONY : test.c.i
+
+test.s: test.c.s
+.PHONY : test.s
+
+# target to generate assembly for a file
+test.c.s:
+	cd /home/hbc/workshop/homework/Cprogramming/dm/chapter2 && $(MAKE) -f tests/CMakeFiles/test.test.dir/build.make tests/CMakeFiles/test.test.dir/test.c.s
+.PHONY : test.c.s
 
 test_link_list.o: test_link_list.c.o
 .PHONY : test_link_list.o
@@ -147,7 +185,11 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... test.test"
 	@echo "... test_link_list.test"
+	@echo "... test.o"
+	@echo "... test.i"
+	@echo "... test.s"
 	@echo "... test_link_list.o"
 	@echo "... test_link_list.i"
 	@echo "... test_link_list.s"
