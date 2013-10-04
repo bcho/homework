@@ -1,0 +1,24 @@
+# Chapter 2
+
+## 2.3
+
+1. int -> int
+1. real -> real
+1. int -> int
+
+
+## 2.4
+
+subscript out of bound
+
+
+## 2.8
+
+```val lifetime = fn : {born:int, crowned:'a, died:int, name:'b, quote:'c} -> int```
+
+
+## 2.9
+
+```val born_at = fn : {born:'a} -> 'a``` -> 类型未确定
+
+#born -> 类型已经确定
