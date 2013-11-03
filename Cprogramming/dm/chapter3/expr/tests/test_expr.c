@@ -2,6 +2,7 @@
 
 #include "../vendor/miniunit.h"
 #include "../expr.h"
+#include "../lexpr.h"
 
 int tests_run = 0;
 
@@ -25,9 +26,44 @@ static char *test_validate()
     return 0;
 }
 
+static char *test_logic_validate()
+{
+    mu_assert("lv1", validate_lexpr("P + Q") == 1);
+    mu_assert("lv2", validate_lexpr("P * Q") == 1);
+    mu_assert("lv3.1", validate_lexpr("~P") == 1);
+    mu_assert("lv3.2", validate_lexpr("P") == 1);
+    mu_assert("lv4", validate_lexpr("~(P + Q)") == 1);
+    mu_assert("lv5", validate_lexpr("~P + Q") == 1);
+    mu_assert("lv6", validate_lexpr("~P * Q") == 1);
+    mu_assert("lv7", validate_lexpr("P + ~Q") == 1);
+    
+    mu_assert("lv8", validate_lexpr("P * + Q") == 0);
+    mu_assert("lv9", validate_lexpr("P + * Q") == 0);
+    mu_assert("lv10", validate_lexpr("P + Q)") == 0);
+    mu_assert("lv11", validate_lexpr("(P + Q") == 0);
+    mu_assert("lv12", validate_lexpr("O+(P+Q") == 0);
+
+    mu_assert("lv13", validate_lexpr("P = Q") == 1);
+    mu_assert("lv14", validate_lexpr("P = ") == 0);
+    mu_assert("lv15", validate_lexpr("P - Q") == 1);
+    mu_assert("lv16", validate_lexpr("P - ") == 0);
+    mu_assert("lv17", validate_lexpr("- P") == 0);
+    mu_assert("lv18", validate_lexpr("= P") == 0);
+    mu_assert("lv19", validate_lexpr("P + Q = R") == 1);
+    mu_assert("lv19", validate_lexpr("P - Q - R") == 1);
+    mu_assert("lv20", validate_lexpr("P = Q - R") == 1);
+    mu_assert("lv21", validate_lexpr("P = Q = R") == 1);
+    mu_assert("lv22", validate_lexpr("P * Q = R") == 1);
+    mu_assert("lv23", validate_lexpr("P * Q - R") == 1);
+    mu_assert("lv24", validate_lexpr("(P + Q) * R + (V * T) - (A + B) * C") == 1);
+
+    return 0;
+}
+
 static char *run()
 {
     mu_run_test(test_validate);
+    mu_run_test(test_logic_validate);
 
     return 0;
 }

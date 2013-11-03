@@ -115,6 +115,19 @@ expr/fast:
 .PHONY : expr/fast
 
 #=============================================================================
+# Target rules for targets named lexpr
+
+# Build rule for target.
+lexpr: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 lexpr
+.PHONY : lexpr
+
+# fast build rule for target.
+lexpr/fast:
+	$(MAKE) -f CMakeFiles/lexpr.dir/build.make CMakeFiles/lexpr.dir/build
+.PHONY : lexpr/fast
+
+#=============================================================================
 # Target rules for targets named test_expr
 
 # Build rule for target.
@@ -151,6 +164,30 @@ expr.c.s:
 	$(MAKE) -f CMakeFiles/expr.dir/build.make CMakeFiles/expr.dir/expr.c.s
 .PHONY : expr.c.s
 
+lexpr.o: lexpr.c.o
+.PHONY : lexpr.o
+
+# target to build an object file
+lexpr.c.o:
+	$(MAKE) -f CMakeFiles/lexpr.dir/build.make CMakeFiles/lexpr.dir/lexpr.c.o
+.PHONY : lexpr.c.o
+
+lexpr.i: lexpr.c.i
+.PHONY : lexpr.i
+
+# target to preprocess a source file
+lexpr.c.i:
+	$(MAKE) -f CMakeFiles/lexpr.dir/build.make CMakeFiles/lexpr.dir/lexpr.c.i
+.PHONY : lexpr.c.i
+
+lexpr.s: lexpr.c.s
+.PHONY : lexpr.s
+
+# target to generate assembly for a file
+lexpr.c.s:
+	$(MAKE) -f CMakeFiles/lexpr.dir/build.make CMakeFiles/lexpr.dir/lexpr.c.s
+.PHONY : lexpr.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -159,11 +196,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... expr"
+	@echo "... lexpr"
 	@echo "... rebuild_cache"
 	@echo "... test_expr"
 	@echo "... expr.o"
 	@echo "... expr.i"
 	@echo "... expr.s"
+	@echo "... lexpr.o"
+	@echo "... lexpr.i"
+	@echo "... lexpr.s"
 .PHONY : help
 
 

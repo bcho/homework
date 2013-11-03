@@ -10,7 +10,7 @@
 #define STACK_SIZE 200
 
 
-unsigned int op_level(char op)
+static int op_level(char op)
 {
     if (op == PLUS)
         return 0;
@@ -23,17 +23,17 @@ unsigned int op_level(char op)
     return -1;
 }
 
-int is_op(char x)
+static int is_op(char x)
 {
     return (x == PLUS || x == MULT || x == NOT || x == LEFTP || x == RIGHP);
 }
 
-int is_whitespace(char x)
+static int is_whitespace(char x)
 {
     return x == ' ';
 }
 
-int is_value(char x)
+static int is_value(char x)
 {
     return (x >= 'A' && x <= 'Z');
 }
