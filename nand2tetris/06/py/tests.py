@@ -55,14 +55,14 @@ class CommandTest(unittest.TestCase):
 
     def testCommand(self):
         for c in ['@abc', '@123', '@def123', '@123def', u'@abc',
-                  '@abc']:
+                  '@abc', '@RET_ADDRESS_CALL0']:
             command = Command(c)
             self.assertEqual('A_COMMAND', command.type)
 
         command = Command('@abc')
         self.assertEqual('abc', command.value)
 
-        for c in ['(abc)', '(def)', '(a)', u'(abc)']:
+        for c in ['(abc)', '(def)', '(a)', u'(abc)', '(RET_ADDRESS_CALL0)']:
             command = Command(c)
             self.assertEqual('L_COMMAND', command.type)
 
@@ -70,7 +70,7 @@ class CommandTest(unittest.TestCase):
         self.assertEqual('abc', command.value)
 
         for c in ['dest=comp;JMP', 'comp', 'comp;JMP', 'comp;JGE',
-                  'dest = comp; JLE', u'comp']:
+                  'dest = comp; JLE', u'comp', 'D+A']:
             command = Command(c)
             self.assertEqual('C_COMMAND', command.type)
 

@@ -17,6 +17,9 @@ class SymbolTable(dict):
     def GetAddress(self, symbol):
         return self[symbol]
 
+    def copy(self):
+        return SymbolTable(self.items())
+
 
 class Code(object):
     _dest_symbols = SymbolTable([
@@ -33,7 +36,8 @@ class Code(object):
         ('A-D', 0b0000111), ('D&A', 0b0000000), ('D|A', 0b0010101),
         ('M', 0b1110000), ('!M', 0b1110001), ('-M', 0b1110011),
         ('M+1', 0b1110111), ('M-1', 0b1110010), ('D+M', 0b1000010),
-        ('M-D', 0b1000111), ('D&M', 0b1000000), ('D|M', 0b1010101)
+        ('D-M', 0b1010011), ('M-D', 0b1000111), ('D&M', 0b1000000),
+        ('D|M', 0b1010101)
     ])
 
     _jump_symbols = SymbolTable([
@@ -54,13 +58,13 @@ class Code(object):
 
 class Command(object):
 
-    A_COMM_P = re.compile(u'^\\@([a-zA-Z0-9]+)$')
+    A_COMM_P = re.compile(u'^\\@([a-zA-Z0-9_\\.\\$]+)$')
     C_COMM_P = re.compile(
-        u'^([a-zA-Z0-9]+[\ ]*\\=[\ ]*)?'
-        u'([a-zA-Z0-9]+)'
+        u'^([a-zA-Z0-9_]+[\ ]*\\=[\ ]*)?'
+        u'([a-zA-Z0-9\\+\\-\\|\\!\\&_]+)'
         u'([\ ]*\\;[\ ]*(JGT|JEQ|JGE|JLT|JNE|JLE|JMP))?$'
     )
-    L_COMM_P = re.compile(u'^\\(([a-zA-Z]+)\\)$')
+    L_COMM_P = re.compile(u'^\\(([a-zA-Z_]{1}[a-zA-Z0-9_\\.\\$]*)\\)$')
 
     def __init__(self, raw):
         self.value, self.type = None, None
@@ -100,7 +104,7 @@ class Parser(object):
         cleaned_lines = [Parser.cleanLine(line) for line in stream.readlines()]
         self.stream = filter(None, cleaned_lines)
         self.content = '\n'.join(self.stream)
-        self.current_command_idx = None
+        self.current_command_idx = -1
         self.currentCommand = None
 
     @staticmethod
@@ -111,15 +115,13 @@ class Parser(object):
 
     @property
     def hasMoreCommands(self):
-        if self.current_command_idx is None:
-            return len(self.stream) > 0
-        else:
-            return self.current_command_idx == len(self.stream)
+        total_size = len(self.stream)
+        return total_size > 0 and self.current_command_idx + 1 < total_size
 
     def advance(self):
         if not self.hasMoreCommands:
             raise EOFError
-        self.current_command_idx = (self.current_command_idx or -1) + 1
+        self.current_command_idx = self.current_command_idx + 1
         self.currentCommand = Command(self.stream[self.current_command_idx])
 
     @property
@@ -150,3 +152,6 @@ class Parser(object):
         if self.commandType != 'C_COMMAND':
             raise RuntimeError('current command type is not C_COMMAND')
         return self.currentCommand.value[2]
+
+    def reset(self):
+        self.current_command_idx, self.currentCommand = -1, None
