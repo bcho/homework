@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/hbc/workshop/homework/Cprogramming/str/str.h
+
+/home/hbc/workshop/homework/Cprogramming/str/tests/test_str.c
+stdio.h
+-
+string.h
+-
+../vendor/miniunit.h
+/home/hbc/workshop/homework/Cprogramming/str/vendor/miniunit.h
+../str.h
+/home/hbc/workshop/homework/Cprogramming/str/str.h
+
+/home/hbc/workshop/homework/Cprogramming/str/vendor/miniunit.h
+
