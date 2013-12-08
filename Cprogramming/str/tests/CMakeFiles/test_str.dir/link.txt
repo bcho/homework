@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -g    CMakeFiles/test_str.dir/test_str.c.o  -o test_str -rdynamic ../libstr.a 
