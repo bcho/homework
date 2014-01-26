@@ -1,0 +1,16 @@
+\sqlexec_{
+select distinct Person.name
+from Person
+    join Eats on Person.name = Eats.name
+    join Serves on Serves.pizza = Eats.pizza
+where
+    Serves.pizzeria = 'Dominos'
+and
+    Person.name not in (
+        select Person.name
+        from Person
+            join Frequents on Person.name = Frequents.name
+        where
+            Frequents.pizzeria = 'Dominos'
+    )
+};

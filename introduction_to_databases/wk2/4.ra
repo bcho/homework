@@ -1,0 +1,9 @@
+\sqlexec_{
+select Serves.pizzeria
+from Eats as EA
+    join Eats as EB
+    on EA.pizza = EB.pizza and EA.name != EB.name
+    join Serves
+    on Serves.pizza = EA.pizza
+where Serves.price < 10 and EA.name = 'Amy' and EB.name = 'Fay'
+};

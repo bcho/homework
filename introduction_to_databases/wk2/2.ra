@@ -1,0 +1,7 @@
+\sqlexec_{
+select Person.name
+from Person
+    join Eats on Person.name = Eats.name
+    join Serves on Eats.pizza = Serves.pizza
+where Serves.pizzeria = 'Straw Hat' and Person.gender = 'female'
+};

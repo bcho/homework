@@ -1,0 +1,7 @@
+\sqlexec_{
+select distinct Serves.pizzeria
+from Serves
+    join Eats on Eats.pizza = Serves.pizza
+    join Person on Person.name = Eats.name
+where Serves.price < 10 and (Person.name = 'Amy' or Person.name = 'Fay')
+};

@@ -1,0 +1,4 @@
+\sqlexec_{select * from Person
+            join Eats on Person.name = Eats.name
+            where Person.gender = 'female' and Person.age > 20;
+};
