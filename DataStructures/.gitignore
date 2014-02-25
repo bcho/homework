@@ -4,3 +4,4 @@ cmake_install.cmake
 Makefile
 
 lib*.a
+test.results
