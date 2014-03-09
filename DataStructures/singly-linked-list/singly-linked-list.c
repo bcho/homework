@@ -78,20 +78,64 @@ int list_length(struct list_head *head)
     return count;
 }
 
-void list_get_ith(struct list_head *head, int i, void *ele)
+void list_get_ith(struct list_head *head, int i, void **ele)
 {
+    if (i < 0)
+        return;
+
+    struct list_item *p;
+
+    for (p = head->first, i--; p && i > 0; p = p->next, i--)
+        ;
+
+    if (i != 0)
+        return;
+    *ele = p->data;
 }
 
 void list_insert(struct list_item *item, struct list_item *new)
 {
+    if (item == NULL || new == NULL)
+        return;
+
+    new->next = item->next;
+    item->next = new;
 }
 
 void list_insert_before(struct list_head *head,
                         struct list_item *item,
                         struct list_item *new)
 {
+    if (new == NULL)
+        return;
+
+    struct list_item *pos;
+    struct list_item sential;
+
+    for (sential.next = head->first, pos = &sential;
+         pos != NULL && pos->next != item;
+         pos = pos->next)
+        ;
+
+    if (pos == NULL)
+        return;
+    new->next = pos->next;
+    pos->next = new;
+    head->first = sential.next;
 }
 
 void list_del(struct list_head *head, struct list_item *item)
 {
+    if (item == NULL)
+        return;
+
+    struct list_item *pos;
+
+    list_for_each(pos, head)
+        if (pos->next == item)
+            break;
+
+    if (pos == NULL)
+        return;
+    pos->next = item->next;
 }

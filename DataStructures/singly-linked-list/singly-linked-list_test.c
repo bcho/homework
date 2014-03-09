@@ -74,14 +74,68 @@ static char *test_list_empty()
 static char *test_list_length()
 {
     struct list_head *list;
+    struct list_item *p;
 
     list = list_create();
 
     mu_assert("Newly created list's length should be 0",
               list_length(list) == 0);
 
-    // TODO test multiple items list
+    p = list_item_create((void *) "hello");
+    list_insert_before(list, list->first, p);
+
+    mu_assert("List item inserted.", list_length(list) == 1);
+
+    p = list_item_create((void *) "world");
+    list_insert(list->first, p);
     
+    mu_assert("List item inserted.", list_length(list) == 2);
+    
+    return OK;
+}
+
+static char *test_list_get_ith()
+{
+    struct list_head *list;
+    struct list_item *p;
+    char c;
+
+    list = list_create();
+
+    c = 'a';
+    list_get_ith(list, -1, (void **) &c);
+    mu_assert("Negative item retrieve failed.", c == 'a');
+
+    p = list_item_create((void *) 'h');
+    list_insert_before(list, list->first, p);
+    
+    list_get_ith(list, 1, (void **) &c);
+    mu_assert("Get first item.", c == 'h');
+    
+    p = list_item_create((void *) 'l');
+    list_insert(list->first, p);
+    
+    list_get_ith(list, 1, (void **) &c);
+    mu_assert("Get first item.", c == 'h');
+    list_get_ith(list, 2, (void **) &c);
+    mu_assert("Get second item.", c == 'l');
+    
+    p = list_item_create((void *) 'e');
+    list_insert_before(list, list->first->next, p);
+    
+    list_get_ith(list, 1, (void **) &c);
+    mu_assert("Get first item.", c == 'h');
+    list_get_ith(list, 2, (void **) &c);
+    mu_assert("Get second item.", c == 'e');
+    list_get_ith(list, 3, (void **) &c);
+    mu_assert("Get third item.", c == 'l');
+
+    list_del(list, list->first->next);
+    list_get_ith(list, 1, (void **) &c);
+    mu_assert("Get first item.", c == 'h');
+    list_get_ith(list, 2, (void **) &c);
+    mu_assert("Get second item.", c == 'l');
+
     return OK;
 }
 
@@ -93,6 +147,7 @@ static char *run()
     mu_run_test(test_destory_list_item);
     mu_run_test(test_list_empty);
     mu_run_test(test_list_length);
+    mu_run_test(test_list_get_ith);
 
     return OK;
 }

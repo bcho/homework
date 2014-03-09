@@ -27,7 +27,7 @@ extern void list_item_destory(struct list_item **);
 extern int list_empty(struct list_head *);
 extern int list_length(struct list_head *);
 
-extern void list_get_ith(struct list_head *, int, void *);
+extern void list_get_ith(struct list_head *, int, void **);
 
 extern void list_insert(struct list_item *, struct list_item *);
 extern void list_insert_before(struct list_head *,
