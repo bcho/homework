@@ -9,6 +9,7 @@ include_directories(.)
 add_subdirectory(hello)
 add_subdirectory("singly-linked-list")
 add_subdirectory(list)
+add_subdirectory(stack)
 
 # Run tests
 set(RESULT_FILE test.results)
@@ -33,10 +34,16 @@ add_custom_command(
     COMMAND "list/list_test" >> ${RESULT_FILE}
     COMMAND echo -e >> ${RESULT_FILE}
     COMMAND echo "list finished..." >> ${RESULT_FILE}
+    
+    COMMAND echo "Running stack brackets..." >> ${RESULT_FILE}
+    COMMAND "stack/brackets_test" >> ${RESULT_FILE}
+    COMMAND echo -e >> ${RESULT_FILE}
+    COMMAND echo "stack brackets finished..." >> ${RESULT_FILE}
 
     DEPENDS hello/hello_test
     DEPENDS "singly-linked-list/singly-linked-list_test"
     DEPENDS "list/list_test"
+    DEPENDS "stack/brackets_test"
 )
 
 add_custom_target(
@@ -45,4 +52,5 @@ add_custom_target(
     DEPENDS hello/hello_test
     DEPENDS "singly-linked-list/singly-linked-list_test"
     DEPENDS "list/list_test"
+    DEPENDS "stack/brackets_test"
 )
