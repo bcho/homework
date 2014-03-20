@@ -40,10 +40,16 @@ add_custom_command(
     COMMAND echo -e >> ${RESULT_FILE}
     COMMAND echo "stack brackets finished..." >> ${RESULT_FILE}
 
+    COMMAND echo "Running stack binary expression..." >> ${RESULT_FILE}
+    COMMAND "stack/binary_expression_test" >> ${RESULT_FILE}
+    COMMAND echo -e >> ${RESULT_FILE}
+    COMMAND echo "stack binary expression finished..." >> ${RESULT_FILE}
+
     DEPENDS hello/hello_test
     DEPENDS "singly-linked-list/singly-linked-list_test"
     DEPENDS "list/list_test"
     DEPENDS "stack/brackets_test"
+    DEPENDS "stack/binary_expression_test"
 )
 
 add_custom_target(
@@ -53,4 +59,5 @@ add_custom_target(
     DEPENDS "singly-linked-list/singly-linked-list_test"
     DEPENDS "list/list_test"
     DEPENDS "stack/brackets_test"
+    DEPENDS "stack/binary_expression_test"
 )
