@@ -1,11 +1,16 @@
 /* linked_tree.c: 链树实现 */
 
+#include "assert.h"
+
+#include <stdlib.h>
+#include <string.h>
+
 /* 结构体定义 */
 struct tree {
     char *data;
     
-    struct tree *left_child;
     struct tree *parent;
+    struct tree *left_child;
     struct tree *right_sibling;
 };
 
@@ -19,7 +24,7 @@ struct tree {
 struct tree *tree_init();
 
 /* 
- * 销毁一棵树
+ * 销毁一棵树及其所有子结点
  *
  * :param t: 被销毁的树
  */
@@ -40,7 +45,7 @@ void tree_clear(struct tree *t);
  * .. note:: 时间复杂度为 O(1)
  *
  * :param t: 被检测的树
- * :rtype: 0 为空，否则为非空
+ * :rtype:  0 为非空，否则为空
  */
 int tree_is_empty(struct tree *t);
 
@@ -60,7 +65,7 @@ char *tree_value(struct tree *t);
  * :param t: 传入的结点
  * :param data: 传入的值
  */
-void tree_assign(struct tree *t, char *data);
+void tree_assign(struct tree *t, const char *data);
 
 /*
  * 向树插入新结点到第 i 位
@@ -109,7 +114,7 @@ struct tree *tree_root(struct tree *t);
 /*
  * 获取结点的父结点
  *
- * .. note:: 若当前结点没有父节点，返回 NULL
+ * .. note:: 若当前结点没有父节点，返回它本身
  *
  * :param t: 传入的结点
  * :rtype: struct tree *
@@ -189,5 +194,172 @@ struct tree *tree_to_binary(struct tree *t);
 /* 测试程序 */
 int main()
 {
+    struct tree *t;
+
+    /* test init */
+    t = tree_init();
+    assert(t != NULL);
+    /* Should be an empty tree */
+    assert(tree_depth(t) == 0);
+    assert(tree_is_empty(t));
+    tree_destory(t);
+
+    /* test assign */
+    t = tree_init();
+    tree_assign(t, "hello");
+    /* Should not be an empty tree */
+    assert(tree_depth(t) == 1);
+    assert(tree_is_empty(t) == 0);
+    /* Should have same value */
+    assert(strcmp("hello", tree_value(t)) == 0);
+    tree_destory(t);
+
+    /* test tree root & parent */
+    t = tree_init();
+    tree_assign(t, "hello");
+    assert(tree_root(t) == t);
+    assert(tree_parent(t) == t);
+    tree_destory(t);
+
     return 0;
+}
+
+void *Malloc(size_t size)
+{
+    void *buffer;
+
+    if ((buffer = malloc(size)) == NULL)
+        exit(-1);
+    return buffer;
+}
+
+char *str_copy(const char *str)
+{
+    int size;
+    char *buffer;
+
+    size = strlen(str);
+    buffer = Malloc(sizeof(char) * (size + 1));
+    strncpy(buffer, str, size);
+    buffer[size] = '\0';
+
+    return buffer;
+}
+
+struct tree *tree_init()
+{
+    struct tree *t;
+
+    t = (struct tree *) Malloc(sizeof(struct tree));
+    t->data = NULL;
+    t->parent = NULL;
+    t->left_child = NULL;
+    t->right_sibling = NULL;
+
+    return t;
+}
+
+void tree_destory(struct tree *t)
+{
+    struct tree *p;
+    struct tree *next;
+
+    if (t == NULL)
+        return;
+
+    for (p = tree_left_child(t), next = NULL; p != NULL; p = next) {
+        next = tree_right_sibling(p);
+        tree_destory(p);
+    }
+
+    free(t->data);
+    free(t);
+}
+
+void tree_clear(struct tree *t)
+{
+    if (t != NULL) {
+        free(t->data);
+        t->left_child = NULL;
+    }
+}
+
+int tree_is_empty(struct tree *t)
+{
+    return ((t == NULL) ||
+            (t->data == NULL && tree_left_child(t) == NULL));
+}
+
+char *tree_value(struct tree *t)
+{
+    if (t == NULL)
+        return NULL;
+    return t->data;
+}
+
+void tree_assign(struct tree *t, const char *data)
+{
+    if (t == NULL || data == NULL)
+        return;
+    
+    t->data = str_copy(data);
+}
+
+int tree_depth(struct tree *t)
+{
+    struct tree *p;
+    int max_depth, sub_depth;
+
+    if (t == NULL || tree_is_empty(t))
+        return 0;
+
+    for (p = tree_left_child(t), max_depth = 0;
+         p != NULL;
+         p = tree_right_sibling(p)) {
+        sub_depth = tree_depth(p);
+        if (sub_depth > max_depth)
+            max_depth = sub_depth;
+    }
+
+    return max_depth + 1;
+}
+
+struct tree *tree_root(struct tree *t)
+{
+    struct tree *parent;
+
+    if (t == NULL)
+        return NULL;
+
+    /* 一直获取它的父结点直到树根 */
+    while ((parent = tree_parent(t)) != t)
+        t = parent;
+
+    return t;
+}
+
+struct tree *tree_parent(struct tree *t)
+{
+    if (t == NULL)
+        return NULL;
+
+    if (t->parent == NULL)
+        return t;
+    return t->parent;
+}
+
+struct tree *tree_left_child(struct tree *t)
+{
+    if (t == NULL)
+        return NULL;
+
+    return t->left_child;
+}
+
+struct tree *tree_right_sibling(struct tree *t)
+{
+    if (t == NULL)
+        return NULL;
+
+    return t->right_sibling;
 }

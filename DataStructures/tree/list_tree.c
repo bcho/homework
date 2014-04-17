@@ -19,7 +19,7 @@ struct tree {
 struct tree *tree_init();
 
 /* 
- * 销毁一棵树
+ * 销毁一棵树及其所有子结点
  *
  * :param t: 被销毁的树
  */
@@ -40,7 +40,7 @@ void tree_clear(struct tree *t);
  * .. note:: 时间复杂度为 O(1)
  *
  * :param t: 被检测的树
- * :rtype: 0 为空，否则为非空
+ * :rtype:  0 为非空，否则为空
  */
 int tree_is_empty(struct tree *t);
 
@@ -60,7 +60,7 @@ char *tree_value(struct tree *t);
  * :param t: 传入的结点
  * :param data: 传入的值
  */
-void tree_assign(struct tree *t, char *data);
+void tree_assign(struct tree *t, const char *data);
 
 /*
  * 向树插入新结点到第 i 位
@@ -109,7 +109,7 @@ struct tree *tree_root(struct tree *t);
 /*
  * 获取结点的父结点
  *
- * .. note:: 若当前结点没有父节点，返回 NULL
+ * .. note:: 若当前结点没有父节点，返回它本身
  *
  * :param t: 传入的结点
  * :rtype: struct tree *
