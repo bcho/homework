@@ -60,7 +60,7 @@ char *tree_value(struct tree *t);
  * :param t: 传入的结点
  * :param data: 传入的值
  */
-void tree_assign(struct tree *t, const char *data);
+void tree_assign(struct tree *t, char *data);
 
 /*
  * 向树插入新结点到第 i 位
@@ -143,7 +143,7 @@ struct tree *tree_right_sibling(struct tree *t);
  * :param visitor: 遍历函数指针
  */
 void tree_traverse_pre_root(struct tree *t,
-                            void (*visitor)(const struct tree *));
+                            void (*visitor)(struct tree *));
 
 /*
  * 对树执行后根遍历
@@ -152,7 +152,7 @@ void tree_traverse_pre_root(struct tree *t,
  * :param visitor: 遍历函数指针
  */
 void tree_traverse_post_root(struct tree *t,
-                             void (*visitor)(const struct tree *));
+                             void (*visitor)(struct tree *));
 
 /*
  * 从字符串定义创建一棵树
