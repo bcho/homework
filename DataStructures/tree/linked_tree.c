@@ -224,7 +224,7 @@ int main()
     return 0;
 }
 
-void *Malloc(size_t size)
+char *Malloc(size_t size)
 {
     void *buffer;
 
