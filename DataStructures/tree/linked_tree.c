@@ -14,6 +14,9 @@ struct tree {
     struct tree *right_sibling;
 };
 
+/* 访问函数定义 */
+typedef void (*visitor_t)(struct tree *);
+
 /* ADT 清单 */
 
 /* 
@@ -147,8 +150,7 @@ struct tree *tree_right_sibling(struct tree *t);
  * :param t: 被遍历的树
  * :param visitor: 遍历函数指针
  */
-void tree_traverse_pre_root(struct tree *t,
-                            void (*visitor)(struct tree *));
+void tree_traverse_pre_root(struct tree *t, visitor_t visitor);
 
 /*
  * 对树执行后根遍历
@@ -156,8 +158,7 @@ void tree_traverse_pre_root(struct tree *t,
  * :param t: 被遍历的树
  * :param visitor: 遍历函数指针
  */
-void tree_traverse_post_root(struct tree *t,
-                             void (*visitor)(struct tree *));
+void tree_traverse_post_root(struct tree *t, visitor_t visitor);
 
 /*
  * 从字符串定义创建一棵树
@@ -194,7 +195,7 @@ struct tree *tree_to_binary(struct tree *t);
 /* 测试程序 */
 int main()
 {
-    struct tree *t;
+    struct tree *t, *c1, *c2;
 
     /* test init */
     t = tree_init();
@@ -219,6 +220,38 @@ int main()
     tree_assign(t, "hello");
     assert(tree_root(t) == t);
     assert(tree_parent(t) == t);
+    tree_destory(t);
+
+    /* test tree insert */
+    t = tree_init();
+    tree_assign(t, "hello");
+    c1 = tree_init();
+    c2 = tree_init();
+    tree_assign(c1, "world");
+    tree_assign(c2, "world!");
+    /* test insert in the head */
+    tree_insert_child(t, c1, -1);
+    /* test insert in the tail */
+    tree_insert_child(t, c2, 10);
+    assert(tree_left_child(t) == c1);
+    assert(tree_right_sibling(c1) == c2);
+    tree_destory(t);
+
+    /* test tree delete */
+    t = tree_init();
+    tree_assign(t, "hello");
+    c1 = tree_init();
+    c2 = tree_init();
+    tree_assign(c1, "world");
+    tree_assign(c2, "world!");
+    tree_insert_child(t, c1, 0);
+    tree_insert_child(c1, c2, 0);
+    assert(tree_depth(t) == 3);
+    assert(tree_depth(c1) == 2);
+    assert(tree_depth(c2) == 1);
+    assert(tree_delete_child(c1, 0) == c2);
+    assert(tree_depth(t) == 2);
+    assert(tree_depth(c1) == 1);
     tree_destory(t);
 
     return 0;
@@ -305,6 +338,57 @@ void tree_assign(struct tree *t, char *data)
     t->data = str_copy(data);
 }
 
+void tree_insert_child(struct tree *t, struct tree *child, int i)
+{
+    int j;
+    struct tree fake;
+    struct tree *p;
+
+    if (i < 0)
+        i = 0;
+
+    for (fake.right_sibling = tree_left_child(t), p = &fake, j = 0;
+         j < i && tree_right_sibling(p) != NULL;
+         p = tree_right_sibling(p), j++)
+        ;
+
+    child->right_sibling = tree_right_sibling(p);
+    p->right_sibling = child;
+    p->parent = t;
+    t->left_child = tree_right_sibling(&fake);
+}
+
+struct tree *tree_delete_child(struct tree *t, int i)
+{
+    int j;
+    struct tree fake;
+    struct tree *p, *rv;
+
+    if (i < 0)
+        return NULL;
+
+    for (fake.right_sibling = tree_left_child(t), p = &fake, j = 0;
+         j < i && p != NULL;
+         p = tree_right_sibling(p), j++)
+        ;
+
+    if (p == NULL)
+        return NULL;
+
+    rv = p->right_sibling;
+    if (rv != NULL) {
+        p->right_sibling = rv->right_sibling;
+
+        /* 删除关联结点 */
+        rv->parent = NULL;
+        rv->right_sibling = NULL;
+    }
+
+    t->left_child = tree_right_sibling(&fake);
+
+    return rv;
+}
+
 int tree_depth(struct tree *t)
 {
     struct tree *p;
@@ -362,4 +446,30 @@ struct tree *tree_right_sibling(struct tree *t)
         return NULL;
 
     return t->right_sibling;
+}
+
+void tree_traverse_pre_root(struct tree *t, visitor_t visitor)
+{
+    struct tree *p;
+
+    if (t == NULL)
+        return;
+
+    visitor(t);
+
+    for (p = tree_left_child(t); p != NULL; p = tree_right_sibling(p))
+        tree_traverse_pre_root(p, visitor);
+}
+
+void tree_traverse_post_root(struct tree *t, visitor_t visitor)
+{
+    struct tree *p;
+
+    if (t == NULL)
+        return;
+
+    for (p = tree_left_child(t); p != NULL; p = tree_right_sibling(p))
+        tree_traverse_pre_root(p, visitor);
+    
+    visitor(t);
 }
