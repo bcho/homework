@@ -1,10 +1,22 @@
 /* linked_tree.c: 链树实现 */
 
-#include "assert.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef ANYVIEW
+
 #include <stdio.h>
+
+void assert(int cond)
+{
+    if (!cond)
+        printf("Failed!");
+}
+#else
+
+#include "assert.h"
+
+#endif
 
 /* 结构体定义 */
 struct tree {
@@ -689,11 +701,6 @@ struct tree *tree_from_string(char *s)
     queue_destory(tokens);
     
     return t;
-}
-
-void print_node(struct tree *t)
-{
-    printf("%s", tree_value(t));
 }
 
 char *tree_stringify(struct tree *t)
