@@ -6,6 +6,7 @@ namespace SortAlgorithm
         {
             QuickSort qs = new QuickSort(5);
 
+            qs.SetComparator((double a, double b) => a < b);
             qs.Seed();
             qs.Sort();
 

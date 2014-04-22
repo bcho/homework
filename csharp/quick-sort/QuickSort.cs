@@ -8,6 +8,8 @@ namespace SortAlgorithm
     {
         public int Scale { get; private set; }
         private double[] Data;
+        // TODO Use generic type.
+        private Func<double, double, bool> Comparator;
 
         public QuickSort()
         {
@@ -17,6 +19,11 @@ namespace SortAlgorithm
         public QuickSort(int scale)
         {
             Initial(scale);
+        }
+
+        public void SetComparator(Func<double, double, bool> cmp)
+        {
+            Comparator = cmp;
         }
 
         public void Seed()
@@ -57,6 +64,7 @@ namespace SortAlgorithm
 
             Scale = scale;
             Data = new double[Scale];
+            Comparator = (double a, double b) => a < b;
         }
 
         private void DoSort(int l, int r)
@@ -84,7 +92,7 @@ namespace SortAlgorithm
 
             for (p = l, l = l + 1; l <= r;)
             {
-                if (Data[l] > Data[p])
+                if (Comparator(Data[p], Data[l]))
                 {
                     Swap(l, r);
                     r = r - 1;
