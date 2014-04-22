@@ -2,24 +2,8 @@ using System;
 using System.Collections;
 
 
-namespace QuickSortDemo
+namespace SortAlgorithm
 {
-    static class DataScale
-    {
-        public const int Maximum = 1000;
-        public const int Minimum = 5;
-        public const int Default = 50;
-    }
-
-    public interface ISortAlgorithm
-    {
-        int Scale { get; }
-
-        void Seed();
-        void Sort();
-        IEnumerable Current();
-    }
-
     public class QuickSort: ISortAlgorithm
     {
         public int Scale { get; private set; }
@@ -121,23 +105,6 @@ namespace QuickSortDemo
             double temp = Data[a];
             Data[a] = Data[b];
             Data[b] = temp;
-        }
-    }
-
-    public class Demo
-    {
-        public static void Main()
-        {
-            QuickSort qs = new QuickSort(10);
-
-            qs.Seed();
-            qs.Sort();
-
-            foreach (double i in qs.Current())
-            {
-                System.Console.Write(i + " ");
-            }
-            System.Console.WriteLine();
         }
     }
 }
