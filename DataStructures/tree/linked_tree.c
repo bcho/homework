@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /* 结构体定义 */
 struct tree {
@@ -254,16 +255,40 @@ int main()
     assert(tree_depth(c1) == 1);
     tree_destory(t);
 
+    /* test tree from string */
+    t = tree_from_string("(A)");
+    assert(tree_depth(t) == 1);
+    assert(strcmp(tree_value(t), "A") == 0);
+    assert(strcmp(tree_stringify(t), "(A)") == 0);
+    tree_destory(t);
+    
+    t = tree_from_string("(A (B))");
+    assert(tree_depth(t) == 2);
+    assert(strcmp(tree_value(t), "A") == 0);
+    assert(strcmp(tree_stringify(t), "(A(B))") == 0);
+    tree_destory(t);
+    
+    t = tree_from_string("(A(B(D)(E))(C (F )))");
+    assert(tree_depth(t) == 3);
+    assert(strcmp(tree_value(t), "A") == 0);
+    assert(strcmp(tree_stringify(t), "(A(B(D)(E))(C(F)))") == 0);
+    tree_destory(t);
+
     return 0;
 }
 
 char *Malloc(size_t size)
 {
-    void *buffer;
+    char *buffer;
 
     if ((buffer = malloc(size)) == NULL)
         exit(-1);
     return buffer;
+}
+
+char *Realloc(char *ptr, size_t size)
+{
+    return realloc(ptr, size);
 }
 
 char *str_copy(char *str)
@@ -277,6 +302,78 @@ char *str_copy(char *str)
     buffer[size] = '\0';
 
     return buffer;
+}
+
+char *str_copyn(char *str, int n)
+{
+    char *buffer;
+
+    buffer = Malloc(sizeof(char) * (n + 1));
+    strncpy(buffer, str, n);
+    buffer[n] = '\0';
+
+    return buffer;
+}
+
+int str_startswith(char *str, char prefix)
+{
+    return *str == prefix;
+}
+
+int str_endswith(char *str, char suffix)
+{
+    return *(str + strlen(str) - 1) == suffix;
+}
+
+int str_split(char *str, char *delim, char ***rv)
+{
+    int count;
+    char *c;
+    char **tokens;
+
+    tokens = malloc(sizeof(char *) * 0);
+    c = strtok(str, delim);
+    while (c != NULL) {
+        count = count + 1;
+        tokens = (char **) Realloc((char *) tokens, sizeof(char *) * count);
+        tokens[count - 1] = str_copy(c);
+
+        c = strtok(NULL, delim);
+    }
+
+    *rv = tokens;
+    return count;
+}
+
+char *str_replace(char *from, char *pattern, char *replace)
+{
+    char *rv;
+    char *p, *q, *r;
+    int from_len, count, rv_len, pattern_len, replace_len;
+
+    from_len = strlen(from);
+    pattern_len = strlen(pattern);
+    replace_len = strlen(replace);
+
+    for (count = 0, p = from;
+         (q = strstr(p, pattern)) != NULL;
+         p = q + pattern_len, count++)
+        ;
+    rv_len = from_len + count * (replace_len - pattern_len);
+
+    rv = Malloc(sizeof(char) * (rv_len + 1));
+
+    for (r = rv, p = from;
+         (q = strstr(p, pattern)) != NULL;
+         p = q + pattern_len) {
+        memcpy(r, p, q - p);
+        r = r + (q - p);
+        memcpy(r, replace, replace_len);
+        r = r + replace_len;
+    }
+    strcpy(r, p);
+
+    return rv;
 }
 
 struct tree *tree_init()
@@ -472,4 +569,157 @@ void tree_traverse_post_root(struct tree *t, visitor_t visitor)
         tree_traverse_pre_root(p, visitor);
     
     visitor(t);
+}
+
+struct queue {
+    char **buffer;
+    int l, r;
+};
+
+char *queue_pop(struct queue *q)
+{
+    char *rv;
+
+    assert(q->r - q->l >= 0);
+    rv = q->buffer[q->l];
+    q->l = q->l + 1;
+
+    return rv;
+}
+
+char *queue_first(struct queue *q)
+{
+    assert(q->r - q->l >= 0);
+    return q->buffer[q->l];
+}
+
+void queue_enqueue(struct queue *q, char *value)
+{
+    q->r = q->r + 1;
+    q->buffer[q->r] = str_copy(value);
+}
+
+struct queue *queue_init(char **values, int count)
+{
+    int i;
+    struct queue *q;
+    
+    q = (struct queue *) Malloc(sizeof(struct queue));
+    q->l = 0;
+    q->r = -1;
+    q->buffer = (char **) Malloc(sizeof(char *) * count);
+    for (i = 0; i< count; i++)
+        queue_enqueue(q, values[i]);
+
+    return q;
+}
+
+void queue_destory(struct queue *q)
+{
+    int i;
+
+    for (i = 0; i < q->r; i++)
+        free(q->buffer[i]);
+    free(q->buffer);
+}
+
+struct queue *tokenize(char *s)
+{
+    int tokens_count, i;
+    char *replaced;
+    char **tokens;
+    struct queue *q;
+
+    replaced = str_replace(s, "(", " ( ");
+    s = replaced;
+    replaced = str_replace(s, ")", " ) ");
+    free(s);
+    s = replaced;
+    tokens_count = str_split(s, " ", &tokens);
+    free(s);
+
+    q = queue_init(tokens, tokens_count);
+    for (i = 0; i < tokens_count; i++)
+        free(tokens[i]);
+    free(tokens);
+
+    return q;
+}
+
+struct tree *read_from(struct queue *tokens)
+{
+    int has_root, child_count;
+    char *token;
+    struct tree *node, *child;
+
+    token = queue_pop(tokens);
+    if (strcmp(token, "(") == 0) {
+        node = tree_init();
+        has_root = 0;
+        child_count = 0;
+        while (strcmp(queue_first(tokens), ")")) {
+            child = read_from(tokens);
+            if (!has_root) {
+                has_root = 1;
+                tree_assign(node, tree_value(child));
+                tree_destory(child);
+            } else {
+                tree_insert_child(node, child, child_count);
+                child_count = child_count + 1;
+            }
+        }
+        queue_pop(tokens);
+        return node;
+    } else if (strcmp(token, ")") == 0) {
+        assert(0);
+    } else {
+        node = tree_init();
+        tree_assign(node, str_copy(token));
+        return node;
+    }
+}
+
+struct tree *tree_from_string(char *s)
+{
+    struct queue *tokens;
+    struct tree *t;
+
+    tokens = tokenize(s);
+    t = read_from(tokens);
+    queue_destory(tokens);
+    
+    return t;
+}
+
+void print_node(struct tree *t)
+{
+    printf("%s", tree_value(t));
+}
+
+char *tree_stringify(struct tree *t)
+{
+    int size;
+    char *rv, *child;
+    struct tree *p;
+
+    if (t == NULL)
+        return NULL;
+
+    size = 2 + strlen(tree_value(t)) + 1;
+    rv = Malloc(sizeof(char) * size);
+    rv = str_copy("(");
+    strcat(rv, tree_value(t));
+
+    for (p = tree_left_child(t); p != NULL; p = tree_right_sibling(p)) {
+        child = tree_stringify(p);
+        if (child == NULL)
+            continue;
+        size = size + strlen(child);
+        rv = Realloc(rv, sizeof(char) * size);
+        strcat(rv, child);
+        free(child);
+    }
+    strcat(rv, ")");
+
+    return rv;
 }
