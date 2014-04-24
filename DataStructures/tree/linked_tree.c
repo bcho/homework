@@ -733,6 +733,7 @@ char *tree_stringify(struct tree *t)
         if (child == NULL)
             continue;
         size = size + strlen(child);
+        /* TODO Use recursion to calculate total size. */
         rv = Realloc(rv, sizeof(char) * size);
         strcat(rv, child);
         free(child);
