@@ -3,20 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef ANYVIEW
-
-#include <stdio.h>
-
-void assert(int cond)
-{
-    if (!cond)
-        printf("Failed!");
-}
-#else
-
 #include "assert.h"
-
-#endif
 
 /* 结构体定义 */
 struct tree {
@@ -26,9 +13,6 @@ struct tree {
     struct tree *left_child;
     struct tree *right_sibling;
 };
-
-/* 访问函数定义 */
-typedef void (*visitor_t)(struct tree *);
 
 /* ADT 清单 */
 
@@ -163,7 +147,7 @@ struct tree *tree_right_sibling(struct tree *t);
  * :param t: 被遍历的树
  * :param visitor: 遍历函数指针
  */
-void tree_traverse_pre_root(struct tree *t, visitor_t visitor);
+void tree_traverse_pre_root(struct tree *t, void (*visitor)(struct tree *));
 
 /*
  * 对树执行后根遍历
@@ -171,7 +155,7 @@ void tree_traverse_pre_root(struct tree *t, visitor_t visitor);
  * :param t: 被遍历的树
  * :param visitor: 遍历函数指针
  */
-void tree_traverse_post_root(struct tree *t, visitor_t visitor);
+void tree_traverse_post_root(struct tree *t, void (*visitor)(struct tree *));
 
 /*
  * 从字符串定义创建一棵树
@@ -568,7 +552,7 @@ struct tree *tree_right_sibling(struct tree *t)
     return t->right_sibling;
 }
 
-void tree_traverse_pre_root(struct tree *t, visitor_t visitor)
+void tree_traverse_pre_root(struct tree *t, void (*visitor)(struct tree *))
 {
     struct tree *p;
 
@@ -581,7 +565,7 @@ void tree_traverse_pre_root(struct tree *t, visitor_t visitor)
         tree_traverse_pre_root(p, visitor);
 }
 
-void tree_traverse_post_root(struct tree *t, visitor_t visitor)
+void tree_traverse_post_root(struct tree *t, void (*visitor)(struct tree *))
 {
     struct tree *p;
 
