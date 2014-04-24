@@ -337,24 +337,35 @@ int str_endswith(char *str, char suffix)
     return *(str + strlen(str) - 1) == suffix;
 }
 
-int str_split(char *str, char *delim, char ***rv)
+int str_split(char *str, char delim, char ***rv)
 {
-    int count;
-    char *c;
+    int i, tokens_count;
     char **tokens;
+    char *c, *p;
 
-    tokens = malloc(sizeof(char *) * 0);
-    c = strtok(str, delim);
-    while (c != NULL) {
-        count = count + 1;
-        tokens = (char **) Realloc((char *) tokens, sizeof(char *) * count);
-        tokens[count - 1] = str_copy(c);
+    /* 计算分割段数 */
+    /* 跳过在开头的分割字符 */
+    for (c = str; *c == delim && *c != '\0'; c++)
+        ;
+    for (tokens_count = 0, c = c + 1; *c != '\0'; c++)
+        if (*c == delim && *(c - 1) != delim)
+            tokens_count = tokens_count + 1;
+    if (*(c - 1) != delim)
+        tokens_count = tokens_count + 1;
 
-        c = strtok(NULL, delim);
-    }
+    /* 复制各个分割段 */
+    tokens = (char **) Malloc(sizeof(char *) * tokens_count);
+    for (c = str, i = 0; *c != '\0'; c++)
+        if (*c != delim) {
+            for (p = c; *p != delim && *p != '\0'; p++)
+                ;
+            tokens[i] = str_copyn(c, p - c);
+            i = i + 1;
+            c = p;
+        }
 
     *rv = tokens;
-    return count;
+    return tokens_count;
 }
 
 char *str_replace(char *from, char *pattern, char *replace)
@@ -647,7 +658,7 @@ struct queue *tokenize(char *s)
     replaced = str_replace(s, ")", " ) ");
     free(s);
     s = replaced;
-    tokens_count = str_split(s, " ", &tokens);
+    tokens_count = str_split(s, ' ', &tokens);
     free(s);
 
     q = queue_init(tokens, tokens_count);
