@@ -300,6 +300,11 @@ char *str_copy(char *str)
     return buffer;
 }
 
+void str_copy_destory(char *str)
+{
+    free(str);
+}
+
 char *str_copyn(char *str, int n)
 {
     char *buffer;
@@ -309,6 +314,11 @@ char *str_copyn(char *str, int n)
     buffer[n] = '\0';
 
     return buffer;
+}
+
+void str_copyn_destory(char *str)
+{
+    free(str);
 }
 
 int str_startswith(char *str, char prefix)
@@ -352,6 +362,15 @@ int str_split(char *str, char delim, char ***rv)
     return tokens_count;
 }
 
+void str_split_destory(char **tokens, int count)
+{
+    int i;
+
+    for (i = 0; i < count; i++)
+        str_copyn_destory(tokens[i]);
+    free(tokens);
+}
+
 char *str_replace(char *from, char *pattern, char *replace)
 {
     char *rv;
@@ -368,7 +387,7 @@ char *str_replace(char *from, char *pattern, char *replace)
         ;
     rv_len = from_len + count * (replace_len - pattern_len);
 
-    rv = Malloc(sizeof(char) * (rv_len + 1));
+    rv = (char *) Malloc(sizeof(char) * (rv_len + 1));
 
     for (r = rv, p = from;
          (q = strstr(p, pattern)) != NULL;
@@ -381,6 +400,11 @@ char *str_replace(char *from, char *pattern, char *replace)
     strcpy(r, p);
 
     return rv;
+}
+
+void str_replace_destory(char *str)
+{
+    free(str);
 }
 
 struct tree *tree_init()
@@ -409,14 +433,14 @@ void tree_destory(struct tree *t)
         tree_destory(p);
     }
 
-    free(t->data);
+    str_copy_destory(t->data);
     free(t);
 }
 
 void tree_clear(struct tree *t)
 {
     if (t != NULL) {
-        free(t->data);
+        str_copy_destory(t->data);
         t->left_child = NULL;
     }
 }
@@ -626,13 +650,13 @@ void queue_destory(struct queue *q)
     int i;
 
     for (i = 0; i < q->r; i++)
-        free(q->buffer[i]);
+        str_copy_destory(q->buffer[i]);
     free(q->buffer);
 }
 
 struct queue *tokenize(char *s)
 {
-    int tokens_count, i;
+    int tokens_count;
     char *replaced;
     char **tokens;
     struct queue *q;
@@ -640,15 +664,13 @@ struct queue *tokenize(char *s)
     replaced = str_replace(s, "(", " ( ");
     s = replaced;
     replaced = str_replace(s, ")", " ) ");
-    free(s);
+    str_replace_destory(s);
     s = replaced;
     tokens_count = str_split(s, ' ', &tokens);
-    free(s);
+    str_replace_destory(s);
 
     q = queue_init(tokens, tokens_count);
-    for (i = 0; i < tokens_count; i++)
-        free(tokens[i]);
-    free(tokens);
+    str_split_destory(tokens, tokens_count);
 
     return q;
 }
