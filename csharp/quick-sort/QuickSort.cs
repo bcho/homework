@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 
 namespace SortAlgorithm
@@ -8,6 +9,7 @@ namespace SortAlgorithm
     {
         public int Scale { get; private set; }
         private double[] Data;
+        private List<SortAlgorithmSnapShot> Shots;
         // TODO Use generic type.
         private Func<double, double, bool> Comparator;
 
@@ -41,12 +43,33 @@ namespace SortAlgorithm
             DoSort(0, Scale - 1);
         }
 
-        public IEnumerable Current()
+        public SortAlgorithmSnapShot GetSnapShot()
         {
-            for (int i = 0; i < Scale; i++)
-            {
-                yield return Data[i];
-            }
+            return new SortAlgorithmSnapShot(this);
+        }
+
+        public IEnumerable<SortAlgorithmSnapShot> GetSnapShots()
+        {
+            return Shots;
+        }
+
+        public void SetSnapShot(SortAlgorithmSnapShot SnapShot)
+        {
+            SnapShot.SetData(Data);
+        }
+
+        public void TakeSnapShot()
+        {
+            Shots.Add(GetSnapShot());
+        }
+
+        public void TakeSnapShot(int p, int l, int r)
+        {
+            SortAlgorithmSnapShot shot = GetSnapShot();
+            shot.SetPointer("p", p);
+            shot.SetPointer("l", l);
+            shot.SetPointer("r", r);
+            Shots.Add(shot);
         }
 
         private void Initial(int scale)
@@ -64,6 +87,7 @@ namespace SortAlgorithm
 
             Scale = scale;
             Data = new double[Scale];
+            Shots = new List<SortAlgorithmSnapShot>();
             Comparator = (double a, double b) => a < b;
         }
 
@@ -101,6 +125,9 @@ namespace SortAlgorithm
                 {
                     l = l + 1;
                 }
+
+                // 记录一个状态快照.
+                TakeSnapShot(p, l, r);
             }
 
             Swap(p, r);

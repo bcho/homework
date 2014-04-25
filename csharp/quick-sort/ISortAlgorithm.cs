@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 
 namespace SortAlgorithm
@@ -21,7 +22,16 @@ namespace SortAlgorithm
         // 进行排序.
         void Sort();
 
-        // 获取当前数据排列情况.
-        IEnumerable Current();
+        // 获取当前状态快照.
+        SortAlgorithmSnapShot GetSnapShot();
+
+        // 获取所有快照.
+        IEnumerable<SortAlgorithmSnapShot> GetSnapShots();
+
+        // 设置状态快照信息.
+        void SetSnapShot(SortAlgorithmSnapShot sort);
+
+        // 记录一个状态快照.
+        void TakeSnapShot();
     }
 }

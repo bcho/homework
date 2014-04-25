@@ -10,10 +10,21 @@ namespace SortAlgorithm
             qs.Seed();
             qs.Sort();
 
-            foreach (double i in qs.Current())
+            foreach (SortAlgorithmSnapShot shot in qs.GetSnapShots())
             {
-                System.Console.Write("{0} ", i);
+                foreach (double d in shot.Data)
+                {
+                    System.Console.Write("{0} ", d);
+                }
+                System.Console.WriteLine();
+
+                foreach (string key in shot.Pointers.Keys)
+                {
+                    System.Console.Write("{0} {1} ", key, shot.Pointers[key]);
+                }
+                System.Console.WriteLine();
             }
+
             System.Console.WriteLine();
         }
     }
