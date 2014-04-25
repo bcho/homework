@@ -4,10 +4,15 @@ TARGET=exe
 FILES=\
       ISortAlgorithm.cs \
       ISortAlgorithmSnapShot.cs \
-      SortAlgorithmSnapShot.cs \
+      ISortAlgorithmSnapShotXML.cs \
+      ISortAlgorithmSnapShotsXML.cs \
+      Color.cs \
       DataScale.cs \
+      SortAlgorithmSnapShot.cs \
       QuickSort.cs \
-      Application.cs \
+      QuickSortSnapShotXML.cs \
+      QuickSortSnapShotsXML.cs \
+      Application.cs
 
 QuickSort.exe: $(FILES)
 	dmcs -target:$(TARGET) -out:QuickSort.exe $(FILES)

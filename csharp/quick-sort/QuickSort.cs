@@ -71,6 +71,11 @@ namespace SortAlgorithm
             shot.SetPointer("r", r);
             Shots.Add(shot);
         }
+        
+        public ISortAlgorithmSnapShotsXML GetSnapShotsXML()
+        {
+            return new QuickSortSnapShotsXML(GetSnapShots());
+        }
 
         private void Initial(int scale)
         {
@@ -120,14 +125,14 @@ namespace SortAlgorithm
                 {
                     Swap(l, r);
                     r = r - 1;
+
+                    // 记录一个状态快照.
+                    TakeSnapShot(p, l, r);
                 }
                 else
                 {
                     l = l + 1;
                 }
-
-                // 记录一个状态快照.
-                TakeSnapShot(p, l, r);
             }
 
             Swap(p, r);

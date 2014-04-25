@@ -33,5 +33,8 @@ namespace SortAlgorithm
 
         // 记录一个状态快照.
         void TakeSnapShot();
+
+        // 获取所有 XML 序列化后的快照.
+        ISortAlgorithmSnapShotsXML GetSnapShotsXML();
     }
 }
