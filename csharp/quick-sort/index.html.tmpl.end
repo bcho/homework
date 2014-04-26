@@ -126,7 +126,7 @@
         window.setTimeout(autoDraw, speed);
     }
 
-    var text = document.querySelector('#snapshots').innerText,
+    var text = document.querySelector('#snapshots').innerHTML,
         parser = new DOMParser();
 
     text = text.split('\n');

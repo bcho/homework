@@ -9,11 +9,11 @@ namespace SortAlgorithm
         // TODO use generic.
         [XmlArrayAttribute("data")]
         [XmlArrayItemAttribute("value")]
-        public double[] Data { get; private set; }
+        public double[] Data { get; set; }
 
         [XmlArrayAttribute("colors")]
         [XmlArrayItemAttribute("value")]
-        public Color[] Colors { get; private set; }
+        public Color[] Colors { get; set; }
 
         public QuickSortSnapShotXML(SortAlgorithmSnapShot shot)
         {

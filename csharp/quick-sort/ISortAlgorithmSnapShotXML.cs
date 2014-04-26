@@ -11,10 +11,10 @@ namespace SortAlgorithm
         // TODO use generic.
         [XmlArrayAttribute("data")]
         [XmlArrayItemAttribute("value")]
-        double[] Data { get; }
+        double[] Data { get; set; }
 
         [XmlArrayAttribute("colors")]
         [XmlArrayItemAttribute("value")]
-        Color[] Colors { get; }
+        Color[] Colors { get; set; }
     }
 }

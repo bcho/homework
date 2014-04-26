@@ -13,7 +13,7 @@ namespace SortAlgorithm
     {
         [XmlArrayAttribute("snapshots")]
         [XmlArrayItem("snapshot")]
-        public QuickSortSnapShotXML[] SnapShots { get; private set; }
+        public QuickSortSnapShotXML[] SnapShots { get; set; }
 
         public QuickSortSnapShotsXML(IEnumerable<SortAlgorithmSnapShot> shots)
         {
