@@ -40,7 +40,8 @@
 
     function draw(xml) {
         var snapShots = xml.documentElement.getElementsByTagName('snapshot'),
-            snapShotData = valueToData(snapShots[0]);
+            snapShotData = valueToData(snapShots[0]),
+            speed = 50;
 
         function valueToData(values) {
             var data = [];
@@ -118,11 +119,11 @@
             drawSnapShot(snapShots[+progress.value]);
 
             if (+progress.value < +progress.max) {
-                window.setTimeout(autoDraw, 200);
+                window.setTimeout(autoDraw, speed);
             }
         }
 
-        window.setTimeout(autoDraw, 200);
+        window.setTimeout(autoDraw, speed);
     }
 
     var text = document.querySelector('#snapshots').innerText,
