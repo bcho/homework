@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        .bar {
+            fill: grey;
+        }
+
+        .bar:hover {
+            fill: steelblue;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .x.axis path {
+            display: none;
+        }
+
+        .p {
+           fill: #e74c3c;
+        }
+        .l, .r {
+           fill: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <input type="range" min="0" max="100" step="1" value="0" id="progress" />
+    <script src="bower_components/d3/d3.min.js"></script>
+    <script src="chart.js"></script>
+</body>
+</html>
