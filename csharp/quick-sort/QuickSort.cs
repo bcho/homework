@@ -41,6 +41,7 @@ namespace SortAlgorithm
         public void Sort()
         {
             DoSort(0, Scale - 1);
+            TakeSnapShot();
         }
 
         public SortAlgorithmSnapShot GetSnapShot()
@@ -60,7 +61,11 @@ namespace SortAlgorithm
 
         public void TakeSnapShot()
         {
-            Shots.Add(GetSnapShot());
+            SortAlgorithmSnapShot shot = GetSnapShot();
+            shot.SetPointer("p", -1);
+            shot.SetPointer("l", -1);
+            shot.SetPointer("r", -1);
+            Shots.Add(shot);
         }
 
         public void TakeSnapShot(int p, int l, int r)
@@ -104,14 +109,8 @@ namespace SortAlgorithm
             }
 
             int part = Partition(l, r);
-            if (part > l)
-            {
-                DoSort(l, part - 1);
-            }
-            if (part < r)
-            {
-                DoSort(part + 1, r);
-            }
+            DoSort(l, part - 1);
+            DoSort(part + 1, r);
         }
 
         private int Partition(int l, int r)
