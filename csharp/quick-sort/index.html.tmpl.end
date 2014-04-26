@@ -1,3 +1,7 @@
+</script>
+    <input type="range" min="0" max="100" step="1" value="0" id="progress" />
+    <script src="http://cdn.staticfile.org/d3/3.4.6/d3.js"></script>
+    <script>
 (function () {
     function sleep(ms) {
         var start = new Date().getTime();
@@ -34,7 +38,7 @@
         .append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-    d3.xml('data.xml', 'application/xml', function(xml) {
+    function draw(xml) {
         var snapShots = xml.documentElement.getElementsByTagName('snapshot'),
             snapShotData = valueToData(snapShots[0]);
 
@@ -119,5 +123,16 @@
         }
 
         window.setTimeout(autoDraw, 200);
-    });
+    }
+
+    var text = document.querySelector('#snapshots').innerText,
+        parser = new DOMParser();
+
+    text = text.split('\n');
+    text.shift();
+    text = text.join('\n');
+    draw(parser.parseFromString(text, 'text/xml'));
 })();
+    </script>
+</body>
+</html>

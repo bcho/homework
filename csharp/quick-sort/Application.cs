@@ -8,14 +8,17 @@ namespace SortAlgorithm
 {
     public class Application
     {
-        private static string outputName = "data.xml";
-        private static int defaultScale = 100;
+        private static string TemplateBeginName = "index.html.tmpl.begin";
+        private static string TemplateEndName = "index.html.tmpl.end";
+        private static string OutputName = "index.html";
+        private static string OutputDirectory = "site";
+        private static int DefaultScale = 70;
 
         public static void Main(string[] args)
         {
             int scale;
 
-            if (args.Length > 1)
+            if (args.Length > 0)
             {
                 bool result = Int32.TryParse(args[0], out scale);
                 if (!result)
@@ -26,10 +29,14 @@ namespace SortAlgorithm
             }
             else
             {
-                scale = defaultScale;
+                scale = DefaultScale;
             }
 
             Generate(scale);
+
+            string path = BuildPath(OutputName);
+            System.Diagnostics.Process.Start(path);
+            System.Console.WriteLine("Please view output in {0}.", path);
         }
 
         private static void Generate(int scale)
@@ -41,9 +48,26 @@ namespace SortAlgorithm
             qs.Sort();
 
             XmlSerializer serializer = new XmlSerializer(typeof(QuickSortSnapShotsXML));
-            TextWriter writer = new StreamWriter(outputName);
-            serializer.Serialize(writer, qs.GetSnapShotsXML());
+            TextWriter data = new StringWriter();
+            serializer.Serialize(data, qs.GetSnapShotsXML());
+            data.Close();
+
+            TextWriter writer = new StreamWriter(BuildPath(OutputName));
+            writer.Write("{0}{1}{2}", ReadTemplate(TemplateBeginName), data, ReadTemplate(TemplateEndName));
             writer.Close();
+        }
+
+        private static string BuildPath(string name)
+        {
+            string current = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            return System.IO.Path.Combine(current, name);
+        }
+
+        private static string ReadTemplate(string name)
+        {
+            string path = BuildPath(name);
+
+            return System.IO.File.ReadAllText(path);
         }
     }
 }

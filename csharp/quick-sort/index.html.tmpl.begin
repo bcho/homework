@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title></title>
     <style>
+        #progress {
+            display: block;
+        }
+
         .bar {
             fill: grey;
         }
@@ -32,8 +36,4 @@
     </style>
 </head>
 <body>
-    <input type="range" min="0" max="100" step="1" value="0" id="progress" />
-    <script src="bower_components/d3/d3.min.js"></script>
-    <script src="chart.js"></script>
-</body>
-</html>
+    <script id="snapshots" type="text/xml">
