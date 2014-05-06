@@ -33,7 +33,7 @@
     :math:`H - \{<root, x_{i}>, \, ..., \, <root, x_{m}>\}`
     有唯一的一个划分 :math:`H_{1}, \, H_{2}, \, ..., \, H_{m} \, (m > 0)`,
     对任意 :math:`j \neq k \, (1 \leq j, k \leq m)`
-    有 :math:`D_{j} \cap D_{k} = \emptyset`，且对任意 :math:`i \m (1 \leq i \leq m)`,
+    有 :math:`D_{j} \cap D_{k} = \emptyset`，且对任意 :math:`i \, (1 \leq i \leq m)`,
     :math:`H_{i}` 是 :math:`D_{i}` 上的二元关系，
     :math:`(D_{i}, \, {H_{i}})` 是一颗符合本定义的树，称为根 :math:`root` 的子树。
 
