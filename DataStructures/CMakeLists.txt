@@ -11,6 +11,7 @@ add_subdirectory("singly-linked-list")
 add_subdirectory(list)
 add_subdirectory(stack)
 add_subdirectory(kmp)
+add_subdirectory("binary-search-tree")
 
 # Run tests
 set(RESULT_FILE test.results)
@@ -51,6 +52,11 @@ add_custom_command(
     COMMAND echo -e >> ${RESULT_FILE}
     COMMAND echo "kmp finished..." >> ${RESULT_FILE}
 
+    COMMAND echo "Running bst..." >> ${RESULT_FILE}
+    COMMAND "binary-search-tree/bst_test" >> ${RESULT_FILE}
+    COMMAND echo -e >> ${RESULT_FILE}
+    COMMAND echo "bst finished..." >> ${RESULT_FILE}
+
     DEPENDS hello/hello_test
     DEPENDS "singly-linked-list/singly-linked-list_test"
     DEPENDS "list/list_test"
@@ -68,4 +74,5 @@ add_custom_target(
     DEPENDS "stack/brackets_test"
     DEPENDS "stack/binary_expression_test"
     DEPENDS "kmp/kmp_test"
+    DEPENDS "binary-search-tree/bst_test"
 )
