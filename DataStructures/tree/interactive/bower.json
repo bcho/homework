@@ -1,0 +1,27 @@
+{
+  "name": "tree-interactive",
+  "version": "0.0.1",
+  "homepage": "https://github.com/bcho/homework",
+  "description": "A simple interactive demo for tree (data structure)",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "tree",
+    "interactive",
+    "data",
+    "structure",
+    "visualization"
+  ],
+  "authors": [
+    "hbc <bcxxxxxx@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
