@@ -305,7 +305,11 @@ TODO copy from anyview.
 参考资料
 --------
 
-.. [(How to Write a (Lisp) Interpreter (in Python))] by Peter Norvig http://norvig.com/lispy.html
+[(How to Write a (Lisp) Interpreter (in Python))]_
+
+.. [(How to Write a (Lisp) Interpreter (in Python))]::
+    
+    by Peter Norvig http://norvig.com/lispy.html
 
 
 HTML5 演示程序
