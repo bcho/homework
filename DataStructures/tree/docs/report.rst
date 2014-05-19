@@ -297,3 +297,18 @@ ADT 操作实现
 --------
 
 TODO copy from anyview.
+
+
+附录
+===
+
+参考资料
+--------
+
+.. [(How to Write a (Lisp) Interpreter (in Python))] by Peter Norvig http://norvig.com/lispy.html
+
+
+HTML5 演示程序
+--------------
+
+演示程序可以在 http://bl.ocks.org/bcho/raw/ea8db46ace9b4ba28897/ 获得。
