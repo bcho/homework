@@ -211,6 +211,341 @@
 ADT 操作实现
 ------------
 
+下面是链树各个操作的具体实现：
+
+
+``tree_init``
++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_init()
+    {
+        struct tree *t;
+
+        t = (struct tree *) malloc(sizeof(struct tree));
+        t->data = NULL;
+        t->parent = NULL;
+        t->left_child = NULL;
+        t->right_sibling = NULL;
+
+        return t;
+    }
+
+``tree_destory``
+++++++++++++++++
+
+.. code:: C
+
+    void tree_destory(struct tree *t)
+    {
+        struct tree *p;
+        struct tree *next;
+
+        if (t == NULL)
+            return;
+
+        for (p = tree_left_child(t), next = NULL; p != NULL; p = next) {
+            next = tree_right_sibling(p);
+            tree_destory(p);
+        }
+
+        free(t->data);
+        free(t);
+    }
+
+
+``tree_clear``
+++++++++++++++
+
+.. code:: C
+
+    void tree_clear(struct tree *t)
+    {
+        if (t != NULL) {
+            free(t->data);
+            t->left_child = NULL;
+        }
+    }
+
+
+``tree_is_empty``
++++++++++++++++++
+
+.. code:: C
+
+    int tree_is_empty(struct tree *t)
+    {
+        return ((t == NULL) ||
+                (t->data == NULL && tree_left_child(t) == NULL));
+    }
+
+
+``tree_value``
+++++++++++++++
+
+.. code:: C
+
+    char *tree_value(struct tree *t)
+    {
+        if (t == NULL)
+            return NULL;
+        return t->data;
+    }
+
+
+``tree_assign``
++++++++++++++++
+
+.. code:: C
+
+    void tree_assign(struct tree *t, char *data)
+    {
+        if (t == NULL || data == NULL)
+            return;
+        
+        t->data = str_copy(data);
+    }
+
+
+``tree_insert_child``
++++++++++++++++++++++
+
+.. code:: C
+
+    void tree_insert_child(struct tree *t, struct tree *child, int i)
+    {
+        int j;
+        struct tree fake;
+        struct tree *p;
+
+        if (i < 0)
+            i = 0;
+
+        for (fake.right_sibling = tree_left_child(t), p = &fake, j = 0;
+             j < i && tree_right_sibling(p) != NULL;
+             p = tree_right_sibling(p), j++)
+            ;
+
+        child->right_sibling = tree_right_sibling(p);
+        p->right_sibling = child;
+        p->parent = t;
+        t->left_child = tree_right_sibling(&fake);
+    }
+
+
+``tree_delete_child``
++++++++++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_delete_child(struct tree *t, int i)
+    {
+        int j;
+        struct tree fake;
+        struct tree *p, *rv;
+
+        if (i < 0)
+            return NULL;
+
+        for (fake.right_sibling = tree_left_child(t), p = &fake, j = 0;
+             j < i && p != NULL;
+             p = tree_right_sibling(p), j++)
+            ;
+
+        if (p == NULL)
+            return NULL;
+
+        rv = p->right_sibling;
+        if (rv != NULL) {
+            p->right_sibling = rv->right_sibling;
+            
+            rv->parent = NULL;
+            rv->right_sibling = NULL;
+        }
+
+        t->left_child = tree_right_sibling(&fake);
+
+        return rv;
+    }
+
+
+``tree_depth``
+++++++++++++++
+
+.. code:: C
+
+    int tree_depth(struct tree *t)
+    {
+        struct tree *p;
+        int max_depth, sub_depth;
+
+        if (t == NULL || tree_is_empty(t))
+            return 0;
+
+        for (p = tree_left_child(t), max_depth = 0;
+             p != NULL;
+             p = tree_right_sibling(p)) {
+            sub_depth = tree_depth(p);
+            if (sub_depth > max_depth)
+                max_depth = sub_depth;
+        }
+
+        return max_depth + 1;
+    }
+
+
+``tree_root``
++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_root(struct tree *t)
+    {
+        struct tree *parent;
+
+        if (t == NULL)
+            return NULL;
+
+        while ((parent = tree_parent(t)) != t)
+            t = parent;
+
+        return t;
+    }
+
+
+``tree_parent``
++++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_parent(struct tree *t)
+    {
+        if (t == NULL)
+            return NULL;
+
+        if (t->parent == NULL)
+            return t;
+        return t->parent;
+    }
+
+
+``tree_left_child``
++++++++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_left_child(struct tree *t)
+    {
+        if (t == NULL)
+            return NULL;
+
+        return t->left_child;
+    }
+
+
+``tree_right_sibling``
+++++++++++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_right_sibling(struct tree *t)
+    {
+        if (t == NULL)
+            return NULL;
+
+        return t->right_sibling;
+    }
+
+
+``tree_traverse_pre_root``
+++++++++++++++++++++++++++
+
+.. code:: C
+
+    void tree_traverse_pre_root(struct tree *t, void (*visitor)(struct tree *))
+    {
+        struct tree *p;
+
+        if (t == NULL)
+            return;
+
+        visitor(t);
+
+        for (p = tree_left_child(t); p != NULL; p = tree_right_sibling(p))
+            tree_traverse_pre_root(p, visitor);
+    }
+
+
+``tree_traverse_post_root``
++++++++++++++++++++++++++++
+
+.. code:: C
+
+    void tree_traverse_post_root(struct tree *t, void (*visitor)(struct tree *))
+    {
+        struct tree *p;
+
+        if (t == NULL)
+            return;
+
+        for (p = tree_left_child(t); p != NULL; p = tree_right_sibling(p))
+            tree_traverse_pre_root(p, visitor);
+        
+        visitor(t);
+    }
+
+
+``tree_from_string``
+++++++++++++++++++++
+
+.. code:: C
+
+    struct tree *tree_from_string(char *s)
+    {
+        struct queue *tokens;
+        struct tree *t;
+
+        tokens = tokenize(s);
+        t = read_from(tokens);
+        queue_destory(tokens);
+        
+        return t;
+    }
+
+
+``tree_stringify``
+++++++++++++++++++
+
+.. code:: C
+
+    char *tree_stringify(struct tree *t)
+    {
+        int size, i;
+        char *buf, *child_buf;
+        struct tree *c;
+        
+        if (t == NULL)
+            return NULL;
+            
+        size = tree_stringify_size(t) + 1;    
+        buf = (char *) malloc(sizeof(char) * size);
+        for (i = 0; i < size; i++)
+            buf[i] = 0;
+        buf[0] = '(';
+        strcat(buf, tree_value(t));
+        
+        for (c = tree_left_child(t); c != NULL; c = tree_right_sibling(c)) {
+            child_buf = tree_stringify(c);
+            assert(child_buf != NULL);        
+            strcat(buf, child_buf); 
+            free(child_buf);
+        }
+        buf[size - 2] = ')';
+            
+        return buf;
+    }
+
 
 测试用例
 --------
