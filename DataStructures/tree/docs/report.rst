@@ -550,6 +550,180 @@ ADT 操作实现
 测试用例
 --------
 
+测试 ``tree_init``
+++++++++++++++++++
+
+.. code:: C
+
+    t = tree_init();
+    _(t != NULL, "新建树不应为 NULL");
+    _(tree_depth(t) == 0, "新建树高度为 0");
+    _(tree_is_empty(t), "新建树应该为空树");        
+    tree_destory(t);
+
+
+测试 ``tree_from_string``
++++++++++++++++++++++++++
+
+本测试分为三种难度的测试：
+
+- 简单的树 (A)
+- 普通的树结构 (A (B (D)) (C))
+- 边界情况测试 （空字符串、错误的格式、多层嵌套的树）
+
+.. code:: C
+    
+    /* Simple case */
+    t = tree_from_string("(A)");
+    _(t != NULL, "新建树不应为 NULL");
+    _(tree_depth(t) == 1, "树深度应该为 1");
+    _(!tree_is_empty(t), "树不应为空");
+    tree_destory(t);
+    
+    /* Normal case */
+    t = tree_from_string("(A (B (D)) (C))");    
+    left_child = tree_left_child(t);
+    _(tree_depth(t) == 3, "树的深度应该为 3");
+    _(strcmp(tree_value(left_child), "B") == 0, "树的左儿子应该为 B");
+    _(tree_parent(left_child) == t, "树的左儿子的根应该为树本身");
+    tree_destory(t); 
+    
+    /* Boundary case 1 */
+    t = tree_from_string("");
+    _(tree_depth(t) == 1, "空字符串建立树深度应该为 1");
+    _(!tree_is_empty(t), "树不应为空");
+    tree_destory(t);
+    
+    /* Boundary case 2 */
+    t = tree_from_string("(A");
+    _(t == NULL, "错误的表示格式建树应该为空");
+        
+    /* Boundary case 3 */
+    t = tree_from_string("((A)");
+    _(t == NULL, "错误的表示格式建树应该为空");
+    
+    /* Boundary case 4 */
+    t = tree_from_string("(1 (2 (3 (4 (5 (6 (7 (8 (9 (10 (11)))))))))))");
+    _(tree_depth(t) == 11, "建立多层的树");
+    tree_destory(t);
+
+
+测试 ``tree_depth`` 和 ``tree_is_empty``
+++++++++++++++++++++++++++++++++++++++++
+
+.. code:: C
+    
+    /* Simple case */
+    t = tree_from_string("(1)");
+    _(tree_depth(t) == 1, "树的深度应该为 1");
+    _(!tree_is_empty(t), "树不应为空");
+    tree_destory(t);
+    
+    /* Boundary case */ 
+    t = tree_from_string("(1 (2 (3 (4 (5 (6 (7 (8 (9 (10 (11)))))))))))");
+    _(tree_depth(t) == 11, "树的深度应该为 11");
+    _(!tree_is_empty(t), "树不应为空");
+    tree_destory(t);
+
+
+测试 ``tree_clear``
++++++++++++++++++++
+
+.. code:: C
+
+    t = tree_from_string("(1)");
+    _(!tree_is_empty(t), "执行 tree_clear 之前，树不应为空");
+    tree_clear(t);
+    _(tree_is_empty(t), "执行 tree_clear 之后，树应该为空");
+    tree_destory(t);
+
+
+测试 ``tree_assign``
+++++++++++++++++++++
+
+.. code:: C
+
+    t = tree_from_string("(before-assign)");
+    data = tree_value(t);
+    _(strcmp(data, "before-assign") == 0,
+      "执行 tree_assign 之前值应该为 before-assign");
+    tree_assign(t, "after-assign");
+    data = tree_value(t);
+    _(strcmp(data, "after-assign") ==0,
+      "执行 tree_assign 之后值应该为 after-assign");
+    tree_destory(t);  
+
+
+测试 ``tree_insert_child``
+++++++++++++++++++++++++++
+
+.. code:: C
+
+    t = tree_from_string("(root)");
+    left_child = tree_from_string("(left-child)");
+    tree_insert_child(t, left_child, 0);
+    _(tree_left_child(t) == left_child, "插入到树的左儿子中");
+    tree_destory(t);
+
+
+测试 ``tree_delete_child``
+++++++++++++++++++++++++++
+    
+.. code:: C
+
+    t = tree_from_string("(root (left-child))");
+    left_child = tree_delete_child(t, 0);
+    _(strcmp(tree_value(left_child), "left-child") == 0, "删除左子树");
+    _(tree_left_child(t) == NULL, "删除左子树");
+    tree_destory(t);
+    tree_destory(left_child);
+
+
+测试 ``tree_root``
+++++++++++++++++++
+    
+.. code:: C
+
+    t = tree_from_string("(root (left-child-1 (left-child)))");
+    left_child = tree_left_child(tree_left_child(t));    
+    _(tree_root(left_child) == t, "左叶子的根节点为根");
+    tree_destory(t);    
+
+
+测试 ``tree_parent``
+++++++++++++++++++++
+
+.. code:: C
+
+    t = tree_from_string("(root (left-child-1 (left-child)))"); 
+    left_child = tree_left_child(t);     
+    _(tree_parent(left_child) == t, "左叶子的父节点为根");
+    tree_destory(t); 
+
+
+测试 ``tree_traverse_pre_root`` 和 ``tree_traverse_post_root``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+因为这两个函数不能对树的状态作出修改，所以采用对比输出的方法来检验是否正确。
+
+.. code:: C
+    
+    /* Should print out A B C D E F G */    
+    t = tree_from_string("(A (B (C (D))) (E (F (G))))");
+    printf("test: tree_treaverse_pre_root, should print out: A B C D E F G: ");
+    tree_traverse_pre_root(t, node_printer);
+    printf("\n");
+    tree_destory(t);
+    
+    /* test tree_traverse_post_root */
+    /* Should print out A B C */
+    t = tree_from_string("(C (A) (B))");
+    printf("test: tree_treaverse_post_root, should print out: A B C: ");
+    tree_traverse_post_root(t, node_printer);
+    printf("\n");
+    tree_destory(t);
+
+
 
 4. 调试与分析
 =============
@@ -624,14 +798,25 @@ ADT 操作实现
 
 .. code:: c
 
-    /* TODO copy from anyview */
+    void _(int cond, char * message)
+    {
+        if (!cond) {
+            printf("%s\n", message);
+            exit(-1);
+        }    
+    }
 
+
+.. image:: imgs/assert.png
 
 
 测试结果
 --------
 
-TODO copy from anyview.
+通过 ``AnyviewCL`` 系统运行所有测试，均通过：
+
+
+.. image:: imgs/test-result.png
 
 
 附录
@@ -640,7 +825,7 @@ TODO copy from anyview.
 参考资料
 --------
 
-[(How to Write a (Lisp) Interpreter (in Python))]_
+`[(How to Write a (Lisp) Interpreter (in Python))]`_
 
 .. [(How to Write a (Lisp) Interpreter (in Python))]::
     
