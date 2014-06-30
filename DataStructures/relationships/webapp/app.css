@@ -1,0 +1,12 @@
+body {
+  background: #000;
+}
+
+#app-canvas {
+  margin: 0;
+  padding: 0;
+}
+
+.app-query-prompt-input {
+  height: 100%;
+}

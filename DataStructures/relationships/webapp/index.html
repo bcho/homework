@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Relationships</title>
+    <link rel="stylesheet" href="vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="app.css">
+</head>
+<body class="container-fluid">
+    <div class="row">
+        <canvas id="app-canvas" class="col-md-12" data-processing-sources="app.pde"></canvas>
+    </div>
+    <div class="row">
+        <div class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+            <form class="navbar-form navbar-left" role="search">
+                <div class="form-group">
+                    <input id="app-query-people-a" class="form-control" type="text">
+                </div>
+                和
+                <div class="form-group">
+                    <input id="app-query-people-b" class="form-control" type="text">
+                </div>
+                <span id="app-query-result">请输入第一个查询名字</span>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="vendor/jquery.min.js"></script>
+<script src="vendor/processing.js"></script>
+<script src="app.js"></script>
+</html>
