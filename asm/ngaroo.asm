@@ -16,7 +16,7 @@ _start:
 
 DoMore:
 
-    ; ``byte`` is a type hint.
+    ; ``byte`` is a size hint.
     ; Convert the character to lowercase by adding 32.
     add byte [ebx], 20h
     ; Move to next byte
