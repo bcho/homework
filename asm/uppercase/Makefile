@@ -1,5 +1,14 @@
-1: 1.o
-	ld -o 1 1.o
+.PHONY: all clean
 
-1.o: 1.asm
-	nasm -f elf64 -g -F stabs 1.asm -l 1.lst
+all: 1 2
+
+
+clean: 1 2
+	rm -rf $?
+
+
+%: %.o
+	ld -o $@ $<
+
+%.o: %.asm
+	nasm -f elf64 -g -F stabs $<

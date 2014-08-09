@@ -1,5 +1,5 @@
 ; This program will read characters from stdin one by one and convert all
-; lowercase character (namely, a-z) to uppercase (namely, A-Z).
+; lowercase characters (namely, a-z) to uppercase (namely, A-Z).
 
 section .bss
 
