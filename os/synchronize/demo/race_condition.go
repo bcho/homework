@@ -1,4 +1,4 @@
-// This program is used to demonstraion dead-lock.
+// This program is used to demonstraion race condition
 // run with: go run -race race_condition.go
 
 package main
