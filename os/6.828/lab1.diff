@@ -1,0 +1,110 @@
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..2f17489
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,5 @@
++[*.c]
++indent_style  = tab
++
++[*.h]
++indent_style = tab
+diff --git a/kern/kdebug.c b/kern/kdebug.c
+index 9547143..c0cd880 100644
+--- a/kern/kdebug.c
++++ b/kern/kdebug.c
+@@ -178,7 +178,10 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
+ 	//	There's a particular stabs type used for line numbers.
+ 	//	Look at the STABS documentation and <inc/stab.h> to find
+ 	//	which one.
+-	// Your code here.
++	stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
++	if (lline > rline)
++		return -1;
++	info->eip_line = stabs[lline].n_desc;
+ 
+ 
+ 	// Search backwards from the line number for the relevant filename
+diff --git a/kern/monitor.c b/kern/monitor.c
+index f8a934a..1db0ff7 100644
+--- a/kern/monitor.c
++++ b/kern/monitor.c
+@@ -24,6 +24,7 @@ struct Command {
+ static struct Command commands[] = {
+ 	{ "help", "Display this list of commands", mon_help },
+ 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
++	{ "backtrace", "Display backtrace", mon_backtrace }
+ };
+ #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
+ 
+@@ -55,13 +56,51 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
+ 	return 0;
+ }
+ 
++#define GET_ADDRESS_VALUE(x) (*((uint32_t *) (x)))
++
+ int
+ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
+ {
+-	// Your code here.
++	int i;
++	uint32_t ebp, eip, arg_addr, ret_addr;
++	struct Eipdebuginfo frame_info;
++
++	cprintf("Stack backtrace:\n");
++
++        // Last ebp.
++	ebp = read_ebp();
++
++	do {
++		// Last frame's return position.
++		ret_addr = ebp + 4;
++		eip = GET_ADDRESS_VALUE(ret_addr);
++
++		cprintf("  ebp %08x eip %08x  args", ebp, eip);
++
++		arg_addr = ebp + 8;
++		for (i = 0; i < 5; i++) {
++			cprintf(" %08x", GET_ADDRESS_VALUE(arg_addr));
++			arg_addr += 1;
++		}
++
++		debuginfo_eip(eip, &frame_info);
++		cprintf("\n\t%s:%x: %.*s+%2x\n",
++				frame_info.eip_file,
++				// TODO lineno
++				frame_info.eip_line,
++				frame_info.eip_fn_namelen,
++				frame_info.eip_fn_name,
++				ebp - frame_info.eip_fn_addr
++				);
++
++		// To previous frame.
++		ebp = GET_ADDRESS_VALUE(ebp);
++	} while (ebp);
++
+ 	return 0;
+ }
+ 
++#undef GET_ADDRESS_VALUE
+ 
+ 
+ /***** Kernel monitor command interpreter *****/
+diff --git a/lib/printfmt.c b/lib/printfmt.c
+index 28e01c9..af23abe 100644
+--- a/lib/printfmt.c
++++ b/lib/printfmt.c
+@@ -206,10 +206,9 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
+ 		// (unsigned) octal
+ 		case 'o':
+ 			// Replace this with your code.
+-			putch('X', putdat);
+-			putch('X', putdat);
+-			putch('X', putdat);
+-			break;
++			num = getuint(&ap, lflag);
++			base = 8;
++			goto number;
+ 
+ 		// pointer
+ 		case 'p':
