@@ -12,9 +12,9 @@ operator = + | -
 ```
 
 ```
-P -> O P P' | D P'
+P -> D P'
 
-P' -> O P P'
+P' -> O P | e
 
 O -> + | -
 
