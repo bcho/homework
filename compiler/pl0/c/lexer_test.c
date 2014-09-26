@@ -9,7 +9,8 @@
 static char *good_samples[] = {
     "examples/simple.pl0",
     "examples/helloworld.pl0",
-    "examples/nested_procedures.pl0"
+    "examples/nested_procedures.pl0",
+    "examples/not_simple.pl0"
 };
 
 void
@@ -34,6 +35,8 @@ test_good_samples()
             token_destory(t);
         }
         token_destory(t);
+
+        fclose(src);
     }
 }
 
