@@ -1,0 +1,4 @@
+BEGIN
+    (* hence we have no string type in pl0, we just write a 42! *)
+    WRITE(42);
+END

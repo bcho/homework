@@ -1,0 +1,10 @@
+PROCEDURE a1
+BEGIN
+    PROCEDURE a2
+    BEGIN
+        PROCEDURE a3
+        BEGIN
+            WRITE(42);
+        END
+    END
+END
