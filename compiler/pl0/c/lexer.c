@@ -67,6 +67,8 @@ void
 lexer_set_src_stream(FILE *stream)
 {
     src_stream = stream;
+    cur_lines = 1;
+    cur_cols = 0;
 }
 
 
