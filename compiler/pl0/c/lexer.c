@@ -196,7 +196,7 @@ token_get()
                 }
                 break;  /* IN_NUM */
             case IN_IDENT:
-                if (isalpha(c)) {
+                if (isalpha(c) || isdigit(c)) {
                     cur_value[cur_value_idx++] = c;
                 } else {
                     state = DONE;
