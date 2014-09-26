@@ -78,7 +78,7 @@ token_get()
     char c;
     struct token *cur_token;
     enum lexer_state state;
-    char cur_value[TOKEN_IDENT_MAX_LENGTH];
+    char cur_value[TOKEN_IDENT_MAX_LENGTH + 1];
     int cur_value_idx;
 
     state = START;
@@ -197,7 +197,12 @@ token_get()
                 break;  /* IN_NUM */
             case IN_IDENT:
                 if (isalpha(c) || isdigit(c)) {
-                    cur_value[cur_value_idx++] = c;
+                    if (cur_value_idx >= TOKEN_IDENT_MAX_LENGTH) {
+                        state = DONE;
+                        cur_token = MAKE_TOKEN(ERROR, "identity to long");
+                    } else {
+                        cur_value[cur_value_idx++] = c;
+                    }
                 } else {
                     state = DONE;
 
