@@ -25,8 +25,7 @@ static int cur_cols = 0;
 enum lexer_state {
     START,
     IN_ASSIGNMENT,
-    /* TODO */
-    // IN_COMMENT,
+    IN_COMMENT,
     IN_NUM,
     IN_IDENT,
     DONE
@@ -148,7 +147,13 @@ token_get()
                             }
                             break;
                         case '(':
-                            cur_token = MAKE_SIMPLE_TOKEN(LPAREN);
+                            /* peek for `(*` */
+                            if (get_char() == '*') {
+                                state = IN_COMMENT;
+                            } else {
+                                cur_token = MAKE_SIMPLE_TOKEN(LPAREN);
+                                unget_char();
+                            }
                             break;
                         case ')':
                             cur_token = MAKE_SIMPLE_TOKEN(RPAREN);
@@ -157,7 +162,7 @@ token_get()
                             cur_token = MAKE_SIMPLE_TOKEN(SEMI);
                             break;
                         default:
-                            cur_token = MAKE_SIMPLE_TOKEN(ERROR);
+                            cur_token = MAKE_TOKEN(ERROR, "unknown lex error");
                             break;
                     }
                 }
@@ -167,7 +172,7 @@ token_get()
                 if (c == '=') {
                     cur_token = MAKE_SIMPLE_TOKEN(ASSIGN);
                 } else {
-                    cur_token = MAKE_SIMPLE_TOKEN(ERROR);
+                    cur_token = MAKE_TOKEN(ERROR, "missing `=` for assignment");
                     
                     /* restore from error */
                     unget_char();
@@ -196,7 +201,16 @@ token_get()
                     /* restore state */
                     unget_char();
                 }
-                break;  /*IN_IDENT */
+                break;  /* IN_IDENT */
+            case IN_COMMENT:
+                /* skip over the comments */
+                if (c == '*' && get_char() == ')') {
+                    state = START;
+                } else if (c == EOF) {
+                    state = DONE;
+                    cur_token = MAKE_TOKEN(ERROR, "unexpected EOF, maybe missing `*)`");
+                }
+                break; /* IN_COMMENT */
             case DONE:
             default:
                 panic("token_get: should not reach here.");
