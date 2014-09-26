@@ -13,7 +13,7 @@ main()
     lexer_set_src_stream(stdin);
     while (1) {
         t = token_get();
-        printf("type: %d\n", t->type);
+        token_print(t);
         if (t->type == END_OF_FILE)
             break;
         token_destory(t);

@@ -8,8 +8,10 @@
 #include "lexer.h"
 
 
-#define MAKE_TOKEN(type, value) token_create((type), (value), cur_lines, cur_cols)
+/* TODO recalculate the cols position base on the token type. */
+#define MAKE_TOKEN(type, value) token_create((type), (value), cur_lines, cur_cols - 1)
 #define MAKE_SIMPLE_TOKEN(type) MAKE_TOKEN((type), NULL)
+#define MAKE_IDENT_TOKEN(value) token_create_from_ident((value), cur_lines, cur_cols - 1)
 
 
 /* source code */
@@ -75,8 +77,13 @@ token_get()
     char c;
     struct token *cur_token;
     enum lexer_state state;
+    char cur_value[TOKEN_IDENT_MAX_LENGTH];
+    int cur_value_idx;
 
     state = START;
+
+    memset(cur_value, 0, TOKEN_IDENT_MAX_LENGTH);
+    cur_value_idx = 0;
 
     while (state != DONE) {
         c = get_char();
@@ -87,18 +94,15 @@ token_get()
                 if (isdigit(c)) {
                     state = IN_NUM;
                     
-                    // store character
-                    printf("%c", c);
+                    cur_value[cur_value_idx++] = c;
                 } else if (isalpha(c)) {
                     state = IN_IDENT;
 
-                    // store character
-                    printf("%c", c);
+                    cur_value[cur_value_idx++] = c;
                 } else if (c == ':') {
                     state = IN_ASSIGNMENT;
                 } else if (isspace(c)) {
-                    /* skip whitespaces */
-                    ;
+                    /* skip whitespaces */ ;
 
                 /* single character token */
                 } else {
@@ -168,41 +172,37 @@ token_get()
                     /* restore from error */
                     unget_char();
                 }
-                break;
+                break;  /* IN_ASSIGNMENT */
             case IN_NUM:
                 if (isdigit(c)) {
-                    // store character
-                    printf("%c", c);
+                    cur_value[cur_value_idx++] = c;
                 } else {
                     state = DONE;
                     
-                    cur_token = MAKE_TOKEN(NUM, "number");
+                    cur_token = MAKE_TOKEN(NUM, cur_value);
 
                     /* restore state */
                     unget_char();
                 }
-                break;
+                break;  /* IN_NUM */
             case IN_IDENT:
                 if (isalpha(c)) {
-                    // store character
-                    printf("%c", c);
+                    cur_value[cur_value_idx++] = c;
                 } else {
                     state = DONE;
 
-                    cur_token = MAKE_TOKEN(IDENT, "ident");
+                    cur_token = MAKE_IDENT_TOKEN(cur_value);
 
                     /* restore state */
                     unget_char();
                 }
-                break;
+                break;  /*IN_IDENT */
             case DONE:
             default:
                 panic("token_get: should not reach here.");
-                break;
+                break;  /* DEFAULT */
         }   /* switch */
     }   /* while */
-
-    /* TODO handle reserved keywords */
 
     return cur_token;
 }
