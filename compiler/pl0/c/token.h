@@ -9,6 +9,7 @@ enum token_type {
     
     /* reserved keywords */
     CONST, VAR, PROCEDURE, BEGIN, END, IF, THEN, WHILE, DO, ODD, CALL,
+    WRITE, READ,
 
     /* operators */
     ASSIGN, EQ, NEQ, LT, LEQ, GT, GEQ, LPAREN, RPAREN, SEMI,
@@ -27,7 +28,6 @@ struct token {
     char *value;
 };
 
-extern char *RESERVED_TOKEN_VALUES[];
 
 
 struct token *token_create(enum token_type, char *, int, int);

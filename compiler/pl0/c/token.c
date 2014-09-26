@@ -22,7 +22,9 @@ static struct reserved_value RESERVED_VALUES[] = {
     { WHILE     ,  "while"},
     { DO        ,  "do"},
     { ODD       ,  "odd"},
-    { CALL      ,  "call"}
+    { CALL      ,  "call"},
+    { WRITE     ,  "write"},
+    { READ      ,  "read"},
 };
 
 
@@ -58,7 +60,7 @@ token_create_from_ident(char * value, int lines, int cols)
         keyword = RESERVED_VALUES[i];
         /* we just simply ignore case here :) */
         if (strncasecmp(keyword.value, value, strlen(value)) == 0)
-            return token_create(keyword.type, keyword.value, lines, cols);
+            return token_create(keyword.type, NULL, lines, cols);
     }
 
     /* it can be an indent */
