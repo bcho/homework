@@ -163,6 +163,9 @@ token_get()
                         case ';':
                             cur_token = MAKE_SIMPLE_TOKEN(SEMI);
                             break;
+                        case ',':
+                            cur_token = MAKE_SIMPLE_TOKEN(PERIOD);
+                            break;
                         default:
                             cur_token = MAKE_TOKEN(ERROR, "unknown lex error");
                             break;

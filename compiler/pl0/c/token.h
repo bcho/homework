@@ -12,7 +12,7 @@ enum token_type {
     WRITE, READ,
 
     /* operators */
-    ASSIGN, EQ, NEQ, LT, LEQ, GT, GEQ, LPAREN, RPAREN, SEMI,
+    ASSIGN, EQ, NEQ, LT, LEQ, GT, GEQ, LPAREN, RPAREN, SEMI, PERIOD,
     PLUS, MINUS, TIMES, OVER,
 
     /* characters */
