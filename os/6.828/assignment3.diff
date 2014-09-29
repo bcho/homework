@@ -1,0 +1,90 @@
+diff --git a/sysproc.c b/sysproc.c
+index 027a5e5..67e0c6d 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -50,9 +50,10 @@ sys_sbrk(void)
+ 
+   if(argint(0, &n) < 0)
+     return -1;
++
+   addr = proc->sz;
+-  if(growproc(n) < 0)
+-    return -1;
++  proc->sz = proc->sz + n;
++
+   return addr;
+ }
+ 
+diff --git a/trap.c b/trap.c
+index 3f80145..8047f0b 100644
+--- a/trap.c
++++ b/trap.c
+@@ -8,6 +8,7 @@
+ #include "traps.h"
+ #include "spinlock.h"
+ 
++int mappages(pde_t *, void *, uint, uint, int);
+ // Interrupt descriptor table (shared by all CPUs).
+ struct gatedesc idt[256];
+ extern uint vectors[];  // in vectors.S: array of 256 entry pointers
+@@ -32,6 +33,36 @@ idtinit(void)
+   lidt(idt, sizeof(idt));
+ }
+ 
++void
++page_fault_handler()
++{
++  char *mem;
++  pde_t *pgdir;
++  uint oldsz, newsz, a;
++
++  pgdir = proc->pgdir;
++  oldsz = rcr2();
++  newsz = proc->sz;
++
++  if (newsz >= KERNBASE) {
++    cprintf("page fault: out of memory\n");
++    proc->killed = 1;
++  }
++  if (newsz < oldsz)
++    return;
++
++  for(a = PGROUNDDOWN(oldsz); a < newsz; a+= PGSIZE) {
++    mem = kalloc();
++    if (mem == 0) {
++      cprintf("page fault: out of memory\n");
++      deallocuvm(pgdir, newsz, oldsz);
++      return;
++    }
++    memset(mem, 0, PGSIZE);
++    mappages(pgdir, (char *)a, PGSIZE, v2p(mem), PTE_W|PTE_U);
++  }
++}
++
+ //PAGEBREAK: 41
+ void
+ trap(struct trapframe *tf)
+@@ -77,6 +108,10 @@ trap(struct trapframe *tf)
+             cpu->id, tf->cs, tf->eip);
+     lapiceoi();
+     break;
++
++  case T_PGFLT:
++    page_fault_handler();
++    return;
+    
+   //PAGEBREAK: 13
+   default:
+diff --git a/vm.c b/vm.c
+index 5326d14..effd99e 100644
+--- a/vm.c
++++ b/vm.c
+@@ -67,7 +67,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
+ // Create PTEs for virtual addresses starting at va that refer to
+ // physical addresses starting at pa. va and size might not
+ // be page-aligned.
+-static int
++int
+ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
+ {
+   char *a, *last;
