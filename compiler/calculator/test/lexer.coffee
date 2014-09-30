@@ -1,8 +1,7 @@
 should = require 'should'
 {
   Lexer: Lexer,
-  TokenType: TokenType,
-  TokenPattern: TokenPattern
+  TokenType: TokenType
 } = require '../calc'
 
 describe 'Lexer', ->

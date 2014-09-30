@@ -253,7 +253,7 @@ class Parser
     ident = @get()
     if not ident.isType TokenType.IDENT
       throw new CompileError "Expect ident, got #{ident}"
-    @symbolTable.set ident
+    @symbolTable.set ident.getValue()
     
     @expect TokenType.ASSIGN
 
@@ -298,13 +298,13 @@ class Parser
     node
 
   parsePterm: ->
-    item = @parseItem()
+    node = @parseItem()
     ptermStar = @parsePtermStar()
 
     if ptermStar?
       new BinaryNode node, TokenType.POW, ptermStar, @symbolTable
     else
-      item
+      node
 
   parsePtermStar: ->
     token = @peek()
@@ -339,11 +339,3 @@ root.TokenType    = TokenType
 root.TokenPattern = TokenPattern
 root.Lexer        = Lexer
 root.Parser       = Parser
-
-
-parser = new Parser
-console.log parser.parse '''
-  let a = 1 + 2
-  let b = 5 + a
-  5 + a * b - (a - 22 / (a + b))
-'''
