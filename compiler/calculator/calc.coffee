@@ -41,6 +41,7 @@ TokenType =
   RPAREN : 8
   LET    : 9
   ASSIGN : 10
+  PRINT  : 11
   EOF    : 254
   ERROR  : 255
 
@@ -56,9 +57,11 @@ TokenPattern =
   RPAREN : /(\))/i
   LET    : /(let)/i
   ASSIGN : /(=)/i
+  PRINT  : /(print)/i
 
 ReservedKeywords = [
-  {pattern: TokenPattern.LET, type: TokenType.LET}
+  {pattern: TokenPattern.LET, type: TokenType.LET},
+  {pattern: TokenPattern.PRINT, type: TokenType.PRINT},
 ]
 
 
@@ -189,6 +192,9 @@ class LinesNode extends Node
 class AssignNode extends Node
   constructor: (@ident, @exp, @symbolTable) ->
 
+class PrintNode extends Node
+  constructor: (@exp, @symbolTable) ->
+
 class BinaryNode extends Node
   constructor: (@left, @op, @right, @symbolTable) ->
 
@@ -244,6 +250,8 @@ class Parser
         throw new CompileError token
       when TokenType.LET
         @parseAssign()
+      when TokenType.PRINT
+        @parsePrint()
       else
         @parseExp()
 
@@ -260,6 +268,11 @@ class Parser
     exp = @parseExp()
 
     new AssignNode ident, exp, @symbolTable
+
+  parsePrint: ->
+    @expect TokenType.PRINT
+
+    new PrintNode @parseExp(), @symbolTable
 
   parseExp: ->
     node = @parseTerm()

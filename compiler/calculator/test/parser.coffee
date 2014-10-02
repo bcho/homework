@@ -63,7 +63,7 @@ describe 'Parser', ->
       '1 +',
       '+ 2',
       '1 + /',
-      # TODO these ttwo should be valid.
+      # TODO these two should be valid.
       # '+ 1 / 2',
       # '- 2 + 3',
       '1 - (2 + 3))',
@@ -76,3 +76,13 @@ describe 'Parser', ->
 
     for stream in streams
       (-> parser.parse stream).should.throw()
+
+  it 'should parse print statment', ->
+    stream = 'print a + 1'
+
+    lineNode = (parser.parse stream).lines[0]
+
+    exp = lineNode.exp
+    exp.left.item.getValue().should.be.exactly 'a'
+    exp.op.should.be.exactly TokenType.PLUS
+    exp.right.item.getValue().should.be.exactly '1'

@@ -150,8 +150,18 @@ describe 'Lexer', ->
       token.getLines().should.be.exactly 1
       token.getCols().should.be.exactly 1
 
+    it 'should parse print', ->
+      op = 'print'
+      lexer.setStream op
+      token = lexer.getToken()
+
+      token.isType(TokenType.PRINT).should.be.true
+      token.getValue().should.be.exactly op
+      token.getLines().should.be.exactly 1
+      token.getCols().should.be.exactly 1
+
     it 'should parse simple expression', ->
-      lexer.setStream '1 + 2 + 3 + 4 + 5'
+      lexer.setStream 'print 1 + 2 + 3 + 4 + 5'
 
       while not lexer.isStreamFinish()
         token = lexer.getToken()
@@ -161,7 +171,7 @@ describe 'Lexer', ->
       lexer.setStream '''
         let a = 1 + 2 + 3 + 4 + 5
         let b = a + 15 ^2
-        a * b
+        print a * b
       '''
 
       while not lexer.isStreamFinish()
