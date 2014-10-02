@@ -86,3 +86,8 @@ describe 'Parser', ->
     exp.left.item.getValue().should.be.exactly 'a'
     exp.op.should.be.exactly TokenType.PLUS
     exp.right.item.getValue().should.be.exactly '1'
+
+  it 'should not parse malformed print statment', ->
+    stream = 'print let a = 1'
+
+    (-> parser.parse stream).should.throw()
