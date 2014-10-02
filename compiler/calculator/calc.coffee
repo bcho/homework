@@ -201,6 +201,9 @@ class BinaryNode extends Node
 class ItemNode extends Node
   constructor: (@item, @symbolTable) ->
 
+class UnaryNode extends Node
+  constructor: (@op, @exp, @symbolTable) ->
+
 
 # Parser for calculator.
 class Parser
@@ -311,7 +314,7 @@ class Parser
     node
 
   parsePterm: ->
-    node = @parseItem()
+    node = @parseUnaryExp()
     ptermStar = @parsePtermStar()
 
     if ptermStar?
@@ -329,6 +332,19 @@ class Parser
       # eps
       null
 
+  parseUnaryExp: ->
+    op = @peek()
+
+    switch op.getType()
+      when TokenType.MINUS
+        @expect TokenType.MINUS
+        new UnaryNode TokenType.MINUS, @parseUnaryExp(), @symbolTable
+      when TokenType.PLUS
+        @expect TokenType.PLUS
+        new UnaryNode TokenType.PLUS, @parseUnaryExp(), @symbolTable
+      else
+        @parseItem()
+
   parseItem: ->
     token = @peek()
 
@@ -343,7 +359,7 @@ class Parser
       when TokenType.IDENT
         new ItemNode @get(), @symbolTable
       else
-        throw new CompileError "Unexpected item: #{token}"
+        throw new CompileError "Unexpected token #{token}"
 
 
 root.CompileError = CompileError

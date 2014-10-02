@@ -23,7 +23,7 @@ describe 'Parser', ->
     lineNode.right.item.getValue().should.be.exactly '1'
 
   describe 'should parse formula with correct association', ->
-    stream = '1 + 2 * 5 ^ (3 + 4)'
+    stream = '1 + 2 * -5 ^ (3 + 4)'
 
     lineNode = (parser.parse stream).lines[0]
 
@@ -36,9 +36,10 @@ describe 'Parser', ->
       lineNode.left.item.getValue().should.be.exactly '2'
       lineNode.op.should.be.exactly TokenType.TIMES
 
-    it 'should parse 5 ^ correctly', ->
+    it 'should parse -5 ^ correctly', ->
       lineNode = lineNode.right
-      lineNode.left.item.getValue().should.be.exactly '5'
+      lineNode.left.op.should.be.exactly TokenType.MINUS
+      lineNode.left.exp.item.getValue().should.be.exactly '5'
       lineNode.op.should.be.exactly TokenType.POW
 
     it 'should parse 3 + 4 correctly', ->
@@ -61,11 +62,9 @@ describe 'Parser', ->
   it 'should not parse malformed formula', ->
     streams = [
       '1 +',
-      '+ 2',
       '1 + /',
-      # TODO these two should be valid.
-      # '+ 1 / 2',
-      # '- 2 + 3',
+      '* 1 / 2',
+      '/ 2 + 3',
       '1 - (2 + 3))',
       '1 - 2 / 3)',
       'let a = ',
