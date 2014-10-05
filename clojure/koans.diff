@@ -1,0 +1,746 @@
+diff --git a/src/koans/01_equalities.clj b/src/koans/01_equalities.clj
+index ed10b7b..5bfb0df 100644
+--- a/src/koans/01_equalities.clj
++++ b/src/koans/01_equalities.clj
+@@ -3,34 +3,34 @@
+ 
+ (meditations
+   "We shall contemplate truth by testing reality, via equality"
+-  (= __ true)
++  (= (not false) true)
+ 
+   "To understand reality, we must compare our expectations against reality"
+-  (= __ (+ 1 1))
++  (= 2 (+ 1 1))
+ 
+   "You can test equality of many things"
+-  (= (+ 3 4) 7 (+ 2 __))
++  (= (+ 3 4) 7 (+ 2 5))
+ 
+   "Some things may appear different, but be the same"
+-  (= __ (= 2 2/1))
++  (= (= 3 6/2) (= 2 2/1))
+ 
+   "You cannot generally float to heavens of integers"
+-  (= __ (= 2 2.0))
++  (= false (= 2 2.0))
+ 
+   "But a looser equality is also possible"
+-  (= __ (== 2.0 2))
++  (= true (== 2.0 2))
+ 
+   "Something is not equal to nothing"
+-  (= __ (not (= 1 nil)))
++  (= true (not (= 1 nil)))
+ 
+   "Strings, and keywords, and symbols: oh my!"
+-  (= __ (= "foo" :foo 'foo))
++  (= false (= "foo" :foo 'foo))
+ 
+   "Make a keyword with your keyboard"
+-  (= :foo (keyword __))
++  (= :foo (keyword "foo"))
+ 
+   "Symbolism is all around us"
+-  (= 'foo (symbol __))
++  (= 'foo (symbol "foo"))
+ 
+   "When things cannot be equal, they must be different"
+-  (not= :fill-in-the-blank __))
++  (not= :fill-in-the-blank "fill-in-the-blank"))
+diff --git a/src/koans/02_lists.clj b/src/koans/02_lists.clj
+index 8cdce7f..79a2653 100644
+--- a/src/koans/02_lists.clj
++++ b/src/koans/02_lists.clj
+@@ -3,43 +3,43 @@
+ 
+ (meditations
+   "Lists can be expressed by function or a quoted form"
+-  (= '(__ __ __ __ __) (list 1 2 3 4 5))
++  (= '(1 2 3 4 5) (list 1 2 3 4 5))
+ 
+   "They are Clojure seqs (sequences), so they allow access to the first"
+-  (= __ (first '(1 2 3 4 5)))
++  (= 1 (first '(1 2 3 4 5)))
+ 
+   "As well as the rest"
+-  (= __ (rest '(1 2 3 4 5)))
++  (= '(2 3 4 5) (rest '(1 2 3 4 5)))
+ 
+   "Count your blessings"
+-  (= __ (count '(dracula dooku chocula)))
++  (= 3 (count '(dracula dooku chocula)))
+ 
+   "Before they are gone"
+-  (= __ (count '()))
++  (= 0 (count '()))
+ 
+   "The rest, when nothing is left, is empty"
+-  (= __ (rest '(100)))
++  (= '() (rest '(100)))
+ 
+   "Construction by adding an element to the front is easy"
+-  (= __ (cons :a '(:b :c :d :e)))
++  (= '(:a :b :c :d :e) (cons :a '(:b :c :d :e)))
+ 
+   "Conjoining an element to a list isn't hard either"
+-  (= __ (conj '(:a :b :c :d) :e))
++  (= '(:e :a :b :c :d) (conj '(:a :b :c :d) :e))
+ 
+   "You can use a list like a stack to get the first element"
+-  (= __ (peek '(:a :b :c :d :e)))
++  (= :a (peek '(:a :b :c :d :e)))
+ 
+   "Or the others"
+-  (= __ (pop '(:a :b :c :d :e)))
++  (= '(:b :c :d :e) (pop '(:a :b :c :d :e)))
+ 
+   "But watch out if you try to pop nothing"
+-  (= __ (try
++  (= "No dice!" (try
+           (pop '())
+           (catch IllegalStateException e
+             "No dice!")))
+ 
+   "The rest of nothing isn't so strict"
+-  (= __ (try
++  (= '() (try
+           (rest '())
+           (catch IllegalStateException e
+             "No dice!"))))
+diff --git a/src/koans/03_vectors.clj b/src/koans/03_vectors.clj
+index 87146d5..5e74e23 100644
+--- a/src/koans/03_vectors.clj
++++ b/src/koans/03_vectors.clj
+@@ -3,31 +3,31 @@
+ 
+ (meditations
+   "You can use vectors in clojure as array-like structures"
+-  (= __ (count [42]))
++  (= 1 (count [42]))
+ 
+   "You can create a vector from a list"
+-  (= __ (vec '(1)))
++  (= [1] (vec '(1)))
+ 
+   "Or from some elements"
+-  (= __ (vector nil nil))
++  (= [nil nil] (vector nil nil))
+ 
+   "But you can populate it with any number of elements at once"
+-  (= [1 __] (vec '(1 2)))
++  (= [1 2] (vec '(1 2)))
+ 
+   "Conjoining to a vector is different than to a list"
+-  (= __ (conj [111 222] 333))
++  (= [111 222 333] (conj [111 222] 333))
+ 
+   "You can get the first element of a vector like so"
+-  (= __ (first [:peanut :butter :and :jelly]))
++  (= :peanut (first [:peanut :butter :and :jelly]))
+ 
+   "And the last in a similar fashion"
+-  (= __ (last [:peanut :butter :and :jelly]))
++  (= :jelly (last [:peanut :butter :and :jelly]))
+ 
+   "Or any index if you wish"
+-  (= __ (nth [:peanut :butter :and :jelly] 3))
++  (= :jelly (nth [:peanut :butter :and :jelly] 3))
+ 
+   "You can also slice a vector"
+-  (= __ (subvec [:peanut :butter :and :jelly] 1 3))
++  (= [:butter :and] (subvec [:peanut :butter :and :jelly] 1 3))
+ 
+   "Equality with collections is in terms of values"
+-  (= (list 1 2 3) (vector 1 2 __)))
++  (= (list 1 2 3) (vector 1 2 3)))
+diff --git a/src/koans/04_sets.clj b/src/koans/04_sets.clj
+index 0b5d14e..42c16a8 100644
+--- a/src/koans/04_sets.clj
++++ b/src/koans/04_sets.clj
+@@ -3,19 +3,19 @@
+ 
+ (meditations
+   "You can create a set by converting another collection"
+-  (= #{3} (set __))
++  (= #{3} (set [3]))
+ 
+   "Counting them is like counting other collections"
+-  (= __ (count #{1 2 3}))
++  (= 3 (count #{1 2 3}))
+ 
+   "Remember that a set is a *mathematical* set"
+-  (= __ (set '(1 1 2 2 3 3 4 4 5 5)))
++  (= #{1 2 3 4 5} (set '(1 1 2 2 3 3 4 4 5 5)))
+ 
+   "You can ask clojure for the union of two sets"
+-  (= __ (clojure.set/union #{1 2 3 4} #{2 3 5}))
++  (= #{1 2 3 4 5} (clojure.set/union #{1 2 3 4} #{2 3 5}))
+ 
+   "And also the intersection"
+-  (= __ (clojure.set/intersection #{1 2 3 4} #{2 3 5}))
++  (= #{2 3} (clojure.set/intersection #{1 2 3 4} #{2 3 5}))
+ 
+   "But don't forget about the difference"
+-  (= __ (clojure.set/difference #{1 2 3 4 5} #{2 3 5})))
++  (= #{1 4} (clojure.set/difference #{1 2 3 4 5} #{2 3 5})))
+diff --git a/src/koans/05_maps.clj b/src/koans/05_maps.clj
+index 25291c0..f024be2 100644
+--- a/src/koans/05_maps.clj
++++ b/src/koans/05_maps.clj
+@@ -3,48 +3,48 @@
+ 
+ (meditations
+   "Don't get lost when creating a map"
+-  (= {:a 1 :b 2} (hash-map :a 1 __ __))
++  (= {:a 1 :b 2} (hash-map :a 1 :b 2))
+ 
+   "A value must be supplied for each key"
+-  (= {:a 1} (hash-map :a __))
++  (= {:a 1} (hash-map :a 1))
+ 
+   "The size is the number of entries"
+-  (= __ (count {:a 1 :b 2}))
++  (= 2 (count {:a 1 :b 2}))
+ 
+   "You can look up the value for a given key"
+-  (= __ (get {:a 1 :b 2} :b))
++  (= 2 (get {:a 1 :b 2} :b))
+ 
+   "Maps can be used as functions to do lookups"
+-  (= __ ({:a 1 :b 2} :a))
++  (= 1 ({:a 1 :b 2} :a))
+ 
+   "And so can keywords"
+-  (= __ (:a {:a 1 :b 2}))
++  (= 1 (:a {:a 1 :b 2}))
+ 
+   "But map keys need not be keywords"
+-  (= __ ({2006 "Torino" 2010 "Vancouver" 2014 "Sochi"} 2010))
++  (= "Vancouver" ({2006 "Torino" 2010 "Vancouver" 2014 "Sochi"} 2010))
+ 
+   "You may not be able to find an entry for a key"
+-  (= __ (get {:a 1 :b 2} :c))
++  (= nil (get {:a 1 :b 2} :c))
+ 
+   "But you can provide your own default"
+-  (= __ (get {:a 1 :b 2} :c :key-not-found))
++  (= :key-not-found (get {:a 1 :b 2} :c :key-not-found))
+ 
+   "You can find out if a key is present"
+-  (= __ (contains? {:a nil :b nil} :b))
++  (= true (contains? {:a nil :b nil} :b))
+ 
+   "Or if it is missing"
+-  (= __ (contains? {:a nil :b nil} :c))
++  (= false (contains? {:a nil :b nil} :c))
+ 
+   "Maps are immutable, but you can create a new and improved version"
+-  (= {1 "January" 2 __} (assoc {1 "January"} 2 "February"))
++  (= {1 "January" 2 "February"} (assoc {1 "January"} 2 "February"))
+ 
+   "You can also create a new version with an entry removed"
+-  (= {__ __} (dissoc {1 "January" 2 "February"} 2))
++  (= {1 "January"} (dissoc {1 "January" 2 "February"} 2))
+ 
+   "Often you will need to get the keys, but the order is undependable"
+-  (= (list __ __ __)
++  (= (list 2006 2010 2014)
+      (sort (keys {2010 "Vancouver" 2014 "Sochi" 2006 "Torino"})))
+ 
+   "You can get the values in a similar way"
+-  (= (list __ __ __)
++  (= (list "Sochi" "Torino" "Vancouver")
+      (sort (vals {2006 "Torino" 2010 "Vancouver" 2014 "Sochi"}))))
+diff --git a/src/koans/06_functions.clj b/src/koans/06_functions.clj
+index fa3e9a1..480b251 100644
+--- a/src/koans/06_functions.clj
++++ b/src/koans/06_functions.clj
+@@ -8,33 +8,33 @@
+ 
+ (meditations
+   "Calling a function is like giving it a hug with parentheses"
+-  (= __ (square 9))
++  (= 81 (square 9))
+ 
+   "Functions are usually defined before they are used"
+-  (= __ (multiply-by-ten 2))
++  (= 20 (multiply-by-ten 2))
+ 
+   "But they can also be defined inline"
+-  (= __ ((fn [n] (* 5 n)) 2))
++  (= 10 ((fn [n] (* 5 n)) 2))
+ 
+   "Or using an even shorter syntax"
+-  (= __ (#(* 15 %) 4))
++  (= 60 (#(* 15 %) 4))
+ 
+   "Even anonymous functions may take multiple arguments"
+-  (= __ (#(+ %1 %2 %3) 4 5 6))
++  (= 15 (#(+ %1 %2 %3) 4 5 6))
+ 
+   "Arguments can also be skipped"
+-  (= __ (#(* 15 %2) 1 2))
++  (= 30 (#(* 15 %2) 1 2))
+ 
+   "One function can beget another"
+-  (= 9 (((fn [] ___)) 4 5))
++  (= 9 (((fn [] #(+ %1 %2))) 4 5))
+ 
+   "Functions can also take other functions as input"
+   (= 20 ((fn [f] (f 4 5))
+-           ___))
++           #(* %1 %2)))
+ 
+   "Higher-order functions take function arguments"
+-  (= 25 (___
++  (= 25 ((fn [f] (f 5))
+           (fn [n] (* n n))))
+ 
+   "But they are often better written using the names of functions"
+-  (= 25 (___ square)))
++  (= 25 ((fn [f] (f 5)) square)))
+diff --git a/src/koans/07_conditionals.clj b/src/koans/07_conditionals.clj
+index b33efc6..b6e291a 100644
+--- a/src/koans/07_conditionals.clj
++++ b/src/koans/07_conditionals.clj
+@@ -12,38 +12,38 @@
+ 
+ (meditations
+   "You will face many decisions"
+-  (= __ (if (false? (= 4 5))
++  (= :a (if (false? (= 4 5))
+           :a
+           :b))
+ 
+   "Some of them leave you no alternative"
+-  (= __ (if (> 4 3)
++  (= [] (if (> 4 3)
+           []))
+ 
+   "And in such a situation you may have nothing"
+-  (= __ (if (nil? 0)
++  (= nil (if (nil? 0)
+           [:a :b :c]))
+ 
+   "In others your alternative may be interesting"
+   (= :glory (if (not (empty? ()))
+               :doom
+-              __))
++              :glory))
+ 
+   "You may have a multitude of possible paths"
+   (let [x 5]
+-    (= :your-road (cond (= x __) :road-not-taken
+-                        (= x __) :another-road-not-taken
+-                        :else __)))
++    (= :your-road (cond (= x 1) :road-not-taken
++                        (= x 2) :another-road-not-taken
++                        :else :your-road)))
+ 
+   "Or your fate may be sealed"
+-  (= 'doom (if-not (zero? __)
++  (= 'doom (if-not (zero? 1)
+           'doom
+           'more-doom))
+ 
+   "In case of emergency, sound the alarms"
+   (= :sirens
+-     (explain-defcon-level __))
++     (explain-defcon-level :cocked-pistol))
+ 
+   "But admit it when you don't know what to do"
+-  (= __
++  (= :say-what?
+      (explain-defcon-level :yo-mama)))
+diff --git a/src/koans/08_higher_order_functions.clj b/src/koans/08_higher_order_functions.clj
+index 299022b..03a559d 100644
+--- a/src/koans/08_higher_order_functions.clj
++++ b/src/koans/08_higher_order_functions.clj
+@@ -3,33 +3,33 @@
+ 
+ (meditations
+   "The map function relates a sequence to another"
+-  (= [__ __ __] (map (fn [x] (* 4 x)) [1 2 3]))
++  (= [4 8 12] (map (fn [x] (* 4 x)) [1 2 3]))
+ 
+   "You may create that mapping"
+-  (= [1 4 9 16 25] (map (fn [x] __) [1 2 3 4 5]))
++  (= [1 4 9 16 25] (map (fn [x] (* x x)) [1 2 3 4 5]))
+ 
+   "Or use the names of existing functions"
+-  (= __ (map nil? [:a :b nil :c :d]))
++  (= [false false true false false] (map nil? [:a :b nil :c :d]))
+ 
+   "A filter can be strong"
+-  (= __ (filter (fn [x] false) '(:anything :goes :here)))
++  (= '() (filter (fn [x] false) '(:anything :goes :here)))
+ 
+   "Or very weak"
+-  (= __ (filter (fn [x] true) '(:anything :goes :here)))
++  (= '(:anything :goes :here) (filter (fn [x] true) '(:anything :goes :here)))
+ 
+   "Or somewhere in between"
+-  (= [10 20 30] (filter (fn [x] __) [10 20 30 40 50 60 70 80]))
++  (= [10 20 30] (filter (fn [x] (< x 40)) [10 20 30 40 50 60 70 80]))
+ 
+   "Maps and filters may be combined"
+-  (= [10 20 30] (map (fn [x] __) (filter (fn [x] __) [1 2 3 4 5 6 7 8])))
++  (= [10 20 30] (map (fn [x] (* x 10)) (filter (fn [x] (< x 4)) [1 2 3 4 5 6 7 8])))
+ 
+   "Reducing can increase the result"
+-  (= __ (reduce (fn [a b] (* a b)) [1 2 3 4]))
++  (= 24 (reduce (fn [a b] (* a b)) [1 2 3 4]))
+ 
+   "You can start somewhere else"
+-  (= 2400 (reduce (fn [a b] (* a b)) __ [1 2 3 4]))
++  (= 2400 (reduce (fn [a b] (* a b)) 100 [1 2 3 4]))
+ 
+   "Numbers are not the only things one can reduce"
+   (= "longest" (reduce (fn [a b]
+-                         (if (< __ __) b a))
++                         (if (< (count a) (count b)) b a))
+                        ["which" "word" "is" "longest"])))
+diff --git a/src/koans/09_runtime_polymorphism.clj b/src/koans/09_runtime_polymorphism.clj
+index 806c8df..3f3c791 100644
+--- a/src/koans/09_runtime_polymorphism.clj
++++ b/src/koans/09_runtime_polymorphism.clj
+@@ -10,19 +10,19 @@
+                    "!")))
+ 
+ (defmulti diet (fn [x] (:eater x)))
+-(defmethod diet :herbivore [a] __)
+-(defmethod diet :carnivore [a] __)
+-(defmethod diet :default [a] __)
++(defmethod diet :herbivore [a] (str (:name a) " eats veggies."))
++(defmethod diet :carnivore [a] (str (:name a) " eats animals."))
++(defmethod diet :default [a] (str "I don't know what " (:name a) " eats."))
+ 
+ (meditations
+   "Some functions can be used in different ways - with no arguments"
+-  (= __ (hello))
++  (= "Hello World!" (hello))
+ 
+   "With one argument"
+-  (= __ (hello "world"))
++  (= "Hello, you silly world." (hello "world"))
+ 
+   "Or with many arguments"
+-  (= __
++  (= "Hello to this group: Peter, Paul, Mary!"
+      (hello "Peter" "Paul" "Mary"))
+ 
+   "Multimethods allow more complex dispatching"
+diff --git a/src/koans/10_lazy_sequences.clj b/src/koans/10_lazy_sequences.clj
+index 07c6858..656d1c9 100644
+--- a/src/koans/10_lazy_sequences.clj
++++ b/src/koans/10_lazy_sequences.clj
+@@ -3,26 +3,26 @@
+ 
+ (meditations
+   "There are many ways to generate a sequence"
+-  (= __ (range 1 5))
++  (= [1 2 3 4] (range 1 5))
+ 
+   "The range starts at the beginning by default"
+-  (= __ (range 5))
++  (= [0 1 2 3 4] (range 5))
+ 
+   "Only take what you need when the sequence is large"
+   (= [0 1 2 3 4 5 6 7 8 9]
+-     (take __ (range 100)))
++     (take 10 (range 100)))
+ 
+   "Or limit results by dropping what you don't need"
+   (= [95 96 97 98 99]
+-     (drop __ (range 100)))
++     (drop 95 (range 100)))
+ 
+   "Iteration provides an infinite lazy sequence"
+-  (= __ (take 20 (iterate inc 0)))
++  (= (range 0 20) (take 20 (iterate inc 0)))
+ 
+   "Repetition is key"
+   (= [:a :a :a :a :a :a :a :a :a :a ]
+-     (repeat 10 __))
++     (repeat 10 :a))
+ 
+   "Iteration can be used for repetition"
+   (= (repeat 100 :foo)
+-     (take 100 (iterate ___ :foo))))
++     (take 100 (iterate (fn [x] x) :foo))))
+diff --git a/src/koans/11_sequence_comprehensions.clj b/src/koans/11_sequence_comprehensions.clj
+index be8462e..afdbe57 100644
+--- a/src/koans/11_sequence_comprehensions.clj
++++ b/src/koans/11_sequence_comprehensions.clj
+@@ -3,7 +3,7 @@
+ 
+ (meditations
+   "Sequence comprehensions can bind each element in turn to a symbol"
+-  (= __
++  (= '(0 1 2 3 4 5)
+      (for [x (range 6)]
+        x))
+ 
+@@ -12,20 +12,20 @@
+      (map (fn [x] (* x x))
+           (range 6))
+      (for [x (range 6)]
+-       __))
++       (* x x)))
+ 
+   "And also filtering"
+   (= '(1 3 5 7 9)
+      (filter odd? (range 10))
+-     (for [x __ :when (odd? x)]
++     (for [x (range 10) :when (odd? x)]
+        x))
+ 
+   "Combinations of these transformations is trivial"
+   (= '(1 9 25 49 81)
+      (map (fn [x] (* x x))
+           (filter odd? (range 10)))
+-     (for [x (range 10) :when __]
+-       __))
++     (for [x (range 10) :when (odd? x)]
++       (* x x)))
+ 
+   "More complex transformations simply take multiple binding forms"
+   (= [[:top :left] [:top :middle] [:top :right]
+@@ -33,4 +33,4 @@
+       [:bottom :left] [:bottom :middle] [:bottom :right]]
+      (for [row [:top :middle :bottom]
+            column [:left :middle :right]]
+-       __)))
++       [row column])))
+diff --git a/src/koans/12_creating_functions.clj b/src/koans/12_creating_functions.clj
+index 1ade8ae..23f0a34 100644
+--- a/src/koans/12_creating_functions.clj
++++ b/src/koans/12_creating_functions.clj
+@@ -5,31 +5,31 @@
+ 
+ (meditations
+   "One may know what they seek by knowing what they do not seek"
+-  (= [__ __ __] (let [not-a-symbol? (complement symbol?)]
++  (= [true false true] (let [not-a-symbol? (complement symbol?)]
+                   (map not-a-symbol? [:a 'b "c"])))
+ 
+   "Praise and 'complement' may help you separate the wheat from the chaff"
+   (= [:wheat "wheat" 'wheat]
+-       (let [not-nil? ___]
++       (let [not-nil? (complement nil?)]
+          (filter not-nil? [nil :wheat nil "wheat" nil 'wheat nil])))
+ 
+   "Partial functions allow procrastination"
+   (= 20 (let [multiply-by-5 (partial * 5)]
+-          (___ __)))
++          (multiply-by-5 4)))
+ 
+   "Don't forget: first things first"
+-  (= [__ __ __ __]
++  (= [:a :b 1 2]
+        (let [ab-adder (partial concat [:a :b])]
+-         (ab-adder [__ __])))
++         (ab-adder [1 2])))
+ 
+   "Functions can join forces as one 'composed' function"
+   (= 25 (let [inc-and-square (comp square inc)]
+-          (inc-and-square __)))
++          (inc-and-square 4)))
+ 
+   "Have a go on a double dec-er"
+-  (= __ (let [double-dec (comp dec dec)]
++  (= 8 (let [double-dec (comp dec dec)]
+           (double-dec 10)))
+ 
+   "Be careful about the order in which you mix your functions"
+-  (= 99 (let [square-and-dec ___]
++  (= 99 (let [square-and-dec (comp dec square)]
+           (square-and-dec 10))))
+diff --git a/src/koans/13_recursion.clj b/src/koans/13_recursion.clj
+index 0bfcf6a..28e85cd 100644
+--- a/src/koans/13_recursion.clj
++++ b/src/koans/13_recursion.clj
+@@ -3,21 +3,30 @@
+ 
+ (defn is-even? [n]
+   (if (= n 0)
+-    __
+-    (___ (is-even? (dec n)))))
++    true
++    (not (is-even? (dec n)))))
+ 
+ (defn is-even-bigint? [n]
+   (loop [n   n
+          acc true]
+     (if (= n 0)
+-      __
++      acc
+       (recur (dec n) (not acc)))))
+ 
+ (defn recursive-reverse [coll]
+-  __)
+-
++  (if (empty? coll)
++    []
++    (conj (recursive-reverse (rest coll)) (first coll))))
++
++;(defn factorial [n]
++;  (if (= n 1)
++;    1
++;    (* n (factorial (dec n)))))
+ (defn factorial [n]
+-  __)
++  (loop [cnt n acc 1]
++    (if (zero? cnt)
++      acc
++      (recur (dec cnt) (* acc cnt)))))
+ 
+ (meditations
+   "Recursion ends with a base case"
+diff --git a/src/koans/14_destructuring.clj b/src/koans/14_destructuring.clj
+index 42e0940..e91e24a 100644
+--- a/src/koans/14_destructuring.clj
++++ b/src/koans/14_destructuring.clj
+@@ -8,37 +8,44 @@
+ 
+ (meditations
+   "Destructuring is an arbiter: it breaks up arguments"
+-  (= __ ((fn [[a b]] (str b a))
++  (= ":bar:foo" ((fn [[a b]] (str b a))
+          [:foo :bar]))
+ 
+   "Whether in function definitions"
+   (= (str "First comes love, "
+           "then comes marriage, "
+           "then comes Clojure with the baby carriage")
+-     ((fn [[a b c]] __)
++     ((fn [[a b c]] (str
++                      (str "First comes " a ", ")
++                      (str "then comes " b ", ")
++                      (str "then comes " c " with the baby carriage")))
+       ["love" "marriage" "Clojure"]))
+ 
+   "Or in let expressions"
+   (= "Rich Hickey aka The Clojurer aka Go Time aka Macro Killah"
+      (let [[first-name last-name & aliases]
+            (list "Rich" "Hickey" "The Clojurer" "Go Time" "Macro Killah")]
+-       __))
++       (apply str (interpose " aka " (conj aliases (str first-name " " last-name))))))
+ 
+   "You can regain the full argument if you like arguing"
+   (= {:original-parts ["Stephen" "Hawking"] :named-parts {:first "Stephen" :last "Hawking"}}
+      (let [[first-name last-name :as full-name] ["Stephen" "Hawking"]]
+-       __))
++       {:original-parts full-name :named-parts {:first first-name :last last-name}}))
+ 
+   "Break up maps by key"
+   (= "123 Test Lane, Testerville, TX"
+      (let [{street-address :street-address, city :city, state :state} test-address]
+-       __))
++       (str street-address ", " city ", " state)))
+ 
+   "Or more succinctly"
+   (= "123 Test Lane, Testerville, TX"
+-     (let [{:keys [street-address __ __]} test-address]
+-       __))
++     (let [{:keys [street-address city state]} test-address]
++       (str street-address ", " city ", " state)))
+ 
+   "All together now!"
+   (= "Test Testerson, 123 Test Lane, Testerville, TX"
+-     (___ ["Test" "Testerson"] test-address)))
++     ((fn [[first-name last-name]
++           {:keys [street-address city state]}]
++        (str first-name " " last-name ", " street-address ", " city ", " state))
++        ["Test" "Testerson"]
++        test-address)))
+diff --git a/src/koans/15_refs.clj b/src/koans/15_refs.clj
+index ea96e50..80b682e 100644
+--- a/src/koans/15_refs.clj
++++ b/src/koans/15_refs.clj
+@@ -6,18 +6,18 @@
+ 
+ (meditations
+   "In the beginning, there was a word"
+-  (= __ (deref the-world))
++  (= "hello" (deref the-world))
+ 
+   "You can get the word more succinctly, but it's the same"
+-  (= __ @the-world)
++  (= "hello" @the-world)
+ 
+   "You can be the change you wish to see in the world."
+-  (= __ (do
++  (= "better" (do
+           (dosync (ref-set the-world "better"))
+           @the-world))
+ 
+   "Alter where you need not replace"
+-  (= __ (let [exclamator (fn [x] (str x "!"))]
++  (= "better!!!" (let [exclamator (fn [x] (str x "!"))]
+           (dosync
+            (alter the-world exclamator)
+            (alter the-world exclamator)
+@@ -25,12 +25,13 @@
+           @the-world))
+ 
+   "Don't forget to do your work in a transaction!"
+-  (= 0 (do __
++  (= 0 (do
++         (dosync (ref-set the-world 0))
+            @the-world))
+ 
+   "Functions passed to alter may depend on the data in the ref"
+   (= 20 (do
+-          (dosync (alter the-world ___))))
++          (dosync (alter the-world (fn [n] 20)))))
+ 
+   "Two worlds are better than one"
+   (= ["Real Jerry" "Bizarro Jerry"]
+@@ -39,4 +40,4 @@
+           (ref-set the-world {})
+           (alter the-world assoc :jerry "Real Jerry")
+           (alter bizarro-world assoc :jerry "Bizarro Jerry")
+-          __))))
++          (map :jerry [@the-world @bizarro-world])))))
+diff --git a/src/koans/16_atoms.clj b/src/koans/16_atoms.clj
+index cc782d7..6d9bf85 100644
+--- a/src/koans/16_atoms.clj
++++ b/src/koans/16_atoms.clj
+@@ -5,29 +5,29 @@
+ 
+ (meditations
+   "Atoms are like refs"
+-  (= __ @atomic-clock)
++  (= 0 @atomic-clock)
+ 
+   "You can change at the swap meet"
+-  (= __ (do
++  (= 1 (do
+           (swap! atomic-clock inc)
+           @atomic-clock))
+ 
+   "Keep taxes out of this: swapping requires no transaction"
+   (= 5 (do
+-         __
++         (swap! atomic-clock (fn [x] 5))
+          @atomic-clock))
+ 
+   "Any number of arguments might happen during a swap"
+-  (= __ (do
++  (= 20 (do
+           (swap! atomic-clock + 1 2 3 4 5)
+           @atomic-clock))
+ 
+   "Atomic atoms are atomic"
+-  (= __ (do
++  (= 20 (do
+           (compare-and-set! atomic-clock 100 :fin)
+           @atomic-clock))
+ 
+   "When your expectations are aligned with reality, things proceed that way"
+   (= :fin (do
+-            (compare-and-set! __ __ __)
++            (compare-and-set! atomic-clock 20 :fin)
+             @atomic-clock)))
