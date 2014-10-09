@@ -199,7 +199,7 @@ class BinaryNode extends Node
   constructor: (@left, @op, @right, @symbolTable) ->
 
 class ItemNode extends Node
-  constructor: (@item, @symbolTable) ->
+  constructor: (@item, @type, @symbolTable) ->
 
 class UnaryNode extends Node
   constructor: (@op, @exp, @symbolTable) ->
@@ -355,11 +355,82 @@ class Parser
         @expect TokenType.RPAREN
         node
       when TokenType.NUMBER
-        new ItemNode @get(), @symbolTable
+        new ItemNode @get(), TokenType.NUMBER, @symbolTable
       when TokenType.IDENT
-        new ItemNode @get(), @symbolTable
+        new ItemNode @get(), TokenType.IDENT, @symbolTable
       else
         throw new CompileError "Unexpected token #{token}"
+
+
+class Compiler
+
+  # Symbols table.
+  symbolTable: null
+
+  constructor: ->
+    @symbolTable = {}
+
+  compile: (node) ->
+    if node instanceof LinesNode
+      @compileLinesNode node
+    else if node instanceof AssignNode
+      @compileAssignNode node
+    else if node instanceof PrintNode
+      @compilePrintNode node
+    else if node instanceof BinaryNode
+      @compileBinaryNode node
+    else if node instanceof ItemNode
+      @compileItemNode node
+    else if node instanceof UnaryNode
+      @compileUnaryNode node
+    else
+      throw new CompileError "Got unexpected node #{node}"
+
+  compileUnaryNode: (node) ->
+    base = if node.op is TokenType.PLUS then 1 else -1
+
+    base * (@compile node.exp)
+
+  compileItemNode: (node) ->
+    switch node.type
+      when TokenType.NUMBER
+        parseInt node.item, 10
+      when TokenType.IDENT
+        identVal = @symbolTable[node.item.getValue()]
+        if not identVal?
+          throw new CompileError "Undefined variable: #{node.item}"
+        identVal
+
+  compileBinaryNode: (node) ->
+    lval = @compile node.left
+    rval = @compile node.right
+
+    switch node.op
+      when TokenType.PLUS
+        lval + rval
+      when TokenType.MINUS
+        lval - rval
+      when TokenType.TIMES
+        lval * rval
+      when TokenType.OVER
+        lval / rval
+      when TokenType.POW
+        Math.pow lval, rval
+
+  compilePrintNode: (node) ->
+    expVal = @compile node.exp
+    console.log expVal
+    
+    expVal
+
+  compileAssignNode: (node) ->
+    identVal = @compile node.exp
+    @symbolTable[node.ident.getValue()] = identVal
+    
+    identVal
+
+  compileLinesNode: (node) ->
+    @compile lineNode for lineNode in node.lines
 
 
 root.CompileError = CompileError
@@ -368,3 +439,4 @@ root.TokenType    = TokenType
 root.TokenPattern = TokenPattern
 root.Lexer        = Lexer
 root.Parser       = Parser
+root.Compiler     = Compiler
