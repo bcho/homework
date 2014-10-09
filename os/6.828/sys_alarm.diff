@@ -1,0 +1,154 @@
+diff --git a/Makefile b/Makefile
+index 5251f36..800b5e0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -26,7 +26,7 @@ OBJS = \
+ 	trap.o\
+ 	uart.o\
+ 	vectors.o\
+-	vm.o\
++	vm.o
+ 
+ # Cross-compiling (e.g., on Mac OS X)
+ # TOOLPREFIX = i386-jos-elf
+@@ -172,6 +172,7 @@ UPROGS=\
+ 	_usertests\
+ 	_wc\
+ 	_zombie\
++	_alarmtest
+ 
+ fs.img: mkfs README $(UPROGS)
+ 	./mkfs fs.img README $(UPROGS)
+diff --git a/proc.c b/proc.c
+index a642f5a..1335123 100644
+--- a/proc.c
++++ b/proc.c
+@@ -70,6 +70,10 @@ found:
+   memset(p->context, 0, sizeof *p->context);
+   p->context->eip = (uint)forkret;
+ 
++  p->alarmticks = 0;
++  p->alarmhandler = 0;
++  p->alarmticks_passed = 0;
++
+   return p;
+ }
+ 
+diff --git a/proc.h b/proc.h
+index 3b9c3ac..8b2e3d4 100644
+--- a/proc.h
++++ b/proc.h
+@@ -66,6 +66,9 @@ struct proc {
+   struct file *ofile[NOFILE];  // Open files
+   struct inode *cwd;           // Current directory
+   char name[16];               // Process name (debugging)
++  int alarmticks;              // Alarm ticks
++  int alarmticks_passed;       // Alarm ran ticks
++  void (*alarmhandler)();      // Alarm handler
+ };
+ 
+ // Process memory is laid out contiguously, low addresses first:
+diff --git a/syscall.c b/syscall.c
+index 799ebc2..ff7fb53 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -98,6 +98,7 @@ extern int sys_unlink(void);
+ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
++extern int sys_alarm(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -121,6 +122,7 @@ static int (*syscalls[])(void) = {
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_alarm]   sys_alarm,
+ };
+ 
+ void
+diff --git a/syscall.h b/syscall.h
+index bc5f356..7f2e507 100644
+--- a/syscall.h
++++ b/syscall.h
+@@ -20,3 +20,4 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_alarm  22
+diff --git a/sysproc.c b/sysproc.c
+index 027a5e5..246471a 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -89,3 +89,21 @@ sys_uptime(void)
+   release(&tickslock);
+   return xticks;
+ }
++
++int
++sys_alarm(void)
++{
++  int ticks;
++  void (*handler)();
++
++  if (argint(0, &ticks) < 0)
++    return -1;
++  if (argptr(1, (char **) &handler, 1) < 0)
++    return -1;
++
++  proc->alarmticks = ticks;
++  proc->alarmhandler = handler;
++  proc->alarmticks_passed = 0;
++  
++  return 0;
++}
+diff --git a/trap.c b/trap.c
+index 3f80145..b4e22ea 100644
+--- a/trap.c
++++ b/trap.c
+@@ -54,6 +54,23 @@ trap(struct trapframe *tf)
+       wakeup(&ticks);
+       release(&tickslock);
+     }
++    // Process alarm tick.
++    if (proc && ((tf->cs & 3) == 3)) {
++      proc->alarmticks_passed++;
++
++      // Run alarm handler.
++      if (proc->alarmticks_passed >= proc->alarmticks) {
++        // Store current instruction.
++        tf->esp -= 4;
++        *((uint *) (tf->esp)) = tf->eip;
++
++        // Run alarm handler.
++        tf->eip = (uint) proc->alarmhandler;
++
++        // Reset alarm.
++        proc->alarmticks_passed = 0;
++      }
++    }
+     lapiceoi();
+     break;
+   case T_IRQ0 + IRQ_IDE:
+diff --git a/user.h b/user.h
+index f45b8d5..bcb6007 100644
+--- a/user.h
++++ b/user.h
+@@ -23,6 +23,7 @@ int getpid(void);
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
++int alarm(int, void (*)());
+ 
+ // ulib.c
+ int stat(char*, struct stat*);
+diff --git a/usys.S b/usys.S
+index 8bfd8a1..a12e199 100644
+--- a/usys.S
++++ b/usys.S
+@@ -29,3 +29,4 @@ SYSCALL(getpid)
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(alarm)
