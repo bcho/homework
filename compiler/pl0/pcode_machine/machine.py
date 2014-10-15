@@ -194,3 +194,252 @@ builtins_list = [
 ]
 
 builtins = {i.name: i for i in builtins_list}
+
+
+# ## Machine
+
+
+class DoubleEndStack(object):
+    '''Double end stack with capacity.
+
+    :param capacity: stack's capacity.
+    '''
+
+    INITIAL_VALUE = 0
+
+    def __init__(self, capacity):
+        # Stack capacity.
+        self.capacity = capacity
+        assert(self.capacity > 0), 'Should have positive capacity.'
+
+        # Stack instance.
+        self._stack = []
+
+        # Lowend stack top, points to next available cell, starts from 0.
+        self._low_top = 0
+
+        # Lowend stack bottom, points to 0.
+        self._low_bottom = 0
+
+        # Highend stack top, points to next available cell,
+        # starts from `capacity` - 1.
+        self._high_top = self.capacity - 1
+
+        # Highend stack bottom, points to `capacity` - 1.
+        self._high_bottom = self.capacity - 1
+
+        self.reset()
+
+    def reset(self):
+        '''Reset stack.'''
+        self._stack = [self.INITIAL_VALUE for i in range(self.capacity)]
+
+        self._low_top = 0
+        self._high_top = self.capacity - 1
+
+    @property
+    def is_low_empty(self):
+        '''Indicates if the lowend stack is empty.'''
+        return self._low_top <= self._low_bottom
+
+    @property
+    def is_low_full(self):
+        '''Indicates if the lowend stack is full.'''
+        return self._low_top > self._high_top
+
+    def push_low(self, something):
+        '''Push something into the lowend stack,
+        raises an `IndexError` when overflow.
+
+        :param something: anything you want to push into the stack.
+        '''
+        if self.is_low_full:
+            raise IndexError('Stack overflow.')
+
+        self._stack[self._low_top] = something
+        self._low_top = self._low_top + 1
+
+    def pop_low(self):
+        '''Pop an element from lowend stack,
+        raises `IndexError` when stack is empty.'''
+        if self.is_low_empty:
+            raise IndexError('Empty stack.')
+
+        self._low_top = self._low_top - 1
+        element = self._stack[self._low_top]
+
+        return element
+
+    def low_push_at(self, index, something):
+        '''Push something in the lowend stack with given index.
+        If the index is illegal, raises `IndexError`.
+
+        :param index: index to be written.
+        :param something: anything you want to push into the stack.
+        '''
+        if index >= self._low_top or index < self._low_bottom:
+            raise IndexError('Invalid position.')
+
+        self._stack[index] = something
+
+    def low_get_at(self, index):
+        '''Retrieve an element in the lowend stack with given index.
+        If the index is illegal, raises `IndexError`.
+
+        :param index: specify index.
+        '''
+        if self.is_low_empty:
+            return None
+        if index >= self._low_top or index < self._low_bottom:
+            raise IndexError('Invalid position.')
+
+        return self._stack[index]
+
+    @property
+    def low_top(self):
+        '''Get lowend stack's top element.
+        Returns `None` when the lowend stack is empty.
+        '''
+        if self.is_low_empty:
+            return None
+        return self._stack[self._low_top - 1]
+
+    @property
+    def low_top_index(self):
+        '''Get lowend stack's top index.'''
+        return self._low_top - 1
+
+    @property
+    def is_high_empty(self):
+        '''Indicates if the highend stack is empty.'''
+        return self._high_top >= self._high_bottom
+
+    @property
+    def is_high_full(self):
+        '''Indicates if the highend stack is full.'''
+        return self._high_top < self._low_top
+
+    def push_high(self, something):
+        '''Push something into the highend stack,
+        raises an `IndexError` when overflow.
+
+        :param something: anything you want to push into the stack.
+        '''
+        if self.is_high_full:
+            raise IndexError('Stack overflow.')
+
+        self._stack[self._high_top] = something
+        self._high_top = self._high_top - 1
+
+    def pop_high(self):
+        '''Pop an element from lowend stack,
+        raises `IndexError` when stack is empty.'''
+        if self.is_high_empty:
+            raise IndexError('Empty stack.')
+
+        self._high_top = self._high_top + 1
+        element = self._stack[self._high_top]
+
+        return element
+
+    def high_push_at(self, index, something):
+        '''Push something in the highend stack with given index.
+        If the index is illegal, raises `IndexError`.
+
+        :param index: index to be written.
+        :param something: anything you want to push into the stack.
+        '''
+        if index <= self._high_top or index > self._high_bottom:
+            raise IndexError('Invalid position.')
+
+        self._stack[index] = something
+
+    def high_get_at(self, index):
+        '''Retrieve an element in the highend stack with given index.
+        If the index is illegal, raises `IndexError`.
+
+        :param index: specify index.
+        '''
+        if self.is_high_empty:
+            return None
+        if index <= self._high_top or index > self._high_bottom:
+            raise IndexError('Invalid position.')
+
+        return self._stack[index]
+
+    @property
+    def high_top(self):
+        '''Get highend stack's top element.
+        Returns `None` when the highend stack is empty.
+        '''
+        if self.is_high_empty:
+            return None
+        return self._stack[self._high_top + 1]
+
+    @property
+    def high_top_index(self):
+        '''Get highend stack's top index.'''
+        return self._high_top + 1
+
+
+class Machine(object):
+    '''P-code machine implementation.
+
+    TODO handle stdin / stdout
+    :param stdin: machine's stdin environment.
+    :param stdout: machine's stdout environment.
+    '''
+
+    # Data store capacity.
+    DATA_STORE_CAPACITY = 65536
+
+    # Stack frame size.
+    #
+    # ### Stack frame:
+    #
+    # MP (frame begin) ->   +------------+
+    #                       |     RV     |
+    #                       +------------+
+    #                       |     SL     |
+    #                       +------------+
+    #                       |     DL     |
+    #                       +------------+
+    #                       |     EP     |
+    #                       +------------+
+    #                       |     RA     |
+    # SP (maybe here)  ->   +------------+
+    STACK_FRAME_SIZE = 5
+
+    def __init__(self, stdin, stdout):
+        self.stdin = stdin
+        self.stdout = stdout
+
+        # Instructions store.
+        self.istore = None
+
+        # Program counter.
+        self.pc = 0
+
+        # Data store.
+        self.dstore = DoubleEndStack(self.DATA_STORE_CAPACITY)
+
+        # Extreme pointer. (Won't be used here.)
+        self.ep = 0
+
+        # Mark pointer. See `stack frame` description above.
+        self.mp = 0
+
+        # New pointer bottom, points to the bottom of the heap.
+        self.np_bottom = 0
+
+    @property
+    def sp(self):
+        '''Stack pointer, see `stack frame` description above.'''
+        # Use the highend of dstore.
+        return self.dstore.high_top_index
+
+    @property
+    def np(self):
+        '''New pointer, points to the top of the heap.'''
+        # Use the lowend of dstore.
+        return self.dstore.low_top_index
