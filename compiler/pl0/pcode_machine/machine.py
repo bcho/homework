@@ -288,12 +288,28 @@ class DoubleEndStack(object):
 
         :param index: specify index.
         '''
-        if self.is_low_empty:
-            return None
         if index >= self._low_top or index < self._low_bottom:
             raise IndexError('Invalid position.')
 
         return self._stack[index]
+
+    def low_move_to(self, index, fill_value):
+        '''Move low index to a new index.
+        If the stack needs to expand, fill the new cells with `fill_value`.
+        Raise `IndexError` if the new index is illegal.
+
+        :param index: new index.
+        :param fill_value: filled value for new cells.
+        '''
+        if index > self._high_top:
+            raise IndexError('Stack overflow.')
+        if index < self._low_bottom:
+            raise IndexError('Stack underflow.')
+
+        while index >= self._low_top:
+            self.push_low(fill_value)
+        while index < self._low_top - 1:
+            self.pop_low()
 
     @property
     def low_top(self):
@@ -360,12 +376,28 @@ class DoubleEndStack(object):
 
         :param index: specify index.
         '''
-        if self.is_high_empty:
-            return None
         if index <= self._high_top or index > self._high_bottom:
             raise IndexError('Invalid position.')
 
         return self._stack[index]
+
+    def high_move_to(self, index, fill_value):
+        '''Move high index to a new index.
+        If the stack needs to expand, fill the new cells with `fill_value`.
+        Raise `IndexError` if the new index is illegal.
+
+        :param index: new index.
+        :param fill_value: filled value for new cells.
+        '''
+        if index < self._low_top:
+            raise IndexError('Stack overflow.')
+        if index > self._high_bottom:
+            raise IndexError('Stack underflow.')
+
+        while index <= self._high_top:
+            self.push_high(fill_value)
+        while index > self._high_top + 1:
+            self.pop_high()
 
     @property
     def high_top(self):
@@ -443,3 +475,43 @@ class Machine(object):
         '''New pointer, points to the top of the heap.'''
         # Use the lowend of dstore.
         return self.dstore.low_top_index
+
+    def execute(self, instructions, start_pc):
+        '''Execute instructions.
+
+        :param instructions: instructions to be executed.
+        :param start_pc: instructions entry point.
+        '''
+        self.reset(instructions, start_pc)
+
+    def reset(self, instructions, start_pc):
+        '''Reset machine state.
+
+        TODO prepare constants area.
+        :param instructions: instructions to be executed.
+        :param start_pc: instructions entry point.
+        '''
+        self.istore = instructions
+        self.pc = start_pc
+        self.ep = 0
+        self.mp = 0
+        self.np = 0
+        self.np_bottom = 0
+        self.sp = 0
+
+    def stack_push(self, data):
+        '''Push data to stack.
+
+        :param data: data to be pushed into the stack.
+        '''
+        self.dstore.push_high(data)
+
+    def stack_pop(self):
+        '''Pop from stack.'''
+        return self.dstore.pop_high()
+
+    def malloc(self, size):
+        raise NotImplementedError
+
+    def free(self, address):
+        raise NotImplementedError

@@ -100,7 +100,7 @@ class TestDoubleEndStack(unittest.TestCase):
 
     def testOverflow(self):
         '''Apply some random test for stack.'''
-        low_end_to_push = random.randint(0, self.capacity + 1)
+        low_end_to_push = random.randint(0, self.capacity)
         boundary = low_end_to_push
         high_end_to_push = self.capacity - low_end_to_push
 
@@ -158,6 +158,50 @@ class TestDoubleEndStack(unittest.TestCase):
             self.assertEqual(i, self.stack.pop_high())
         self.assertTrue(self.stack.is_low_empty)
         self.assertTrue(self.stack.is_high_empty)
+
+    def testLowIndexMoveTo(self):
+        fill_value = 1
+
+        # Should raise exception in boundary cases.
+        self.assertRaises(IndexError, self.stack.low_move_to, -1, fill_value)
+        self.assertRaises(IndexError, self.stack.low_move_to, self.capacity,
+                          fill_value)
+
+        self.stack.low_move_to(0, fill_value)
+        self.assertEqual(0, self.stack.low_top_index)
+
+        self.stack.low_move_to(self.capacity - 1, fill_value)
+        while not self.stack.is_low_empty:
+            self.assertEqual(fill_value, self.stack.pop_low())
+
+    def testHighIndexMoveTo(self):
+        fill_value = 1
+
+        # Should raise exception in boundary cases.
+        self.assertRaises(IndexError, self.stack.high_move_to, -1, fill_value)
+        self.assertRaises(IndexError, self.stack.high_move_to,
+                          self.capacity, fill_value)
+
+        self.stack.high_move_to(self.capacity - 1, fill_value)
+        self.assertEqual(self.capacity - 1, self.stack.high_top_index)
+
+        self.stack.low_move_to(0, fill_value)
+        while not self.stack.is_high_empty:
+            self.assertEqual(fill_value, self.stack.pop_high())
+
+    def testMoveToBoundary(self):
+        fill_value = 1
+        boundary = random.randint(0, self.capacity)
+
+        self.stack.low_move_to(boundary, fill_value)
+        self.assertRaises(IndexError, self.stack.high_move_to, boundary,
+                          fill_value)
+
+        self.stack.reset()
+
+        self.stack.high_move_to(boundary, fill_value)
+        self.assertRaises(IndexError, self.stack.low_move_to, boundary,
+                          fill_value)
 
 
 if __name__ == '__main__':
