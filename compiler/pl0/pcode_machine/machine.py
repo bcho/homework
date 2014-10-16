@@ -50,83 +50,387 @@ GET_OP2 = lambda x: (int(x) >> (OPCODE_BITS + OP1_BITS)) & OP2_MASK
 
 
 # ### Instructions
-Instruction = namedtuple('Instruction', ['name', 'opcode', 'comments'])
+Instruction = namedtuple('Instruction', ['name', 'opcode', 'fn'])
+
+
+def inst_cup(machine):
+    '''Call user procedure'''
+    raise NotImplementedError
+
+
+def inst_csp(machine):
+    '''Call standard procedure'''
+    raise NotImplementedError
+
+
+def inst_ent(machine):
+    '''Procedure entry'''
+    raise NotImplementedError
+
+
+def inst_mst(machine):
+    '''Mark stack'''
+    raise NotImplementedError
+
+
+def inst_rtn(machine):
+    '''Return'''
+    raise NotImplementedError
+
+
+def inst_equ(machine):
+    '''Equality comparison'''
+    raise NotImplementedError
+
+
+def inst_neq(machine):
+    '''Inequality comparison'''
+    raise NotImplementedError
+
+
+def inst_grt(machine):
+    '''Greater than comparison'''
+    raise NotImplementedError
+
+
+def inst_geq(machine):
+    '''Greater than or equal comparison'''
+    raise NotImplementedError
+
+
+def inst_les(machine):
+    '''Less than comparison'''
+    raise NotImplementedError
+
+
+def inst_leq(machine):
+    '''Less than or equal comparison'''
+    raise NotImplementedError
+
+
+def inst_adi(machine):
+    '''Integer addition'''
+    raise NotImplementedError
+
+
+def inst_sbi(machine):
+    '''Integer subtraction'''
+    raise NotImplementedError
+
+
+def inst_ngi(machine):
+    '''Integer sign inversion'''
+    raise NotImplementedError
+
+
+def inst_mpi(machine):
+    '''Integer multiplication'''
+    raise NotImplementedError
+
+
+def inst_dvi(machine):
+    '''Integer divison'''
+    raise NotImplementedError
+
+
+def inst_mod(machine):
+    '''Integer modulo'''
+    raise NotImplementedError
+
+
+def inst_abi(machine):
+    '''Integer absolute value'''
+    raise NotImplementedError
+
+
+def inst_sqi(machine):
+    '''Integer square'''
+    raise NotImplementedError
+
+
+def inst_inc(machine):
+    '''Increment'''
+    raise NotImplementedError
+
+
+def inst_dec(machine):
+    '''Decrement'''
+    raise NotImplementedError
+
+
+def inst_adr(machine):
+    '''Real addition'''
+    raise NotImplementedError
+
+
+def inst_sbr(machine):
+    '''Real subtraction'''
+    raise NotImplementedError
+
+
+def inst_ngr(machine):
+    '''Real sign inversion'''
+    raise NotImplementedError
+
+
+def inst_mpr(machine):
+    '''Real multiplication'''
+    raise NotImplementedError
+
+
+def inst_dvr(machine):
+    '''Real divison'''
+    raise NotImplementedError
+
+
+def inst_abr(machine):
+    '''Real absolute value'''
+    raise NotImplementedError
+
+
+def inst_sqr(machine):
+    '''Real square'''
+    raise NotImplementedError
+
+
+def inst_ior(machine):
+    '''Inclusive OR'''
+    raise NotImplementedError
+
+
+def inst_and(machine):
+    '''And'''
+    raise NotImplementedError
+
+
+def inst_xor(machine):
+    '''Exclusive OR'''
+    raise NotImplementedError
+
+
+def inst_not(machine):
+    '''Complement'''
+    raise NotImplementedError
+
+
+def inst_inn(machine):
+    '''Set membership'''
+    raise NotImplementedError
+
+
+def inst_uni(machine):
+    '''Set union'''
+    raise NotImplementedError
+
+
+def inst_int(machine):
+    '''Set intersection'''
+    raise NotImplementedError
+
+
+def inst_dif(machine):
+    '''Set difference'''
+    raise NotImplementedError
+
+
+def inst_cmp(machine):
+    '''Set complement'''
+    raise NotImplementedError
+
+
+def inst_sgs(machine):
+    '''Generate singleton set'''
+    raise NotImplementedError
+
+
+def inst_ujp(machine):
+    '''Unconditional jump'''
+    raise NotImplementedError
+
+
+def inst_xjp(machine):
+    '''Indexed jump'''
+    raise NotImplementedError
+
+
+def inst_fjp(machine):
+    '''False jump'''
+    raise NotImplementedError
+
+
+def inst_tjp(machine):
+    '''True jump'''
+    raise NotImplementedError
+
+
+def inst_flt(machine):
+    '''Float top of stack'''
+    raise NotImplementedError
+
+
+def inst_flo(machine):
+    '''Float next to top of stack'''
+    raise NotImplementedError
+
+
+def inst_trc(machine):
+    '''Truncate'''
+    raise NotImplementedError
+
+
+def inst_md(machine):
+    '''Round'''
+    raise NotImplementedError
+
+
+def inst_chr(machine):
+    '''Convert to character'''
+    raise NotImplementedError
+
+
+def inst_ord(machine):
+    '''Convert to integer'''
+    raise NotImplementedError
+
+
+def inst_stp(machine):
+    '''Stop machine.'''
+    raise NotImplementedError
+
+
+def inst_lda(machine):
+    '''Load address of data'''
+    raise NotImplementedError
+
+
+def inst_ldc(machine):
+    '''Load constant'''
+    raise NotImplementedError
+
+
+def inst_ldi(machine):
+    '''Load indirect'''
+    raise NotImplementedError
+
+
+def inst_lva(machine):
+    '''Load value (address)'''
+    raise NotImplementedError
+
+
+def inst_lvb(machine):
+    '''Load value (boolean)'''
+    raise NotImplementedError
+
+
+def inst_lvc(machine):
+    '''Load value (character)'''
+    raise NotImplementedError
+
+
+def inst_lvi(machine):
+    '''Load value (integer)'''
+    raise NotImplementedError
+
+
+def inst_lvr(machine):
+    '''Load value (real)'''
+    raise NotImplementedError
+
+
+def inst_lvs(machine):
+    '''Load value (set)'''
+    raise NotImplementedError
+
+
+def inst_sti(machine):
+    '''Store indirect'''
+    raise NotImplementedError
+
+
+def inst_ixa(machine):
+    '''Compute indexed address'''
+    raise NotImplementedError
+
 
 insts_list = [
     # Subprogram linkage ops.
-    Instruction('CUP', 0x00, 'Call user procedure'),
-    Instruction('CSP', 0x01, 'Call standard procedure'),
-    Instruction('ENT', 0x02, 'Procedure entry'),
-    Instruction('MST', 0x03, 'Mark stack'),
-    Instruction('RTN', 0x04, 'Return'),
+    Instruction('CUP', 0x00, inst_cup),
+    Instruction('CSP', 0x01, inst_csp),
+    Instruction('ENT', 0x02, inst_ent),
+    Instruction('MST', 0x03, inst_mst),
+    Instruction('RTN', 0x04, inst_rtn),
 
     # Comparaion ops.
-    Instruction('EQU', 0x05, 'Equality comparison'),
-    Instruction('NEQ', 0x06, 'Inequality comparison'),
-    Instruction('GRT', 0x07, 'Greater than comparison'),
-    Instruction('GEQ', 0x08, 'Greater than or equal comparison'),
-    Instruction('LES', 0x09, 'Less than comparison'),
-    Instruction('LEQ', 0x0A, 'Less than or equal comparison'),
+    Instruction('EQU', 0x05, inst_equ),
+    Instruction('NEQ', 0x06, inst_neq),
+    Instruction('GRT', 0x07, inst_grt),
+    Instruction('GEQ', 0x08, inst_geq),
+    Instruction('LES', 0x09, inst_les),
+    Instruction('LEQ', 0x0A, inst_leq),
 
     # Arithmetic ops.
-    Instruction('ADI', 0x0B, 'Integer addition'),
-    Instruction('SBI', 0x0C, 'Integer subtraction'),
-    Instruction('NGI', 0x0D, 'Integer sign inversion'),
-    Instruction('MPI', 0x0E, 'Integer multiplication'),
-    Instruction('DVI', 0x0F, 'Integer divison'),
-    Instruction('MOD', 0x10, 'Integer modulo'),
-    Instruction('ABI', 0x11, 'Integer absolute value'),
-    Instruction('SQI', 0x12, 'Integer square'),
-    Instruction('INC', 0x13, 'Increment'),
-    Instruction('DEC', 0x14, 'Decrement'),
-    Instruction('ABR', 0x15, 'Real addition'),
-    Instruction('SBR', 0x16, 'Real subtraction'),
-    Instruction('NGR', 0x17, 'Real sign inversion'),
-    Instruction('MPR', 0x18, 'Real multiplication'),
-    Instruction('DVR', 0x19, 'Real divison'),
-    Instruction('ABR', 0x1A, 'Real absolute value'),
-    Instruction('SQR', 0x1B, 'Real square'),
+    Instruction('ADI', 0x0B, inst_adi),
+    Instruction('SBI', 0x0C, inst_sbi),
+    Instruction('NGI', 0x0D, inst_ngi),
+    Instruction('MPI', 0x0E, inst_mpi),
+    Instruction('DVI', 0x0F, inst_dvi),
+    Instruction('MOD', 0x10, inst_mod),
+    Instruction('ABI', 0x11, inst_abi),
+    Instruction('SQI', 0x12, inst_sqi),
+    Instruction('INC', 0x13, inst_inc),
+    Instruction('DEC', 0x14, inst_dec),
+    Instruction('ADR', 0x15, inst_adr),
+    Instruction('SBR', 0x16, inst_sbr),
+    Instruction('NGR', 0x17, inst_ngr),
+    Instruction('MPR', 0x18, inst_mpr),
+    Instruction('DVR', 0x19, inst_dvr),
+    Instruction('ABR', 0x1A, inst_abr),
+    Instruction('SQR', 0x1B, inst_sqr),
 
     # Boolean ops.
-    Instruction('IOR', 0x1C, 'Inclusive OR'),
-    Instruction('AND', 0x1D, 'And'),
-    Instruction('XOR', 0x1E, 'Exclusive OR'),
-    Instruction('NOT', 0x1F, 'Complement'),
+    Instruction('IOR', 0x1C, inst_ior),
+    Instruction('AND', 0x1D, inst_and),
+    Instruction('XOR', 0x1E, inst_xor),
+    Instruction('NOT', 0x1F, inst_not),
 
     # Set ops. (Not implement yet.)
-    Instruction('INN', 0x20, 'Set membership'),
-    Instruction('UNI', 0x21, 'Set union'),
-    Instruction('INT', 0x22, 'Set intersection'),
-    Instruction('DIF', 0x23, 'Set difference'),
-    Instruction('CMP', 0x24, 'Comlement'),
-    Instruction('SGS', 0x25, 'Generate singleton set'),
+    Instruction('INN', 0x20, inst_inn),
+    Instruction('UNI', 0x21, inst_uni),
+    Instruction('INT', 0x22, inst_int),
+    Instruction('DIF', 0x23, inst_dif),
+    Instruction('CMP', 0x24, inst_cmp),
+    Instruction('SGS', 0x25, inst_sgs),
 
     # Jump ops.
-    Instruction('UJP', 0x26, 'Unconditional jump'),
-    Instruction('XJP', 0x27, 'Indexed jump'),
-    Instruction('FJP', 0x28, 'False jump'),
-    Instruction('TJP', 0x29, 'True jump'),
+    Instruction('UJP', 0x26, inst_ujp),
+    Instruction('XJP', 0x27, inst_xjp),
+    Instruction('FJP', 0x28, inst_fjp),
+    Instruction('TJP', 0x29, inst_tjp),
 
     # Conversion ops.
-    Instruction('FLT', 0x2A, 'Float top of stack'),
-    Instruction('FLO', 0x2B, 'Float next to top of stack'),
-    Instruction('TRC', 0x2C, 'Truncate'),
-    Instruction('MD',  0x2D, 'Round'),
-    Instruction('CHR', 0x2E, 'Convert to character'),
-    Instruction('ORD', 0x2F, 'Convert to integer'),
+    Instruction('FLT', 0x2A, inst_flt),
+    Instruction('FLO', 0x2B, inst_flo),
+    Instruction('TRC', 0x2C, inst_trc),
+    Instruction('MD',  0x2D, inst_md),
+    Instruction('CHR', 0x2E, inst_chr),
+    Instruction('ORD', 0x2F, inst_ord),
+
+    # Program termination ops.
+    Instruction('STP', 0x30, inst_stp),
 
     # Data reference ops.
-    Instruction('LDA', 0x31, 'Load address of data'),
-    Instruction('LDC', 0x32, 'Load constant'),
-    Instruction('LDI', 0x33, 'Load indrect'),
-    Instruction('LVA', 0x34, 'Load value (address)'),
-    Instruction('LVB', 0x35, 'Load value (boolean)'),
-    Instruction('LVC', 0x36, 'Load value (character)'),
-    Instruction('LVI', 0x37, 'Load value (integer)'),
-    Instruction('LVR', 0x38, 'Load value (float)'),
-    Instruction('LVS', 0x39, 'Load value (set)'),
-    Instruction('STI', 0x3A, 'Store indirect'),
-    Instruction('IXA', 0x3B, 'Compute indexed address')
+    Instruction('LDA', 0x31, inst_lda),
+    Instruction('LDC', 0x32, inst_ldc),
+    Instruction('LDI', 0x33, inst_ldi),
+    Instruction('LVA', 0x34, inst_lva),
+    Instruction('LVB', 0x35, inst_lvb),
+    Instruction('LVC', 0x36, inst_lvc),
+    Instruction('LVI', 0x37, inst_lvi),
+    Instruction('LVR', 0x38, inst_lvr),
+    Instruction('LVS', 0x39, inst_lvs),
+    Instruction('STI', 0x3A, inst_sti),
+    Instruction('IXA', 0x3B, inst_ixa)
 ]
 
 # Instruction name-ed map
@@ -173,7 +477,7 @@ data_types = {i.type: i for i in data_types_list}
 Builtin = namedtuple('Builtin', ['name', 'opcode', 'comments', 'fn'])
 
 # TODO implement the builtins.
-builtin_default_fn = lambda: panic(NotImplementedError)
+builtin_default_fn = lambda *args, **kwargs: panic(NotImplementedError)
 
 builtins_list = [
     Builtin('rdb', 0x00, 'Read boolean', builtin_default_fn),
