@@ -1,0 +1,449 @@
+diff --git a/kern/env.c b/kern/env.c
+index 03f1bb3..a621d1d 100644
+--- a/kern/env.c
++++ b/kern/env.c
+@@ -114,8 +114,18 @@ envid2env(envid_t envid, struct Env **env_store, bool checkperm)
+ void
+ env_init(void)
+ {
++	int i;
++
+ 	// Set up envs array
+ 	// LAB 3: Your code here.
++	for (i = NENV - 1; i >= 0; i--) {
++		// Init env.
++		envs[i].env_id = 0;
++
++		// Insert into env_free_list.
++		envs[i].env_link = env_free_list;
++		env_free_list = &envs[i];
++	}
+ 
+ 	// Per-CPU part of the initialization
+ 	env_init_percpu();
+@@ -161,6 +171,7 @@ env_setup_vm(struct Env *e)
+ 	// Allocate a page for the page directory
+ 	if (!(p = page_alloc(ALLOC_ZERO)))
+ 		return -E_NO_MEM;
++	p->pp_ref++;
+ 
+ 	// Now, set e->env_pgdir and initialize the page directory.
+ 	//
+@@ -179,6 +190,15 @@ env_setup_vm(struct Env *e)
+ 	//    - The functions in kern/pmap.h are handy.
+ 
+ 	// LAB 3: Your code here.
++	e->env_pgdir = page2kva(p);
++
++	// Above UTOP
++	for (i = PDX(UTOP); i < NPDENTRIES; i++)
++		e->env_pgdir[i] = kern_pgdir[i];
++
++	// Below UTOP
++	for (i = 0; i < PDX(UTOP); i++)
++		e->env_pgdir[i] = 0;
+ 
+ 	// UVPT maps the env's own page table read-only.
+ 	// Permissions: kernel R, user R
+@@ -267,6 +287,19 @@ region_alloc(struct Env *e, void *va, size_t len)
+ 	//   'va' and 'len' values that are not page-aligned.
+ 	//   You should round va down, and round (va + len) up.
+ 	//   (Watch out for corner-cases!)
++	int i;
++	struct PageInfo *page;
++
++	va = ROUNDDOWN(va, PGSIZE);
++	len = ROUNDUP(len, PGSIZE);
++
++	for (i = 0; i < len; i+= PGSIZE) {
++		if ((page = page_alloc(ALLOC_ZERO)) ==  0)
++			panic("region_alloc(): cannot alloc page");
++
++		if (page_insert(e->env_pgdir, page, va + i, PTE_U | PTE_W) != 0)
++			panic("region_alloc(): cannot insert page");
++	}
+ }
+ 
+ //
+@@ -323,11 +356,40 @@ load_icode(struct Env *e, uint8_t *binary)
+ 	//  What?  (See env_run() and env_pop_tf() below.)
+ 
+ 	// LAB 3: Your code here.
++	struct Elf *elfh;
++	struct Proghdr *ph, *eph;
++	char *seg_va;
++	int i;
++	struct PageInfo *page;
++
++	lcr3(PADDR(e->env_pgdir));
++	elfh = (struct Elf *) binary;
++	if (elfh->e_magic != ELF_MAGIC)
++		panic("load_icode(): not an ELF binary");
++
++	ph = (struct Proghdr *) ((uint8_t *) elfh + elfh->e_phoff);
++	eph = ph + elfh->e_phnum;
++	for (; ph < eph; ph++) {
++		if (ph->p_type != ELF_PROG_LOAD)
++			continue;
++
++		region_alloc(e, (void *) ph->p_va, ph->p_filesz);
++		seg_va = (char *) ph->p_va;
++		for (i = 0; i < ph->p_filesz; i++)
++			seg_va[i] = binary[ph->p_offset + i];
++	}
++	e->env_tf.tf_eip = elfh->e_entry;
+ 
+ 	// Now map one page for the program's initial stack
+ 	// at virtual address USTACKTOP - PGSIZE.
+ 
+ 	// LAB 3: Your code here.
++	page = page_alloc(ALLOC_ZERO);
++	if (page == NULL)
++		panic("load_icode(): unable to alloc page");
++	page_insert(e->env_pgdir, page, (void *) (USTACKTOP - PGSIZE), PTE_W|PTE_U);
++	
++	lcr3(PADDR(kern_pgdir));
+ }
+ 
+ //
+@@ -341,6 +403,14 @@ void
+ env_create(uint8_t *binary, enum EnvType type)
+ {
+ 	// LAB 3: Your code here.
++	int ret;
++	struct Env *env;
++
++	if ((ret = env_alloc(&env, 0)) < 0)
++		panic("env_create(): %e", ret);
++
++	load_icode(env, binary);
++	env->env_type = type;
+ }
+ 
+ //
+@@ -456,7 +526,12 @@ env_run(struct Env *e)
+ 	//	e->env_tf to sensible values.
+ 
+ 	// LAB 3: Your code here.
+-
+-	panic("env_run not yet implemented");
++	if (curenv != NULL && curenv->env_status == ENV_RUNNING)
++		curenv->env_status = ENV_RUNNABLE;
++	curenv = e;
++	curenv->env_status = ENV_RUNNING;
++	curenv->env_runs++;
++	lcr3(PADDR(curenv->env_pgdir));
++	env_pop_tf(&curenv->env_tf);
+ }
+ 
+diff --git a/kern/kdebug.c b/kern/kdebug.c
+index 5b92a9e..e8947a8 100644
+--- a/kern/kdebug.c
++++ b/kern/kdebug.c
+@@ -150,6 +150,9 @@ debuginfo_eip(uintptr_t addr, struct Eipdebuginfo *info)
+ 
+ 		// Make sure the STABS and string table memory is valid.
+ 		// LAB 3: Your code here.
++		if (user_mem_check(curenv, stabs, (uintptr_t) stab_end - (uintptr_t) stabs, PTE_U)
++		    || user_mem_check(curenv, stabstr, stabstr_end - stabstr, PTE_U))
++			return -1;
+ 	}
+ 
+ 	// String table validity checks
+diff --git a/kern/pmap.c b/kern/pmap.c
+index 2589470..409cfaf 100644
+--- a/kern/pmap.c
++++ b/kern/pmap.c
+@@ -162,6 +162,10 @@ mem_init(void)
+ 	//////////////////////////////////////////////////////////////////////
+ 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
+ 	// LAB 3: Your code here.
++	envs = (struct Env *) boot_alloc(sizeof(struct Env) * NENV);
++	if (envs == 0)
++		panic("mem_init(): cannot alloc envs array");
++	memset(envs, 0, sizeof(struct Env) * NENV);
+ 
+ 	//////////////////////////////////////////////////////////////////////
+ 	// Now that we've allocated the initial kernel data structures, we set
+@@ -189,6 +193,11 @@ mem_init(void)
+ 			ROUNDUP(npages * sizeof(struct PageInfo), PGSIZE),
+ 			PADDR(pages),
+ 			PTE_U);
++	boot_map_region(kern_pgdir,
++			(uintptr_t) pages,
++			ROUNDUP(npages * sizeof(struct PageInfo), PGSIZE),
++			PADDR(pages),
++			PTE_W);
+ 
+ 	//////////////////////////////////////////////////////////////////////
+ 	// Map the 'envs' array read-only by the user at linear address UENVS
+@@ -197,6 +206,16 @@ mem_init(void)
+ 	//    - the new image at UENVS  -- kernel R, user R
+ 	//    - envs itself -- kernel RW, user NONE
+ 	// LAB 3: Your code here.
++	boot_map_region(kern_pgdir,
++			UENVS,
++			ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
++			PADDR(envs),
++			PTE_U);
++	boot_map_region(kern_pgdir,
++			(uintptr_t) envs,
++			ROUNDUP(NENV * sizeof(struct Env), PGSIZE),
++			PADDR(envs),
++			PTE_W);
+ 
+ 	//////////////////////////////////////////////////////////////////////
+ 	// Use the physical memory that 'bootstack' refers to as the kernel
+@@ -211,7 +230,7 @@ mem_init(void)
+ 	boot_map_region(kern_pgdir,
+ 			KSTACKTOP - KSTKSIZE, KSTKSIZE,
+ 			PADDR(bootstack),
+-			PTE_P | PTE_W);
++			PTE_W);
+ 	boot_map_region(kern_pgdir,
+ 			KSTKSIZE - PTSIZE, PTSIZE - KSTKSIZE, 0, 0);
+ 
+@@ -580,8 +599,36 @@ int
+ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
+ {
+ 	// LAB 3: Your code here.
++	uintptr_t i;
++	uint32_t offset;
++	pte_t *entry;
++
++	for (i = (uintptr_t) va;
++	     i < ROUNDUP((uintptr_t) va + len - 1, PGSIZE);
++	     i += PGSIZE) {
++		if (i >= ULIM)
++			goto fail;
++
++		if ((entry = pgdir_walk(env->env_pgdir, (void *) i, 0)) == NULL)
++			goto fail;
++
++		offset = PGOFF(*entry);
++
++		if (!(offset & PTE_U))
++			goto fail;
++
++		// Check user page permission.
++		
++		// The page is not writeable.
++		if (!(offset & PTE_W) && (perm & PTE_W))
++			goto fail;
++	}
+ 
+ 	return 0;
++
++fail:
++	user_mem_check_addr = i;
++	return -E_FAULT;
+ }
+ 
+ //
+diff --git a/kern/syscall.c b/kern/syscall.c
+index 3e11eee..8f80ff3 100644
+--- a/kern/syscall.c
++++ b/kern/syscall.c
+@@ -21,6 +21,7 @@ sys_cputs(const char *s, size_t len)
+ 	// Destroy the environment if not.
+ 
+ 	// LAB 3: Your code here.
++	user_mem_assert(curenv, (void *) s, len, PTE_U | PTE_P);
+ 
+ 	// Print the string supplied by the user.
+ 	cprintf("%.*s", len, s);
+@@ -69,12 +70,24 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
+ 	// Call the function corresponding to the 'syscallno' parameter.
+ 	// Return any appropriate return value.
+ 	// LAB 3: Your code here.
+-
+-	panic("syscall not implemented");
+-
++	
+ 	switch (syscallno) {
+-	default:
+-		return -E_NO_SYS;
++		case SYS_cputs:
++			sys_cputs((char *) a1, (size_t) a2);
++			break;
++		case SYS_cgetc:
++			sys_cgetc();
++			break;
++		case SYS_getenvid:
++			return sys_getenvid();
++		case SYS_env_destroy:
++			return sys_env_destroy((envid_t) a1);
++		case NSYSCALLS:
++			break;
++		default:
++			return -E_INVAL;
+ 	}
++
++	return 0;
+ }
+ 
+diff --git a/kern/trap.c b/kern/trap.c
+index 82c517d..d58d262 100644
+--- a/kern/trap.c
++++ b/kern/trap.c
+@@ -65,6 +65,52 @@ trap_init(void)
+ 	extern struct Segdesc gdt[];
+ 
+ 	// LAB 3: Your code here.
++	extern void trap_divide();
++	extern void trap_debug();
++	extern void trap_nmi();
++	extern void trap_brkpt();
++	extern void trap_oflow();
++	extern void trap_bound();
++	extern void trap_illop();
++	extern void trap_device();
++	extern void trap_dblflt();
++	extern void trap_tss();
++	extern void trap_segnp();
++	extern void trap_stack();
++	extern void trap_gpflt();
++	extern void trap_pgflt();
++	extern void trap_fperr();
++	extern void trap_align();
++	extern void trap_mchk();
++	extern void trap_simderr();
++	extern void trap_syscall();
++	extern void trap_default();
++
++	int i = 0;
++	SETGATE(idt[0], 0, GD_KT, trap_default, 0);
++	// Init the IDT.
++	for (i = 1; i < 255; i++)
++		idt[i] = idt[0];
++
++	SETGATE(idt[T_DIVIDE], 1, GD_KT, trap_divide, 0);
++	SETGATE(idt[T_DEBUG], 1, GD_KT, trap_debug, 0);
++	SETGATE(idt[T_NMI], 0, GD_KT, trap_nmi, 0);
++	SETGATE(idt[T_BRKPT], 1, GD_KT, trap_brkpt, 3);		// Let user env to invoke monitor.
++	SETGATE(idt[T_OFLOW], 1, GD_KT, trap_oflow, 0);
++	SETGATE(idt[T_BOUND], 1, GD_KT, trap_bound, 0);
++	SETGATE(idt[T_ILLOP], 1, GD_KT, trap_illop, 0);
++	SETGATE(idt[T_DEVICE], 1, GD_KT, trap_device, 0);
++	SETGATE(idt[T_DBLFLT], 1, GD_KT, trap_dblflt, 0);
++	SETGATE(idt[T_TSS], 1, GD_KT, trap_tss, 0);
++	SETGATE(idt[T_SEGNP], 1, GD_KT, trap_segnp, 0);
++	SETGATE(idt[T_STACK], 1, GD_KT, trap_stack, 0);
++	SETGATE(idt[T_GPFLT], 1, GD_KT, trap_gpflt, 0);
++	SETGATE(idt[T_PGFLT], 1, GD_KT, trap_pgflt, 0);
++	SETGATE(idt[T_FPERR], 1, GD_KT, trap_fperr, 0);
++	SETGATE(idt[T_ALIGN], 1, GD_KT, trap_align, 0);
++	SETGATE(idt[T_MCHK], 1, GD_KT, trap_mchk, 0);
++	SETGATE(idt[T_SIMDERR], 1, GD_KT, trap_simderr, 0);
++	SETGATE(idt[T_SYSCALL], 1, GD_KT, trap_syscall, 3);	// User should be able to invoke syscall.
+ 
+ 	// Per-CPU setup 
+ 	trap_init_percpu();
+@@ -143,14 +189,33 @@ trap_dispatch(struct Trapframe *tf)
+ {
+ 	// Handle processor exceptions.
+ 	// LAB 3: Your code here.
+-
+-	// Unexpected trap: The user process or the kernel has a bug.
+-	print_trapframe(tf);
+-	if (tf->tf_cs == GD_KT)
+-		panic("unhandled trap in kernel");
+-	else {
+-		env_destroy(curenv);
+-		return;
++	switch (tf->tf_trapno) {
++		case T_PGFLT:
++			page_fault_handler(tf);
++			return;
++		case T_BRKPT:
++			monitor(tf);
++			env_destroy(curenv);
++			return;
++		case T_SYSCALL:
++			curenv->env_tf = *tf;
++			tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
++						      tf->tf_regs.reg_edx,
++						      tf->tf_regs.reg_ecx,
++						      tf->tf_regs.reg_ebx,
++						      tf->tf_regs.reg_edi,
++						      tf->tf_regs.reg_esi);
++			return;
++		default:
++			cprintf("trapno: %d\n", tf->tf_trapno);
++			// Unexpected trap: The user process or the kernel has a bug.
++			print_trapframe(tf);
++			if (tf->tf_cs == GD_KT)
++				panic("unhandled trap in kernel");
++			else {
++				env_destroy(curenv);
++				return;
++			}
+ 	}
+ }
+ 
+@@ -204,6 +269,8 @@ page_fault_handler(struct Trapframe *tf)
+ 	// Handle kernel-mode page faults.
+ 
+ 	// LAB 3: Your code here.
++	if ((tf->tf_cs ^ 0) == 0)		// page fault in kernel mode
++		panic("kernel page fault");
+ 
+ 	// We've already handled kernel-mode exceptions, so if we get here,
+ 	// the page fault happened in user mode.
+diff --git a/kern/trapentry.S b/kern/trapentry.S
+index 22fc640..856da8e 100644
+--- a/kern/trapentry.S
++++ b/kern/trapentry.S
+@@ -46,10 +46,37 @@
+ /*
+  * Lab 3: Your code here for generating entry points for the different traps.
+  */
++TRAPHANDLER_NOEC(trap_divide, T_DIVIDE)
++TRAPHANDLER_NOEC(trap_debug, T_DEBUG)
++TRAPHANDLER_NOEC(trap_nmi, T_NMI)
++TRAPHANDLER_NOEC(trap_brkpt, T_BRKPT)
++TRAPHANDLER_NOEC(trap_oflow, T_OFLOW)
++TRAPHANDLER_NOEC(trap_bound, T_BOUND)
++TRAPHANDLER_NOEC(trap_illop, T_ILLOP)
++TRAPHANDLER_NOEC(trap_device, T_DEVICE)
++TRAPHANDLER(trap_dblflt, T_DBLFLT)
++TRAPHANDLER(trap_tss, T_TSS)
++TRAPHANDLER(trap_segnp, T_SEGNP)
++TRAPHANDLER(trap_stack, T_STACK)
++TRAPHANDLER(trap_gpflt, T_GPFLT)
++TRAPHANDLER(trap_pgflt, T_PGFLT)
++TRAPHANDLER_NOEC(trap_fperr, T_FPERR)
++TRAPHANDLER(trap_align, T_ALIGN)
++TRAPHANDLER_NOEC(trap_mchk, T_MCHK)
++TRAPHANDLER_NOEC(trap_simderr, T_SIMDERR)
+ 
+-
++TRAPHANDLER_NOEC(trap_syscall, T_SYSCALL)
++TRAPHANDLER(trap_default, T_DEFAULT)
+ 
+ /*
+  * Lab 3: Your code here for _alltraps
+  */
+-
++_alltraps:
++    pushl %ds           // build trapframe
++    pushl %es
++    pushal
++    movw $GD_KD, %ax    // switch to kernel data segment
++    movw %ax, %ds
++    movw %ax, %es
++    pushl %esp          // call trap()
++    call trap
+diff --git a/lib/libmain.c b/lib/libmain.c
+index 8a14b29..31b9b37 100644
+--- a/lib/libmain.c
++++ b/lib/libmain.c
+@@ -13,7 +13,7 @@ libmain(int argc, char **argv)
+ {
+ 	// set thisenv to point at our Env structure in envs[].
+ 	// LAB 3: Your code here.
+-	thisenv = 0;
++	thisenv = envs + ENVX(sys_getenvid());
+ 
+ 	// save the name of the program so that panic() can use it
+ 	if (argc > 0)
