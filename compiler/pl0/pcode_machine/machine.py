@@ -49,6 +49,14 @@ OP2_MASK = (1 << OP2_BTIS) - 1
 GET_OP2 = lambda x: (int(x) >> (OPCODE_BITS + OP1_BITS)) & OP2_MASK
 
 
+def disassemble_instruction(inst):
+    '''Disassemble an instruction, returns (opcode, op1, op2).
+
+    :param inst: instruction to be disassembled.
+    '''
+    return (GET_OPCODE(inst), GET_OP1(inst), GET_OP2(inst))
+
+
 # ### Instructions
 Instruction = namedtuple('Instruction', ['name', 'opcode', 'fn'])
 
@@ -295,7 +303,7 @@ def inst_ord(machine):
 
 def inst_stp(machine):
     '''Stop machine.'''
-    raise NotImplementedError
+    machine.stop_machine()
 
 
 def inst_lda(machine):
@@ -433,8 +441,8 @@ insts_list = [
     Instruction('IXA', 0x3B, inst_ixa)
 ]
 
-# Instruction name-ed map
-instructions = {i.name: i for i in insts_list}
+# Instruction opcode-ed map
+instructions = {i.opcode: i for i in insts_list}
 
 
 # ## Registers
@@ -746,6 +754,13 @@ class Machine(object):
     # SP (maybe here)  ->   +------------+
     STACK_FRAME_SIZE = 5
 
+    # Machine state constant.
+    STATE_STOP = 0
+    STATE_RUNNING = 1
+
+    # Supported instrucitons map.
+    instructions = instructions
+
     def __init__(self, stdin, stdout):
         self.stdin = stdin
         self.stdout = stdout
@@ -768,6 +783,9 @@ class Machine(object):
         # New pointer bottom, points to the bottom of the heap.
         self.np_bottom = 0
 
+        # Machine state.
+        self.state = self.STATE_STOP
+
     @property
     def sp(self):
         '''Stack pointer, see `stack frame` description above.'''
@@ -780,6 +798,22 @@ class Machine(object):
         # Use the lowend of dstore.
         return self.dstore.low_top_index
 
+    def advance_pc(self):
+        '''Move pc forward an instruction.'''
+        self.pc = self.pc + 1
+
+    @property
+    def is_machine_running(self):
+        return self.state == self.STATE_RUNNING
+
+    def start_machine(self):
+        '''Start the machine.'''
+        self.state = self.STATE_RUNNING
+
+    def stop_machine(self):
+        '''Stop the machine.'''
+        self.state = self.STATE_STOP
+
     def execute(self, instructions, start_pc):
         '''Execute instructions.
 
@@ -787,6 +821,29 @@ class Machine(object):
         :param start_pc: instructions entry point.
         '''
         self.reset(instructions, start_pc)
+
+        self.start_machine()
+
+        while self.is_machine_running:
+            try:
+                self.execute_instruction()
+            except Exception as e:
+                self.stop_machine()
+                raise e
+
+    def execute_instruction(self):
+        '''Execute an instruction.'''
+        inst_bytecode = self.istore[self.pc]
+        self.advance_pc()
+
+        op, op1, op2 = disassemble_instruction(inst_bytecode)
+        inst = self.instructions.get(op, None)
+        if not inst:
+            panic(message='Unknown instruction: {0:#032b}'.format(
+                inst_bytecode
+            ))
+
+        inst.fn(self)
 
     def reset(self, instructions, start_pc):
         '''Reset machine state.
@@ -796,12 +853,12 @@ class Machine(object):
         :param start_pc: instructions entry point.
         '''
         self.istore = instructions
+        self.dstore.reset()
         self.pc = start_pc
         self.ep = 0
         self.mp = 0
-        self.np = 0
         self.np_bottom = 0
-        self.sp = 0
+        self.state = self.STATE_STOP
 
     def stack_push(self, data):
         '''Push data to stack.
@@ -819,3 +876,8 @@ class Machine(object):
 
     def free(self, address):
         raise NotImplementedError
+
+
+if __name__ == '__main__':
+    machine = Machine(None, None)
+    machine.execute([0x30, 0x10], 0)    # Should stop the machine.
