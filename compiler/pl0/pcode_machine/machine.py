@@ -60,306 +60,417 @@ def disassemble_instruction(inst):
     return (GET_OPCODE(inst), GET_OP1(inst), GET_OP2(inst))
 
 
+def assemble_instruction(opcode, op1=None, op2=None):
+    '''Assemble an instruction.
+
+    :param opcode: opcode or opcode name.
+    :param op1: operand 1.
+    :param op2: operand 2.
+    '''
+    if op1 is None:
+        op1 = 0
+    if op2 is None:
+        op2 = 0
+    if isinstance(opcode, str):
+        opcode = instruction_names[opcode].opcode
+
+    opcode, op1, op2 = int(opcode), int(op1), int(op2)
+    return op2 << OP2_SHIFT | op1 << OP1_SHIFT | opcode << OPCODE_SHIFT
+
+
 # ### Instructions
 Instruction = namedtuple('Instruction', ['name', 'opcode', 'fn'])
 
 
-def inst_cup(machine):
+def inst_cup(op1, op2, machine):
     '''Call user procedure'''
     raise NotImplementedError
 
 
-def inst_csp(machine):
+def inst_csp(op1, op2, machine):
     '''Call standard procedure'''
     raise NotImplementedError
 
 
-def inst_ent(machine):
+def inst_ent(op1, op2, machine):
     '''Procedure entry'''
     raise NotImplementedError
 
 
-def inst_mst(machine):
+def inst_mst(op1, op2, machine):
     '''Mark stack'''
     raise NotImplementedError
 
 
-def inst_rtn(machine):
+def inst_rtn(op1, op2, machine):
     '''Return'''
     raise NotImplementedError
 
 
-def inst_equ(machine):
+def inst_equ(op1, op2, machine):
     '''Equality comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) == take_as(x2, op_type))
 
 
-def inst_neq(machine):
+def inst_neq(op1, op2, machine):
     '''Inequality comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) != take_as(x2, op_type))
 
 
-def inst_grt(machine):
+def inst_grt(op1, op2, machine):
     '''Greater than comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) > take_as(x2, op_type))
 
 
-def inst_geq(machine):
+def inst_geq(op1, op2, machine):
     '''Greater than or equal comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) <= take_as(x2, op_type))
 
 
-def inst_les(machine):
+def inst_les(op1, op2, machine):
     '''Less than comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) < take_as(x2, op_type))
 
 
-def inst_leq(machine):
+def inst_leq(op1, op2, machine):
     '''Less than or equal comparison'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    x1, x2 = machine.stack_pop(), machine.stack_pop()
+    machine.stack_push(take_as(x1, op_type) <= take_as(x2, op_type))
 
 
-def inst_adi(machine):
+def inst_adi(op1, op2, machine):
     '''Integer addition'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'i') + take_as(i1, 'i')
+    machine.stack_push(i3)
 
 
-def inst_sbi(machine):
+def inst_sbi(op1, op2, machine):
     '''Integer subtraction'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'i') - take_as(i1, 'i')
+    machine.stack_push(i3)
 
 
-def inst_ngi(machine):
+def inst_ngi(op1, op2, machine):
     '''Integer sign inversion'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = - take_as(i1, 'i')
+    machine.stack_push(i2)
 
 
-def inst_mpi(machine):
+def inst_mpi(op1, op2, machine):
     '''Integer multiplication'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'i') * take_as(i1, 'i')
+    machine.stack_push(i3)
 
 
-def inst_dvi(machine):
+def inst_dvi(op1, op2, machine):
     '''Integer divison'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'i') // take_as(i1, 'i')
+    machine.stack_push(i3)
 
 
-def inst_mod(machine):
+def inst_mod(op1, op2, machine):
     '''Integer modulo'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'i') % take_as(i1, 'i')
+    machine.stack_push(i3)
 
 
-def inst_abi(machine):
+def inst_abi(op1, op2, machine):
     '''Integer absolute value'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = abs(take_as(i1, 'i'))
+    machine.stack_push(i2)
 
 
-def inst_sqi(machine):
+def inst_sqi(op1, op2, machine):
     '''Integer square'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = take_as(i1, 'i') ** 2
+    machine.stack_push(i2)
 
 
-def inst_inc(machine):
+def inst_inc(op1, op2, machine):
     '''Increment'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    if op_type not in ['a', 'b', 'c', 'i']:
+        panic('Unsupported integral type: {0}'.format(op_type))
+
+    i1 = take_as(machine.stack_pop(), op_type)
+
+    if op_type == 'c':
+        i2 = chr(ord(i1) + 1)
+    else:
+        i2 = i1 + 1
+
+    machine.stack_push(i2)
 
 
-def inst_dec(machine):
+def inst_dec(op1, op2, machine):
     '''Decrement'''
-    raise NotImplementedError
+    op_type = get_type_name_from_value(op1)
+    if op_type not in ['a', 'b', 'c', 'i']:
+        panic('Unsupported integral type: {0}'.format(op_type))
+
+    i1 = take_as(machine.stack_pop(), op_type)
+
+    if op_type == 'c':
+        i2 = chr(ord(i1) - 1)
+    else:
+        i2 = i1 - 1
+
+    machine.stack_push(i2)
 
 
-def inst_adr(machine):
+def inst_adr(op1, op2, machine):
     '''Real addition'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') + take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_sbr(machine):
+def inst_sbr(op1, op2, machine):
     '''Real subtraction'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') - take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_ngr(machine):
+def inst_ngr(op1, op2, machine):
     '''Real sign inversion'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = - take_as(i1, 'r')
+    machine.stack_push(i2)
 
 
-def inst_mpr(machine):
+def inst_mpr(op1, op2, machine):
     '''Real multiplication'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') * take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_dvr(machine):
+def inst_dvr(op1, op2, machine):
     '''Real divison'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') / take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_abr(machine):
+def inst_abr(op1, op2, machine):
     '''Real absolute value'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = abs(take_as(i1, 'r'))
+    machine.stack_push(i2)
 
 
-def inst_sqr(machine):
+def inst_sqr(op1, op2, machine):
     '''Real square'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = take_as(i1, 'r') ** 2
+    machine.stack_push(i2)
 
 
-def inst_ior(machine):
+def inst_ior(op1, op2, machine):
     '''Inclusive OR'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') or take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_and(machine):
+def inst_and(op1, op2, machine):
     '''And'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') and take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_xor(machine):
+def inst_xor(op1, op2, machine):
     '''Exclusive OR'''
-    raise NotImplementedError
+    i1, i2 = machine.stack_pop(), machine.stack_pop()
+    i3 = take_as(i2, 'r') ^ take_as(i1, 'r')
+    machine.stack_push(i3)
 
 
-def inst_not(machine):
+def inst_not(op1, op2, machine):
     '''Complement'''
-    raise NotImplementedError
+    i1 = machine.stack_pop()
+    i2 = not take_as(i1, 'r')
+    machine.stack_push(i2)
 
 
-def inst_inn(machine):
+def inst_inn(op1, op2, machine):
     '''Set membership'''
     raise NotImplementedError
 
 
-def inst_uni(machine):
+def inst_uni(op1, op2, machine):
     '''Set union'''
     raise NotImplementedError
 
 
-def inst_int(machine):
+def inst_int(op1, op2, machine):
     '''Set intersection'''
     raise NotImplementedError
 
 
-def inst_dif(machine):
+def inst_dif(op1, op2, machine):
     '''Set difference'''
     raise NotImplementedError
 
 
-def inst_cmp(machine):
+def inst_cmp(op1, op2, machine):
     '''Set complement'''
     raise NotImplementedError
 
 
-def inst_sgs(machine):
+def inst_sgs(op1, op2, machine):
     '''Generate singleton set'''
     raise NotImplementedError
 
 
-def inst_ujp(machine):
+def inst_ujp(op1, op2, machine):
     '''Unconditional jump'''
-    raise NotImplementedError
+    address = take_as(op2, 'a')
+    machine.update_pc(address)
 
 
-def inst_xjp(machine):
+def inst_xjp(op1, op2, machine):
     '''Indexed jump'''
-    raise NotImplementedError
+    base_address = take_as(op2, 'a')
+    offset = take_as(machine.stack_pop(), 'i')
+    machine.update_pc(base_address + offset)
 
 
-def inst_fjp(machine):
+def inst_fjp(op1, op2, machine):
     '''False jump'''
-    raise NotImplementedError
+    address = take_as(op2, 'a')
+    cond = take_as(machine.stack_pop(), 'b')
+    if not cond:
+        machine.update_pc(address)
 
 
-def inst_tjp(machine):
+def inst_tjp(op1, op2, machine):
     '''True jump'''
-    raise NotImplementedError
+    address = take_as(op2, 'a')
+    cond = take_as(machine.stack_pop(), 'b')
+    if cond:
+        machine.update_pc(address)
 
 
-def inst_flt(machine):
+def inst_flt(op1, op2, machine):
     '''Float top of stack'''
-    raise NotImplementedError
+    top = take_as(machine.stack_pop(), 'r')
+    machine.stack_push(take_as(top, 'r'))
 
 
-def inst_flo(machine):
+def inst_flo(op1, op2, machine):
     '''Float next to top of stack'''
-    raise NotImplementedError
+    top = machine.stack_pop()
+    next_to_top = take_as(machine.stack_pop(), 'i')
+    machine.stack_push(take_as(next_to_top, 'r'))
+    machine.stack_push(top)
 
 
-def inst_trc(machine):
+def inst_trc(op1, op2, machine):
     '''Truncate'''
-    raise NotImplementedError
+    top = take_as(machine.stack_pop(), 'r')
+    # In python, `int(float_value)` will truncate the decimal
+    machine.stack_push(take_as(top, 'i'))
 
 
-def inst_md(machine):
+def inst_md(op1, op2, machine):
     '''Round'''
-    raise NotImplementedError
+    top = take_as(machine.stack_pop(), 'r')
+    machine.stack_push(round(top))
 
 
-def inst_chr(machine):
+def inst_chr(op1, op2, machine):
     '''Convert to character'''
-    raise NotImplementedError
+    top = take_as(machine.stack_pop(), 'i')
+    machine.stack_push(take_as(top, 'c'))
 
 
-def inst_ord(machine):
+def inst_ord(op1, op2, machine):
     '''Convert to integer'''
-    raise NotImplementedError
+    top = take_as(machine.stack_pop(), 'c')
+    machine.stack_push(take_as(top, 'i'))
 
 
-def inst_stp(machine):
+def inst_stp(op1, op2, machine):
     '''Stop machine.'''
     machine.stop_machine()
 
 
-def inst_lda(machine):
+def inst_lda(op1, op2, machine):
     '''Load address of data'''
     raise NotImplementedError
 
 
-def inst_ldc(machine):
+def inst_ldc(op1, op2, machine):
     '''Load constant'''
-    raise NotImplementedError
+    constant_type = get_type_name_from_value(op1)
+    cindex = take_as(op2, 'i')
+    constant = take_as(machine.constants_get_at(cindex), constant_type)
+    machine.stack_push(constant)
 
 
-def inst_ldi(machine):
+def inst_ldi(op1, op2, machine):
     '''Load indirect'''
     raise NotImplementedError
 
 
-def inst_lva(machine):
+def inst_lva(op1, op2, machine):
     '''Load value (address)'''
     raise NotImplementedError
 
 
-def inst_lvb(machine):
+def inst_lvb(op1, op2, machine):
     '''Load value (boolean)'''
     raise NotImplementedError
 
 
-def inst_lvc(machine):
+def inst_lvc(op1, op2, machine):
     '''Load value (character)'''
     raise NotImplementedError
 
 
-def inst_lvi(machine):
+def inst_lvi(op1, op2, machine):
     '''Load value (integer)'''
     raise NotImplementedError
 
 
-def inst_lvr(machine):
+def inst_lvr(op1, op2, machine):
     '''Load value (real)'''
     raise NotImplementedError
 
 
-def inst_lvs(machine):
+def inst_lvs(op1, op2, machine):
     '''Load value (set)'''
     raise NotImplementedError
 
 
-def inst_sti(machine):
+def inst_sti(op1, op2, machine):
     '''Store indirect'''
     raise NotImplementedError
 
 
-def inst_ixa(machine):
+def inst_ixa(op1, op2, machine):
     '''Compute indexed address'''
     raise NotImplementedError
 
@@ -446,6 +557,8 @@ insts_list = [
 
 # Instruction opcode-ed map
 instructions = {i.opcode: i for i in insts_list}
+# Instruction name-ed map
+instruction_names = {i.name: i for i in insts_list}
 
 
 # ## Registers
@@ -481,6 +594,34 @@ data_types_list = [
 
 # Datatypes type-ed map
 data_types = {i.type: i for i in data_types_list}
+# Datatypes value-ed map
+data_type_values = {i.value: i for i in data_types_list}
+
+
+def take_as(data, type):
+    '''Convert data with type.
+
+    :param data: data to be converted.
+    :param type: target type.
+    '''
+    data_type = data_types[type]
+    return data_type.converter(data)
+
+
+def get_type_name_from_value(value):
+    '''Get data type name from value.
+
+    :param value: bytecode type value.
+    '''
+    return data_type_values[value].type
+
+
+def get_type_value_from_name(name):
+    '''Get data type value from name.
+
+    :parma name: data type name.
+    '''
+    return data_types[name].value
 
 
 # ## Builtin Functions.
@@ -761,8 +902,8 @@ class Machine(object):
     STATE_STOP = 0
     STATE_RUNNING = 1
 
-    # Supported instrucitons map.
-    instructions = instructions
+    # Supported instructions map.
+    SUPPORT_INSTRUCTIONS = instructions
 
     def __init__(self, stdin, stdout):
         self.stdin = stdin
@@ -786,8 +927,14 @@ class Machine(object):
         # New pointer bottom, points to the bottom of the heap.
         self.np_bottom = 0
 
+        # Constants list.
+        self.constants = []
+
         # Machine state.
         self.state = self.STATE_STOP
+
+        # Machine current instruction.
+        self.current_instruction = None
 
     @property
     def sp(self):
@@ -801,9 +948,14 @@ class Machine(object):
         # Use the lowend of dstore.
         return self.dstore.low_top_index
 
-    def advance_pc(self):
-        '''Move pc forward an instruction.'''
-        self.pc = self.pc + 1
+    def update_pc(self, to=None):
+        '''Move pc forward.
+
+        :param to: target pc, defaults to current pc + 1.
+        '''
+        if to is None:
+            to = self.pc + 1
+        self.pc = to
 
     @property
     def is_machine_running(self):
@@ -817,13 +969,15 @@ class Machine(object):
         '''Stop the machine.'''
         self.state = self.STATE_STOP
 
-    def execute(self, instructions, start_pc):
+    def execute(self, instructions, typed_constants, constants, start_pc):
         '''Execute instructions.
 
         :param instructions: instructions to be executed.
+        :param typed_constants: pre-alloced constants, store in dstore.
+        :param constants: integer / string contants.
         :param start_pc: instructions entry point.
         '''
-        self.reset(instructions, start_pc)
+        self.reset(instructions, typed_constants, constants, start_pc)
 
         self.start_machine()
 
@@ -832,27 +986,30 @@ class Machine(object):
                 self.execute_instruction()
             except Exception as e:
                 self.stop_machine()
+                print(disassemble_instruction(self.current_instruction))
                 raise e
 
     def execute_instruction(self):
         '''Execute an instruction.'''
-        inst_bytecode = self.istore[self.pc]
-        self.advance_pc()
+        self.current_instruction = inst_bytecode = self.istore[self.pc]
+        self.update_pc()
 
         op, op1, op2 = disassemble_instruction(inst_bytecode)
-        inst = self.instructions.get(op, None)
+        inst = self.SUPPORT_INSTRUCTIONS.get(op, None)
         if not inst:
             panic(message='Unknown instruction: {0:#032b}'.format(
                 inst_bytecode
             ))
 
-        inst.fn(self)
+        inst.fn(op1, op2, self)
 
-    def reset(self, instructions, start_pc):
+    def reset(self, instructions, typed_constants, constants, start_pc):
         '''Reset machine state.
 
-        TODO prepare constants area.
+        TODO prepare typed constants area.
         :param instructions: instructions to be executed.
+        :param typed_constants: pre-alloced constants, stores in dstore.
+        :param constants: integer / string constants.
         :param start_pc: instructions entry point.
         '''
         self.istore = instructions
@@ -861,7 +1018,9 @@ class Machine(object):
         self.ep = 0
         self.mp = 0
         self.np_bottom = 0
+        self.constants = constants
         self.state = self.STATE_STOP
+        self.current_instruction = None
 
     def stack_push(self, data):
         '''Push data to stack.
@@ -880,7 +1039,23 @@ class Machine(object):
     def free(self, address):
         raise NotImplementedError
 
+    def constants_get_at(self, index):
+        '''Get a constant from bytecode constants.
+        Raise `IndexError` if the index is invalid.
+
+        :param index: constant index.
+        '''
+        return self.constants[index]
+
 
 if __name__ == '__main__':
+    instructions = [
+        assemble_instruction('LDC', get_type_value_from_name('i'), 0),
+        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
+        assemble_instruction('EQU', get_type_value_from_name('i')),
+        assemble_instruction('STP')
+    ]
     machine = Machine(None, None)
-    machine.execute([0x30, 0x10], 0)    # Should stop the machine.
+    typed_constants = []
+    constants = [1, 2]
+    machine.execute(instructions, typed_constants, constants, 1)
