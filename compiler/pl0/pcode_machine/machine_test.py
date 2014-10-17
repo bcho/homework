@@ -11,7 +11,7 @@ import unittest
 from machine import ExecuteError, panic
 # Instructions.
 from machine import (GET_OPCODE, GET_OP1, GET_OP2,
-                     assemble_instruction, instructions)
+                     assemble_instruction, INSTRUCTIONS)
 # Machine
 from machine import DoubleEndStack
 
@@ -38,7 +38,7 @@ class TestInstructions(unittest.TestCase):
         for (inst, disassembled) in self.instructions:
             op_name, op1, op2 = disassembled
 
-            self.assertEqual(op_name, instructions[GET_OPCODE(inst)].name)
+            self.assertEqual(op_name, INSTRUCTIONS[GET_OPCODE(inst)].name)
             self.assertEqual(op1, GET_OP1(inst))
             self.assertEqual(op2, GET_OP2(inst))
 
