@@ -9,6 +9,7 @@
 - https://github.com/lkesteloot/turbopascal
 '''
 
+import math
 from collections import namedtuple
 
 
@@ -626,27 +627,181 @@ def get_type_value_from_name(name):
 
 # ## Builtin Functions.
 
-Builtin = namedtuple('Builtin', ['name', 'opcode', 'comments', 'fn'])
+Builtin = namedtuple('Builtin', ['name', 'opcode', 'fn'])
 
-# TODO implement the builtins.
-builtin_default_fn = lambda *args, **kwargs: panic(NotImplementedError)
+
+def builtin_rdb(machine):
+    '''Read boolean.'''
+    address = take_as(machine.stack_pop(), 'a')
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    raw_value = machine.stdin.read(1)
+    # Only `0` will be `false` value.
+    if raw_value == '0':
+        value = False
+    else:
+        value = True
+
+    machine.write_at(address, value)
+
+
+def builtin_rdc(machine):
+    '''Read char.'''
+    address = take_as(machine.stack_pop(), 'a')
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    value = machine.stdin.read(1)
+    machine.write_at(address, value)
+
+
+def builtin_rdi(machine):
+    '''Read integer.'''
+    address = take_as(machine.stack_pop(), 'a')
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    raw_value = machine.stdin.readline()
+    value = take_as(raw_value.strip(), 'i')
+    machine.write_at(address, value)
+
+
+def builtin_rdr(machine):
+    '''Read real.'''
+    address = take_as(machine.stack_pop(), 'a')
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    raw_value = machine.stdin.readline()
+    value = take_as(raw_value.strip(), 'r')
+    machine.write_at(address, value)
+
+
+def builtin_rln(machine):
+    '''Read `\n`.'''
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    # Read until `\n`.
+    machine.stdin.readline()
+
+
+def builtin_wrb(machine):
+    '''Write boolean.'''
+    width = take_as(machine.stack_pop(), 'i')
+    value = str(take_as(machine.stack_pop(), 'b'))
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    right_justified_spaces = max(0, width - len(value))
+    output = (' ' * right_justified_spaces) + value
+    machine.stdout.write(output)
+
+
+def builtin_wrc(machine):
+    '''Write char.'''
+    width = take_as(machine.stack_pop(), 'i')
+    value = str(take_as(machine.stack_pop(), 'c'))
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    right_justified_spaces = max(0, width - len(value))
+    output = (' ' * right_justified_spaces) + value
+    machine.stdout.write(output)
+
+
+def builtin_wri(machine):
+    '''Write integer.'''
+    width = take_as(machine.stack_pop(), 'i')
+    value = str(take_as(machine.stack_pop(), 'i'))
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    right_justified_spaces = max(0, width - len(value))
+    output = (' ' * right_justified_spaces) + value
+    machine.stdout.write(output)
+
+
+def builtin_wre(machine):
+    '''Write real, exponential format.'''
+    fraction_width = take_as(machine.stack_pop(), 'i')
+    width = take_as(machine.stack_pop(), 'i')
+    value = str(take_as(machine.stack_pop(), 'i'))
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    exp = '{0:.{1}e}'.format(value, fraction_width)
+    right_justified_spaces = max(0, width - len(exp))
+    output = (' ' * right_justified_spaces) + exp
+    machine.stdout.write(output)
+
+
+def builtin_wrf(machine):
+    '''Write real, fixed format.'''
+    fraction_width = take_as(machine.stack_pop(), 'i')
+    width = take_as(machine.stack_pop(), 'i')
+    value = str(take_as(machine.stack_pop(), 'i'))
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    exp = '{0:.{1}f}'.format(value, fraction_width)
+    right_justified_spaces = max(0, width - len(exp))
+    output = (' ' * right_justified_spaces) + exp
+    machine.stdout.write(output)
+
+
+def builtin_wrs(machine):
+    '''Write string.'''
+    address = take_as(machine.stack_pop(), 'a')
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    machine.stdout.write(take_as(machine.get_at(address), 's'))
+
+
+def builtin_wln(machine):
+    '''Write `\n`.'''
+    # Won't use provided file obj here.
+    machine.stack_pop()
+
+    machine.stdout.write('\n')
+
+
+def builtin_sqt(machine):
+    '''Squre root.'''
+    value = take_as(machine.stack_pop(), 'r')
+    machine.stack_push(math.sqrt(value))
+
+
+def builtin_ln(machine):
+    '''Natural logarithm.'''
+    value = take_as(machine.stack_pop(), 'r')
+    machine.stack_push(math.log(value))
+
+
+def builtin_exp(machine):
+    '''Exponentiation.'''
+    value = take_as(machine.stack_pop(), 'r')
+    machine.stack_push(math.exp(value))
+
 
 builtins_list = [
-    Builtin('rdb', 0x00, 'Read boolean', builtin_default_fn),
-    Builtin('rdc', 0x01, 'Read char', builtin_default_fn),
-    Builtin('rdi', 0x02, 'Read integer', builtin_default_fn),
-    Builtin('rdr', 0x03, 'Read real', builtin_default_fn),
-    Builtin('rln', 0x04, 'Read line', builtin_default_fn),
-    Builtin('wrb', 0x05, 'Write boolean', builtin_default_fn),
-    Builtin('wrc', 0x06, 'Write char', builtin_default_fn),
-    Builtin('wri', 0x07, 'Write integer', builtin_default_fn),
-    Builtin('wre', 0x08, 'Write real, exponential format', builtin_default_fn),
-    Builtin('wrf', 0x09, 'Write float, fixed format', builtin_default_fn),
-    Builtin('wrs', 0x0A, 'Write string', builtin_default_fn),
-    Builtin('wln', 0x0B, 'Write line', builtin_default_fn),
-    Builtin('sqt', 0x0C, 'Square root', builtin_default_fn),
-    Builtin('ln',  0x0D, 'Natural logarithm', builtin_default_fn),
-    Builtin('exp', 0x0E, 'Exponentiation', builtin_default_fn)
+    Builtin('rdb', 0x00, builtin_rdb),
+    Builtin('rdc', 0x01, builtin_rdc),
+    Builtin('rdi', 0x02, builtin_rdi),
+    Builtin('rdr', 0x03, builtin_rdr),
+    Builtin('rln', 0x04, builtin_rln),
+    Builtin('wrb', 0x05, builtin_wrb),
+    Builtin('wrc', 0x06, builtin_wrc),
+    Builtin('wri', 0x07, builtin_wri),
+    Builtin('wre', 0x08, builtin_wre),
+    Builtin('wrf', 0x09, builtin_wrf),
+    Builtin('wrs', 0x0A, builtin_wrs),
+    Builtin('wln', 0x0B, builtin_wln),
+    Builtin('sqt', 0x0C, builtin_sqt),
+    Builtin('ln',  0x0D, builtin_ln),
+    Builtin('exp', 0x0E, builtin_exp)
 ]
 
 builtins = {i.name: i for i in builtins_list}
@@ -736,7 +891,7 @@ class DoubleEndStack(object):
         if index >= self._low_top or index < self._low_bottom:
             raise IndexError('Invalid position.')
 
-        self._stack[index] = something
+        self.push_at(index, something)
 
     def low_get_at(self, index):
         '''Retrieve an element in the lowend stack with given index.
@@ -745,9 +900,9 @@ class DoubleEndStack(object):
         :param index: specify index.
         '''
         if index >= self._low_top or index < self._low_bottom:
-            raise IndexError('Invalid position.')
+            raise IndexError('Invalid index.')
 
-        return self._stack[index]
+        return self.get_at(index)
 
     def low_move_to(self, index, fill_value):
         '''Move low index to a new index.
@@ -824,7 +979,7 @@ class DoubleEndStack(object):
         if index <= self._high_top or index > self._high_bottom:
             raise IndexError('Invalid position.')
 
-        self._stack[index] = something
+        self.push_at(index, something)
 
     def high_get_at(self, index):
         '''Retrieve an element in the highend stack with given index.
@@ -833,9 +988,9 @@ class DoubleEndStack(object):
         :param index: specify index.
         '''
         if index <= self._high_top or index > self._high_bottom:
-            raise IndexError('Invalid position.')
+            raise IndexError('Invalid index.')
 
-        return self._stack[index]
+        return self.get_at(index)
 
     def high_move_to(self, index, fill_value):
         '''Move high index to a new index.
@@ -868,6 +1023,30 @@ class DoubleEndStack(object):
     def high_top_index(self):
         '''Get highend stack's top index.'''
         return self._high_top + 1
+
+    def push_at(self, index, something):
+        '''Push something into the stack with given index.
+
+        If the index is illegal, raises `IndexError`.
+
+        :param index: index to be written.
+        :param something: anything you want to push into the stack.
+        '''
+        if index < 0 or index >= self.capacity:
+            raise IndexError('Invalid position.')
+
+        self._stack[index] = something
+
+    def get_at(self, index):
+        '''Retrieve an element in the stack with given index.
+        If the index is illegal, raises 'IndexError`.
+
+        :param index: specify index.
+        '''
+        if index < 0 or index >= self.capacity:
+            raise IndexError('Invalid index.')
+
+        return self._stack[index]
 
 
 class MachineBaseDebugger(object):
@@ -1017,6 +1196,12 @@ class Machine(object):
     SUPPORT_INSTRUCTIONS = INSTRUCTIONS
 
     def __init__(self, stdin, stdout, debugger=None):
+        '''P-Machine
+
+        :param stdin: machine running env's standard input file object.
+        :param stdout: machine runnint env's standard output file object.
+        :param debugger: machine debugger. Defaults to `None`.
+        '''
         self.stdin = stdin
         self.stdout = stdout
 
@@ -1156,6 +1341,21 @@ class Machine(object):
     def stack_pop(self):
         '''Pop from stack.'''
         return self.dstore.pop_high()
+
+    def write_at(self, address, value):
+        '''Write into arbitrary address in dstore.
+
+        :param address: target address.
+        :param value: value to be placed.
+        '''
+        self.dstore.push_at(address, value)
+
+    def read_at(self, address):
+        '''Read from dstore with arbitrary address.
+
+        :param address: target address.
+        '''
+        self.dstore.get_at(address)
 
     def malloc(self, size):
         raise NotImplementedError
