@@ -9,6 +9,7 @@
 - https://github.com/lkesteloot/turbopascal
 '''
 
+import sys
 import math
 from collections import namedtuple
 
@@ -85,27 +86,70 @@ Instruction = namedtuple('Instruction', ['name', 'opcode', 'fn'])
 
 def inst_cup(op1, op2, machine):
     '''Call user procedure'''
-    raise NotImplementedError
+    argsize, iaddr = op1, op2
+
+    # See `stack frame` belows.
+    machine.update_mp(machine.sp + argsize + machine.STACK_FRAME_SIZE - 1)
+
+    # Store callee's next instruction address.
+    machine.write_at(machine.sp + argsize, machine.pc)
+
+    # Update machine pc the procedure entry instruction.
+    machine.update_pc(iaddr)
 
 
 def inst_csp(op1, op2, machine):
     '''Call standard procedure'''
-    raise NotImplementedError
+    std_func = machine.SUPPORT_BUILTINS[op2].fn
+    std_func(machine)
 
 
 def inst_ent(op1, op2, machine):
     '''Procedure entry'''
-    raise NotImplementedError
+    amount = op2
+    target = machine.mp - amount
+
+    # Update sp.
+    if op1 == 0x0:
+        machine.update_sp(target)
+    # Update ep.
+    elif op1 == 0x1:
+        machine.update_ep(target)
 
 
 def inst_mst(op1, op2, machine):
     '''Mark stack'''
-    raise NotImplementedError
+    # Calculate procedure static link.
+    level = op2
+    sl = machine.mp
+    for _ in range(level):
+        sl = machine.get_sl(sl)
+
+    # Create stack frame, see `stack frame` below.
+    machine.stack_push(machine.INITIAL_VALUE)  # RV, set by callee.
+    machine.stack_push(sl)  # SL
+    machine.stack_push(machine.mp)  # DL
+    machine.stack_push(machine.ep)  # EP
+    machine.stack_push(machine.INITIAL_VALUE)  # RA, set by `CUP`
 
 
 def inst_rtn(op1, op2, machine):
     '''Return'''
-    raise NotImplementedError
+    rv_type = get_type_name_from_value(op1)
+
+    # Restore caller's stack, see `stack frame` below.
+    callee_mp = machine.mp
+    machine.update_pc(take_as(machine.read_at(callee_mp - 4), 'a'))
+    machine.update_ep(take_as(machine.read_at(callee_mp - 3), 'a'))
+    machine.update_mp(take_as(machine.read_at(callee_mp - 2), 'a'))
+
+    if rv_type is not 'p':
+        machine.update_sp(callee_mp - 1)
+        rv = machine.stack_pop()
+        machine.stack_push(take_as(rv, rv_type))
+    else:
+        # Procedure should discard the return value.
+        machine.update_sp(callee_mp)
 
 
 def inst_equ(op1, op2, machine):
@@ -418,9 +462,23 @@ def inst_stp(op1, op2, machine):
     machine.stop_machine()
 
 
+def _inst_compute_address(level, offset, machine):
+    '''Compute address off by n-level mp.
+
+    :param level: mp's level (sl level).
+    :param offset: offset from the mp.
+    :param machine: executing machine.
+    '''
+    mp = machine.mp
+    for _ in range(level):
+        mp = machine.get_sl(mp)
+    return mp - offset
+
+
 def inst_lda(op1, op2, machine):
     '''Load address of data'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(address, 'a'))
 
 
 def inst_ldc(op1, op2, machine):
@@ -433,47 +491,61 @@ def inst_ldc(op1, op2, machine):
 
 def inst_ldi(op1, op2, machine):
     '''Load indirect'''
-    raise NotImplementedError
+    address = take_as(machine.stack_pop(), 'a')
+    value_type = get_type_name_from_value(op1)
+    machine.stack_push(take_as(machine.read_at(address), value_type))
 
 
 def inst_lva(op1, op2, machine):
     '''Load value (address)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 'a'))
 
 
 def inst_lvb(op1, op2, machine):
     '''Load value (boolean)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 'b'))
 
 
 def inst_lvc(op1, op2, machine):
     '''Load value (character)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 'c'))
 
 
 def inst_lvi(op1, op2, machine):
     '''Load value (integer)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 'i'))
 
 
 def inst_lvr(op1, op2, machine):
     '''Load value (real)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 'r'))
 
 
 def inst_lvs(op1, op2, machine):
     '''Load value (set)'''
-    raise NotImplementedError
+    address = _inst_compute_address(op1, op2, machine)
+    machine.stack_push(take_as(machine.read_at(address), 's'))
 
 
 def inst_sti(op1, op2, machine):
     '''Store indirect'''
-    raise NotImplementedError
+    value_type = get_type_name_from_value(op1)
+    value = machine.stack_pop()
+    address = take_as(machine.stack_pop(), 'a')
+    machine.write_at(address, take_as(value, value_type))
 
 
 def inst_ixa(op1, op2, machine):
     '''Compute indexed address'''
-    raise NotImplementedError
+    a1 = take_as(machine.stack_pop(), 'a')
+    i = take_as(machine.satck_pop(), 'i')
+    q = op2
+    machine.stack_push(take_as(q * i + a1, 'a'))
 
 
 insts_list = [
@@ -590,7 +662,9 @@ data_types_list = [
     DataType('r', 0x04, 'real', lambda x: float(x)),
     DataType('s', 0x05, 'string', lambda x: str(x)),
     DataType('t', 0x06, 'set', lambda x: set(x)),  # TODO review converter
-    DataType('x', 0x07, 'dynamic type', lambda x: x)
+    DataType('x', 0x07, 'dynamic type', lambda x: x),
+    DataType('p', 0x08, 'procedure',
+             lambda x: panic(message='Unable to convert to this type.'))
 ]
 
 # Datatypes type-ed map
@@ -757,7 +831,7 @@ def builtin_wrs(machine):
     # Won't use provided file obj here.
     machine.stack_pop()
 
-    machine.stdout.write(take_as(machine.get_at(address), 's'))
+    machine.stdout.write(take_as(machine.read_at(address), 's'))
 
 
 def builtin_wln(machine):
@@ -786,25 +860,43 @@ def builtin_exp(machine):
     machine.stack_push(math.exp(value))
 
 
+def builtin_dbg(machine):
+    '''Debug machine's current state.'''
+    print('Debug infos...')
+    machine.debug_machine()
+
+
 builtins_list = [
-    Builtin('rdb', 0x00, builtin_rdb),
-    Builtin('rdc', 0x01, builtin_rdc),
-    Builtin('rdi', 0x02, builtin_rdi),
-    Builtin('rdr', 0x03, builtin_rdr),
-    Builtin('rln', 0x04, builtin_rln),
-    Builtin('wrb', 0x05, builtin_wrb),
-    Builtin('wrc', 0x06, builtin_wrc),
-    Builtin('wri', 0x07, builtin_wri),
-    Builtin('wre', 0x08, builtin_wre),
-    Builtin('wrf', 0x09, builtin_wrf),
-    Builtin('wrs', 0x0A, builtin_wrs),
-    Builtin('wln', 0x0B, builtin_wln),
-    Builtin('sqt', 0x0C, builtin_sqt),
-    Builtin('ln',  0x0D, builtin_ln),
-    Builtin('exp', 0x0E, builtin_exp)
+    Builtin('RDB', 0x00, builtin_rdb),
+    Builtin('RDC', 0x01, builtin_rdc),
+    Builtin('RDI', 0x02, builtin_rdi),
+    Builtin('RDR', 0x03, builtin_rdr),
+    Builtin('RLN', 0x04, builtin_rln),
+    Builtin('WRB', 0x05, builtin_wrb),
+    Builtin('WRC', 0x06, builtin_wrc),
+    Builtin('WRI', 0x07, builtin_wri),
+    Builtin('WRE', 0x08, builtin_wre),
+    Builtin('WRF', 0x09, builtin_wrf),
+    Builtin('WRS', 0x0A, builtin_wrs),
+    Builtin('WLN', 0x0B, builtin_wln),
+    Builtin('SQT', 0x0C, builtin_sqt),
+    Builtin('LN',  0x0D, builtin_ln),
+    Builtin('EXP', 0x0E, builtin_exp),
+    Builtin('DBG', 0x0F, builtin_dbg)
 ]
 
-builtins = {i.name: i for i in builtins_list}
+# Builtins opcode-ed map.
+BUILTINS = {i.opcode: i for i in builtins_list}
+# Builtins name-ed map.
+BUILTIN_NAMES = {i.name: i for i in builtins_list}
+
+
+def get_builtin_opcode_from_name(name):
+    '''Get builtin opcode from name.
+
+    :param name: builtin's name.
+    '''
+    return BUILTIN_NAMES[name].opcode
 
 
 # ## Machine
@@ -889,7 +981,7 @@ class DoubleEndStack(object):
         :param something: anything you want to push into the stack.
         '''
         if index >= self._low_top or index < self._low_bottom:
-            raise IndexError('Invalid position.')
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         self.push_at(index, something)
 
@@ -900,22 +992,26 @@ class DoubleEndStack(object):
         :param index: specify index.
         '''
         if index >= self._low_top or index < self._low_bottom:
-            raise IndexError('Invalid index.')
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         return self.get_at(index)
 
-    def low_move_to(self, index, fill_value):
+    def low_move_to(self, index, fill_value=None):
         '''Move low index to a new index.
         If the stack needs to expand, fill the new cells with `fill_value`.
         Raise `IndexError` if the new index is illegal.
 
         :param index: new index.
         :param fill_value: filled value for new cells.
+                           Defaults to `INITIAL_VALUE`.
         '''
         if index > self._high_top:
             raise IndexError('Stack overflow.')
         if index < self._low_bottom:
             raise IndexError('Stack underflow.')
+
+        if fill_value is None:
+            fill_value = self.INITIAL_VALUE
 
         while index >= self._low_top:
             self.push_low(fill_value)
@@ -977,7 +1073,7 @@ class DoubleEndStack(object):
         :param something: anything you want to push into the stack.
         '''
         if index <= self._high_top or index > self._high_bottom:
-            raise IndexError('Invalid position.')
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         self.push_at(index, something)
 
@@ -988,22 +1084,26 @@ class DoubleEndStack(object):
         :param index: specify index.
         '''
         if index <= self._high_top or index > self._high_bottom:
-            raise IndexError('Invalid index.')
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         return self.get_at(index)
 
-    def high_move_to(self, index, fill_value):
+    def high_move_to(self, index, fill_value=None):
         '''Move high index to a new index.
         If the stack needs to expand, fill the new cells with `fill_value`.
         Raise `IndexError` if the new index is illegal.
 
         :param index: new index.
         :param fill_value: filled value for new cells.
+                           Defaults to `INITIAL_VALUE`.
         '''
         if index < self._low_top:
             raise IndexError('Stack overflow.')
         if index > self._high_bottom:
             raise IndexError('Stack underflow.')
+
+        if fill_value is None:
+            fill_value = self.INITIAL_VALUE
 
         while index <= self._high_top:
             self.push_high(fill_value)
@@ -1033,7 +1133,7 @@ class DoubleEndStack(object):
         :param something: anything you want to push into the stack.
         '''
         if index < 0 or index >= self.capacity:
-            raise IndexError('Invalid position.')
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         self._stack[index] = something
 
@@ -1044,7 +1144,10 @@ class DoubleEndStack(object):
         :param index: specify index.
         '''
         if index < 0 or index >= self.capacity:
-            raise IndexError('Invalid index.')
+            raise IndexError('Invalid index: {0}.'.format(index))
+        # Unused area.
+        if index >= self._low_top and index <= self._high_top:
+            raise IndexError('Invalid index: {0}.'.format(index))
 
         return self._stack[index]
 
@@ -1075,10 +1178,10 @@ class MachineInspector(MachineBaseDebugger):
     _inspect_tmpl = '''
 Registers
 
-    PC: {pc:#032b}
-    MP: {mp:#032b}
-    NP: {mp:#032b}
-    SP: {sp:#032b}
+    PC: {pc:#08x}
+    MP: {mp:#08x}
+    NP: {np:#08x}
+    SP: {sp:#08x}
 
 Statck
 
@@ -1093,8 +1196,8 @@ Current Instruction
 {cur_inst}
 '''
 
-    _stack_inspect_tmpl = '\t{index}: {content}'
-    _heap_inspect_tmpl = '\t{index}: {content}'
+    _stack_inspect_tmpl = '\t{index:#08x}: {content}'
+    _heap_inspect_tmpl = '\t{index:#08x}: {content}'
     _inst_inspect_tmpl = '\t{opcode} {op1:02x} {op2:04x}'
 
     def debug(self, machine):
@@ -1113,6 +1216,7 @@ Current Instruction
             'cur_inst': self._debug_instruction(machine.current_instruction)
         }
         facts.update(machine.registers)
+        facts['pc'] = max(0, facts['pc'] - 1)
 
         print(self._inspect_tmpl.format(**facts))
 
@@ -1171,11 +1275,14 @@ class Machine(object):
     # Data store capacity.
     DATA_STORE_CAPACITY = 65536
 
+    # Data store default value.
+    INITIAL_VALUE = 0
+
     # Stack frame size.
     #
     # ### Stack frame:
     #
-    # MP (frame begin) ->   +------------+
+    # MP (frame begin) ->   +------------+ (high address)
     #                       |     RV     |
     #                       +------------+
     #                       |     SL     |
@@ -1185,7 +1292,12 @@ class Machine(object):
     #                       |     EP     |
     #                       +------------+
     #                       |     RA     |
-    # SP (maybe here)  ->   +------------+
+    #                       +------------+
+    #                       |    ARG1    |
+    #                       +------------+
+    #                       |    ARG2    |
+    # SP (frame end)  ->    +------------+ (low address)
+    #
     STACK_FRAME_SIZE = 5
 
     # Machine state constant.
@@ -1194,6 +1306,9 @@ class Machine(object):
 
     # Supported instructions map.
     SUPPORT_INSTRUCTIONS = INSTRUCTIONS
+
+    # Supported builtin procedures.
+    SUPPORT_BUILTINS = BUILTINS
 
     def __init__(self, stdin, stdout, debugger=None):
         '''P-Machine
@@ -1257,13 +1372,42 @@ class Machine(object):
         }
 
     def update_pc(self, to=None):
-        '''Move pc forward.
+        '''Update pc.
 
         :param to: target pc, defaults to current pc + 1.
         '''
         if to is None:
             to = self.pc + 1
         self.pc = to
+
+    def update_sp(self, to):
+        '''Update sp.
+
+        :param to: target sp.
+        '''
+        self.dstore.high_move_to(to)
+
+    def update_mp(self, to=None):
+        '''Update mp.
+
+        :param to: target mp.
+        '''
+        self.mp = to
+
+    def update_ep(self, to=None):
+        '''Update ep.
+
+        :param to: target ep.
+        '''
+        self.ep = to
+
+    def get_sl(self, mp):
+        '''Calculate static link address base on mp.
+        See `stack frame` above.
+
+        :param mp: stack frame's mp.
+        '''
+        return mp - 1
 
     @property
     def is_machine_running(self):
@@ -1276,6 +1420,11 @@ class Machine(object):
     def stop_machine(self):
         '''Stop the machine.'''
         self.state = self.STATE_STOP
+
+    def debug_machine(self):
+        '''Debug machine's current state.'''
+        if self.debugger:
+            self.debugger(self)
 
     def execute(self, instructions, typed_constants, constants, start_pc):
         '''Execute instructions.
@@ -1294,8 +1443,7 @@ class Machine(object):
                 self.execute_instruction()
             except Exception as e:
                 self.stop_machine()
-                if self.debugger:
-                    debugger(self)
+                self.debug_machine()
                 raise e
 
     def execute_instruction(self):
@@ -1355,7 +1503,7 @@ class Machine(object):
 
         :param address: target address.
         '''
-        self.dstore.get_at(address)
+        return self.dstore.get_at(address)
 
     def malloc(self, size):
         raise NotImplementedError
@@ -1376,17 +1524,26 @@ if __name__ == '__main__':
     debugger = MachineInspector()
 
     instructions = [
+        assemble_instruction('ENT', 0, 5),
+        assemble_instruction('ENT', 1, 3),
+        assemble_instruction('LDA', 0, 5),
+        assemble_instruction('LVI', 0, 5),
         assemble_instruction('LDC', get_type_value_from_name('i'), 0),
-        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
-        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
-        assemble_instruction('LDC', get_type_value_from_name('s'), 2),
-        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
-        assemble_instruction('LDC', get_type_value_from_name('r'), 1.1),
-        assemble_instruction('EQU', get_type_value_from_name('i')),
+        assemble_instruction('ADI'),
+        assemble_instruction('STI', get_type_value_from_name('i')),
+        assemble_instruction('CSP', 0, get_builtin_opcode_from_name('DBG')),
+        assemble_instruction('RTN', get_type_value_from_name('p')),
+        assemble_instruction('ENT', 0, 4),
+        assemble_instruction('ENT', 1, 5),
+        assemble_instruction('MST', 0),
+        assemble_instruction('CUP', 0, 0),
+        assemble_instruction('RTN', get_type_value_from_name('p')),
+        assemble_instruction('MST', 0),
+        assemble_instruction('CUP', 0, 9),
         assemble_instruction('STP')
     ]
-    machine = Machine(None, None, debugger)
+    machine = Machine(sys.stdin, sys.stdout, debugger)
     typed_constants = []
-    constants = [1, 2, 'hello world']
-    machine.execute(instructions, typed_constants, constants, 0)
-    debugger(machine)
+    constants = [2]  # 0x00fff5 should be 2
+    machine.execute(instructions, typed_constants, constants, 14)
+    machine.debug_machine()
