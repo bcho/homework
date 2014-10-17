@@ -38,15 +38,18 @@ def panic(ExceptionClass=ExecuteError, message=None):
 '''
 
 OPCODE_BITS = 8
+OPCODE_SHIFT = 0
 OP1_BITS = 8
+OP1_SHIFT = OPCODE_SHIFT + OPCODE_BITS
 OP2_BTIS = 16
+OP2_SHIFT = OP1_SHIFT + OP1_BITS
 
 OPCODE_MASK = (1 << OPCODE_BITS) - 1
-GET_OPCODE = lambda x: int(x) & OPCODE_MASK
+GET_OPCODE = lambda x: (int(x) >> OPCODE_SHIFT) & OPCODE_MASK
 OP1_MASK = (1 << OP1_BITS) - 1
-GET_OP1 = lambda x: (int(x) >> (OPCODE_BITS)) & OP1_MASK
+GET_OP1 = lambda x: (int(x) >> OP1_SHIFT) & OP1_MASK
 OP2_MASK = (1 << OP2_BTIS) - 1
-GET_OP2 = lambda x: (int(x) >> (OPCODE_BITS + OP1_BITS)) & OP2_MASK
+GET_OP2 = lambda x: (int(x) >> OP2_SHIFT) & OP2_MASK
 
 
 def disassemble_instruction(inst):
