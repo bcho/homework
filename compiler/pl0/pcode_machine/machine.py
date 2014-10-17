@@ -1109,7 +1109,8 @@ class Machine(object):
                 self.execute_instruction()
             except Exception as e:
                 self.stop_machine()
-                debugger(self)
+                if self.debugger:
+                    debugger(self)
                 raise e
 
     def execute_instruction(self):
@@ -1180,11 +1181,11 @@ if __name__ == '__main__':
         assemble_instruction('LDC', get_type_value_from_name('i'), 1),
         assemble_instruction('LDC', get_type_value_from_name('s'), 2),
         assemble_instruction('LDC', get_type_value_from_name('i'), 1),
-        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
+        assemble_instruction('LDC', get_type_value_from_name('r'), 1.1),
         assemble_instruction('EQU', get_type_value_from_name('i')),
         assemble_instruction('STP')
     ]
-    machine = Machine(None, None)
+    machine = Machine(None, None, debugger)
     typed_constants = []
     constants = [1, 2, 'hello world']
     machine.execute(instructions, typed_constants, constants, 0)
