@@ -72,7 +72,7 @@ def assemble_instruction(opcode, op1=None, op2=None):
     if op2 is None:
         op2 = 0
     if isinstance(opcode, str):
-        opcode = instruction_names[opcode].opcode
+        opcode = INSTRUCTION_NAMES[opcode].opcode
 
     opcode, op1, op2 = int(opcode), int(op1), int(op2)
     return op2 << OP2_SHIFT | op1 << OP1_SHIFT | opcode << OPCODE_SHIFT
@@ -556,9 +556,9 @@ insts_list = [
 ]
 
 # Instruction opcode-ed map
-instructions = {i.opcode: i for i in insts_list}
+INSTRUCTIONS = {i.opcode: i for i in insts_list}
 # Instruction name-ed map
-instruction_names = {i.name: i for i in insts_list}
+INSTRUCTION_NAMES = {i.name: i for i in insts_list}
 
 
 # ## Registers
@@ -574,7 +574,7 @@ registers_list = [
 ]
 
 # Register name-ed map
-registers = {i.name: i for i in registers_list}
+REGISTERS = {i.name: i for i in registers_list}
 
 
 # ## Data Types
@@ -593,9 +593,9 @@ data_types_list = [
 ]
 
 # Datatypes type-ed map
-data_types = {i.type: i for i in data_types_list}
+DATA_TYPES = {i.type: i for i in data_types_list}
 # Datatypes value-ed map
-data_type_values = {i.value: i for i in data_types_list}
+DATA_TYPE_VALUES = {i.value: i for i in data_types_list}
 
 
 def take_as(data, type):
@@ -604,7 +604,7 @@ def take_as(data, type):
     :param data: data to be converted.
     :param type: target type.
     '''
-    data_type = data_types[type]
+    data_type = DATA_TYPES[type]
     return data_type.converter(data)
 
 
@@ -613,7 +613,7 @@ def get_type_name_from_value(value):
 
     :param value: bytecode type value.
     '''
-    return data_type_values[value].type
+    return DATA_TYPE_VALUES[value].type
 
 
 def get_type_value_from_name(name):
@@ -621,7 +621,7 @@ def get_type_value_from_name(name):
 
     :parma name: data type name.
     '''
-    return data_types[name].value
+    return DATA_TYPES[name].value
 
 
 # ## Builtin Functions.
@@ -870,6 +870,117 @@ class DoubleEndStack(object):
         return self._high_top + 1
 
 
+class MachineBaseDebugger(object):
+    '''Machine base debugger.'''
+
+    def debug(self, machine):
+        '''Debug a machine.
+
+        :param machine: target machine.
+        '''
+        raise NotImplementedError
+
+    def __call__(self, machine):
+        self.debug(machine)
+
+
+class MachineInspector(MachineBaseDebugger):
+    '''Machine state inspector.'''
+
+    # Stack inspect cells count.
+    _stack_print_size = 10
+
+    # Heap inspect cells count.
+    _heap_print_size = 10
+
+    _inspect_tmpl = '''
+Registers
+
+    PC: {pc:#032b}
+    MP: {mp:#032b}
+    NP: {mp:#032b}
+    SP: {sp:#032b}
+
+Statck
+
+{stack}
+
+Heap
+
+{heap}
+
+Current Instruction
+
+{cur_inst}
+'''
+
+    _stack_inspect_tmpl = '\t{index}: {content}'
+    _heap_inspect_tmpl = '\t{index}: {content}'
+    _inst_inspect_tmpl = '\t{opcode} {op1:02x} {op2:04x}'
+
+    def debug(self, machine):
+        '''Print out machine inner states, includes:
+
+        - pc / mp / np / sp value
+        - stack content
+        - heap content
+        - current instruction
+
+        :param machine: target machine
+        '''
+        facts = {
+            'stack': self._debug_stack(machine),
+            'heap': self._debug_heap(machine),
+            'cur_inst': self._debug_instruction(machine.current_instruction)
+        }
+        facts.update(machine.registers)
+
+        print(self._inspect_tmpl.format(**facts))
+
+    def _debug_stack(self, machine, inspect_count=None):
+        '''Inspect machine's stack.
+
+        :param machine: target machine.
+        :param inspect_count: inspect cells count.
+                              Defaults to `_stack_print_size`.
+        '''
+        inspect_count = inspect_count or self._stack_print_size
+
+        cells = []
+        for sp in range(machine.sp, machine.sp + inspect_count):
+            try:
+                content = machine.dstore.high_get_at(sp)
+            except IndexError:
+                break
+            cells.append(self._stack_inspect_tmpl.format(
+                index=sp,
+                content=content
+            ))
+        cells.reverse()
+        return '\n'.join(cells)
+
+    def _debug_heap(self, machine, inspect_count=None):
+        '''Inspect machine's heap.
+
+        :param machine: target machine.
+        :param inspect_count: inspect cells count.
+                              Defaults to `_heap_print_size`
+        '''
+        # TODO
+        return '\t<unknown>'
+
+    def _debug_instruction(self, instruction):
+        '''Inspect an instruction.
+
+        :param instruction: bytecode to be explained.
+        '''
+        opcode, op1, op2 = disassemble_instruction(instruction)
+        opcode_name = INSTRUCTIONS[opcode].name
+        return self._inst_inspect_tmpl.format(opcode=opcode_name,
+                                              op1=op1,
+                                              op2=op2)
+
+
 class Machine(object):
     '''P-code machine implementation.
 
@@ -903,11 +1014,13 @@ class Machine(object):
     STATE_RUNNING = 1
 
     # Supported instructions map.
-    SUPPORT_INSTRUCTIONS = instructions
+    SUPPORT_INSTRUCTIONS = INSTRUCTIONS
 
-    def __init__(self, stdin, stdout):
+    def __init__(self, stdin, stdout, debugger=None):
         self.stdin = stdin
         self.stdout = stdout
+
+        self.debugger = debugger
 
         # Instructions store.
         self.istore = None
@@ -948,6 +1061,16 @@ class Machine(object):
         # Use the lowend of dstore.
         return self.dstore.low_top_index
 
+    @property
+    def registers(self):
+        '''Current registers value.'''
+        return {
+            'pc': self.pc,
+            'mp': self.mp,
+            'np': self.np,
+            'sp': self.sp
+        }
+
     def update_pc(self, to=None):
         '''Move pc forward.
 
@@ -986,7 +1109,7 @@ class Machine(object):
                 self.execute_instruction()
             except Exception as e:
                 self.stop_machine()
-                print(disassemble_instruction(self.current_instruction))
+                debugger(self)
                 raise e
 
     def execute_instruction(self):
@@ -1049,13 +1172,20 @@ class Machine(object):
 
 
 if __name__ == '__main__':
+    debugger = MachineInspector()
+
     instructions = [
         assemble_instruction('LDC', get_type_value_from_name('i'), 0),
+        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
+        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
+        assemble_instruction('LDC', get_type_value_from_name('s'), 2),
+        assemble_instruction('LDC', get_type_value_from_name('i'), 1),
         assemble_instruction('LDC', get_type_value_from_name('i'), 1),
         assemble_instruction('EQU', get_type_value_from_name('i')),
         assemble_instruction('STP')
     ]
     machine = Machine(None, None)
     typed_constants = []
-    constants = [1, 2]
-    machine.execute(instructions, typed_constants, constants, 1)
+    constants = [1, 2, 'hello world']
+    machine.execute(instructions, typed_constants, constants, 0)
+    debugger(machine)
