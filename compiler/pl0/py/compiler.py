@@ -113,11 +113,17 @@ class TokenChar(object):
     '''Token character.
 
     :param char: internal character.
-    :param is_eof: indicates if it's a EOF. Defaults to `False`
+    :param iseof: indicates if it's a EOF. Defaults to `False`
     '''
 
-    def __init__(self, char, is_eof=None):
-        self.is_eof = is_eof or False
+    def __init__(self, char, iseof=None):
+        if iseof is None:
+            self._iseof = False
+        else:
+            self._iseof = iseof
+
+        if char is not None and len(char) > 1:
+            raise TypeError('Only accept single character.')
         self.char = char
 
     @_none_is_nonthing
@@ -133,14 +139,19 @@ class TokenChar(object):
         return self.char.isspace()
 
     def iseof(self):
-        return self.is_eof
+        return self._iseof
 
     @_none_is_nonthing
     def __eq__(self, other):
         return self.char == other
 
+    def __add__(self, other):
+        char = self.char or ''
+        return other + char
+
     def __radd__(self, other):
-        return other + self.char
+        char = self.char or ''
+        return other + char
 
 
 class LexerState(Enum):
@@ -184,7 +195,7 @@ class Lexer(object):
         '''Tokens stream.'''
         while True:
             token = self._get_token()
-            if token.type is TokenType.EOF:
+            if token.type == TokenType.EOF:
                 raise StopIteration
             yield token
 
@@ -309,15 +320,18 @@ class Lexer(object):
                     self._backup_char()
 
             elif state == LexerState.IN_COMMENT:
-                # Skip over the comments.
-                next_char = self._get_char()
-                if char == '*' and next_char == ')':
-                    state = LexerState.START
-                elif char.iseof():
+                if char.iseof():
                     state = LexerState.DONE
                     cur_token = self._make_token(TokenType.ERROR,
                                                  'unexpected EOF, '
                                                  'maybe missing `*)`')
+                elif char == '*':
+                    next_char = self._get_char()
+                    if next_char == ')':
+                        state = LexerState.START
+                    else:
+                        # Skip over the comments.
+                        pass
 
             else:
                 raise CompileError('lexer: unexpected state.')
@@ -331,9 +345,10 @@ class Lexer(object):
         if self.cols >= len(self._line_buffer):
             self.lines += 1
             self.cols = 0
-            self._line_buffer = self._input_stream.readline()
-            if self._line_buffer is None or len(self._line_buffer) == 0:
-                return TokenChar(None, is_eof=True)
+            self._line_buffer = self._input_stream.readline() + '\n'
+            if self._line_buffer == '\n':
+                char = TokenChar(None, True)
+                return char
 
         char = self._line_buffer[self.cols]
         self.cols += 1
@@ -364,6 +379,7 @@ class Lexer(object):
 
 
 if __name__ == '__main__':
-    lexer = Lexer()
+    from io import StringIO
+    lexer = Lexer(StringIO('(*'))
     for i in lexer:
         print(i)
