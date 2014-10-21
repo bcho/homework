@@ -520,6 +520,19 @@ class WhileNode(ASTNode):
         self.body = body
 
 
+class AssignmentNode(ASTNode):
+    '''Assignment node.
+
+        a := 1
+
+    :param name: assignee identity node.
+    :param expression: assigned expression.
+    '''
+    def __init__(self, name, expression):
+        self.name = name
+        self.expression = expression
+
+
 class IdentNode(ASTNode):
     '''Identity node.
 
