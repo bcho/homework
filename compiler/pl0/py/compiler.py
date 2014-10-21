@@ -378,6 +378,191 @@ class Lexer(object):
         yield self.tokens
 
 
+class ASTNode(object):
+    '''Abstract syntaxt tree node.'''
+
+    def __str__(self):
+        return '<{0}>'.format(self.__class__.__name__)
+
+
+class ProgramNode(ASTNode):
+    '''PL/0 program node.
+
+        const
+            const1 = 2;
+        var
+            a, b, c;
+
+        begin
+            a := 1;
+        end
+
+    :param constants: program level constants list.
+    :param variables: program level variables list.
+    :param procedures: program level procedures list.
+    :param statements: program level statements list.
+    '''
+
+    def __init__(self, constants, variables, procedures, statements):
+        self.constants = constants
+        self.variables = variables
+        self.procedures = procedures
+        self.statements = statements
+
+
+class ProcedureNode(ASTNode):
+    '''Procedure node.
+
+        procedure proc
+        var
+            local;
+        begin
+            READ(local);
+        end
+
+    TODO: need parent procedure ref?
+    :param name: procedure identity name node.
+    :param constants: procedure level constants list.
+    :param variables: procedure level variables list.
+    :param procedures: procedure level procedures list.
+    :param statements: procedure level statements list.
+    '''
+
+    def __init__(self, name, constants, variables, procedures, statements):
+        self.name = name
+        self.constants = constants
+        self.variables = variables
+        self.procedures = procedures
+        self.statements = statements
+
+
+class ConstNode(ASTNode):
+    '''Constant declaration node. (value stored in symbol table.)
+
+        const const1 = 2, const2 = 3;
+
+    :param name: constant identity node.
+    '''
+
+    def __init__(self, name):
+        self.name = name
+
+
+class VarNode(ASTNode):
+    '''Variable declaration node. (value stored in symbol table.)
+
+        var a, b, c;
+
+    :param name: constant identity node.
+    '''
+
+    def __init__(self, name):
+        self.name = name
+
+
+class CallUserProcedureNode(ASTNode):
+    '''Call user defined procedure node.
+
+        call proc1;
+
+    :param procedure_name: called procedure identity node.
+    '''
+
+    def __init__(self, procedure_name):
+        self.procedure_name = procedure_name
+
+
+class CallBuiltinProcedureNode(ASTNode):
+    '''Call builtin procedure node.
+
+        write(42);
+
+    :param builtin_name: called builtin identity node.
+    :param parameters: called parameters list.
+    '''
+
+    def __init__(self, builtin_name, parameters):
+        self.builtin_name = builtin_name
+        self.parameters = parameters
+
+
+class IfNode(ASTNode):
+    '''If statement node.
+
+        if odd 1 then begin
+            write(1);
+        end
+
+    :param condition: condition expression node.
+    :param then_part: then statement node.
+    :param else_part: else statement node.
+    '''
+
+    def __init__(self, condition, then_part, else_part):
+        self.condition = condition
+        self.then_part = then_part
+        self.else_part = else_part
+
+
+class WhileNode(ASTNode):
+    '''While statement node.
+
+        while num > 0 begin
+            num = num - 1;
+        end
+
+    :param condition: condition expression node.
+    :param body: loop body.
+    '''
+
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+
+class IdentNode(ASTNode):
+    '''Identity node.
+
+    :param name: identity's name
+    '''
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return '<IdentNode: {0}>'.format(self.name)
+
+
+class UnaryNode(ASTNode):
+    '''Unary expression node.
+
+        - num
+
+    :param operator: operator.
+    :param expression: expression node.
+    '''
+
+    def __init__(self, operator, expression):
+        self.operator = operator
+        self.expression = expression
+
+
+class BinaryNode(ASTNode):
+    '''Binary operation expression node.
+
+        a / b
+
+    :param operator: operator.
+    :param left: left side expression node.
+    :param right: right side expression node.
+    '''
+
+    def __init__(self, operator, left, right):
+        self.operator = operator
+        self.left = left
+        self.right = right
+
+
 if __name__ == '__main__':
     from io import StringIO
     lexer = Lexer(StringIO('(*'))
