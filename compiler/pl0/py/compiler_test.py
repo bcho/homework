@@ -55,13 +55,25 @@ class TestTokenChar(unittest.TestCase):
 
 class TestLexer(unittest.TestCase):
 
-    def testSimple(self):
+    def testStream(self):
         stream = StringIO('(* this \nis\n comments *)\nvar var')
         lexer = Lexer(stream)
 
         for token in lexer:
             self.assertIsInstance(token, Token)
             self.assertEqual(TokenType.VAR, token.type)
+
+    def testPeekAndGet(self):
+        stream = StringIO('const a = 5')
+        lexer = Lexer(stream)
+
+        first_token = lexer.get_token()
+        peeked_token = lexer.peek()
+        second_token = lexer.get_token()
+
+        self.assertEqual(TokenType.CONST, first_token.type)
+        self.assertEqual(TokenType.IDENT, second_token.type)
+        self.assertEqual(peeked_token, second_token)
 
     def testErrorState(self):
         stream = StringIO('(*')

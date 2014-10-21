@@ -185,6 +185,9 @@ class Lexer(object):
         # Current column no.
         self.cols = 0
 
+        # Peeked next token.
+        self._next_token = None
+
     def reset(self):
         '''Reset lexer.'''
         self._line_buffer = ''
@@ -194,10 +197,26 @@ class Lexer(object):
     def tokens(self):
         '''Tokens stream.'''
         while True:
-            token = self._get_token()
+            token = self.get_token()
             if token.type == TokenType.EOF:
                 raise StopIteration
             yield token
+
+    def get_token(self):
+        '''Get a token.'''
+        token = self.peek()
+
+        # Consume the next token.
+        self._next_token = None
+
+        return token
+
+    def peek(self):
+        '''Peek a token.'''
+        if self._next_token is None:
+            self._next_token = self._get_token()
+
+        return self._next_token
 
     def _get_token(self):
         '''Get a token.'''
@@ -574,6 +593,23 @@ class BinaryNode(ASTNode):
         self.operator = operator
         self.left = left
         self.right = right
+
+
+class Parser(object):
+    '''Parser.'''
+
+    def __init__(self):
+        # Lexer instance.
+        self.lexer = None
+
+    def parse(self, lexer):
+        '''Create a parse tree.
+
+        :param lexer: lexer instance.
+        '''
+        self.lexer = lexer
+
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
