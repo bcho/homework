@@ -48,17 +48,18 @@ class TokenType(Enum):
     GT = (21, '>')
     GEQ = (22, '>=')
     LPAREN = (23, '(')
-    RPAREN = (23, ')')
-    SEMI = (24, ';')
-    PERIOD = (25, ',')
-    PLUS = (26, '+')
-    MINUS = (27, '-')
-    TIMES = (28, '*')
-    OVER = (29, '/')
+    RPAREN = (24, ')')
+    COMMA = (25, ',')
+    SEMI = (26, ';')
+    PERIOD = (27, '.')
+    PLUS = (28, '+')
+    MINUS = (29, '-')
+    TIMES = (30, '*')
+    OVER = (31, '/')
 
     # Character
-    IDENT = (30, None)
-    NUM = (31, None)
+    IDENT = (32, None)
+    NUM = (33, None)
 
 
 RESERVED_KEYWORDS = {
@@ -292,10 +293,13 @@ class Lexer(object):
                     elif char == ')':
                         cur_token = self._make_token(TokenType.RPAREN, ')')
                         break  # while state != LexerState.DONE
+                    elif char == ',':
+                        cur_token = self._make_token(TokenType.COMMA, ',')
+                        break  # while state != LexerState.DONE
                     elif char == ';':
                         cur_token = self._make_token(TokenType.SEMI, ';')
                         break  # while state != LexerState.DONE
-                    elif char == ',':
+                    elif char == '.':
                         cur_token = self._make_token(TokenType.PERIOD)
                         break  # while state != LexerState.DONE
                     else:
