@@ -1,0 +1,50 @@
+CONST
+    BASETWO = 2;
+VAR
+    a, b, c, d, e;
+
+PROCEDURE square;
+VAR
+    num, s;
+BEGIN
+    READ(num);
+
+    WHILE num # 0 DO
+    BEGIN
+        s := num * num;
+
+        WRITE(square)
+    END
+END;
+
+PROCEDURE mul;
+VAR
+    base, times;
+BEGIN
+    READ(base, times);
+
+    WRITE(base * times)
+END;
+
+PROCEDURE dec2bin;
+VAR
+    num, remain;
+BEGIN
+    READ(num);
+
+    WHILE num > 0 DO
+    BEGIN
+        IF ODD num THEN BEGIN
+            WRITE(1);
+            num := num - 1
+        END;
+
+        num := num / BASETWO
+    END
+END;
+
+BEGIN
+    CALL square;
+    CALL mul;
+    CALL dec2bin
+END.

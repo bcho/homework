@@ -1,0 +1,16 @@
+PROCEDURE a1;
+    PROCEDURE a2;
+        PROCEDURE a3;
+        BEGIN
+            WRITE(42)
+        END;
+    BEGIN
+        call a3
+    END;
+BEGIN
+    call a2
+END;
+
+BEGIN
+    call a1
+END.

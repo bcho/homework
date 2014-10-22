@@ -1,0 +1,3 @@
+BEGIN
+    WRITE(1 + 1)
+END.
