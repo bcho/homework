@@ -4,6 +4,7 @@
 # Testcases for pl0 compiler.
 '''
 
+import os
 import unittest
 from io import StringIO
 
@@ -11,6 +12,8 @@ from io import StringIO
 from compiler import TokenChar, Token
 # Lexer
 from compiler import Lexer, TokenType
+# Parser
+from compiler import Parser, ProgramNode, CompileError
 
 
 class TestTokenChar(unittest.TestCase):
@@ -82,3 +85,32 @@ class TestLexer(unittest.TestCase):
         token = [i for i in lexer][0]
         self.assertIsInstance(token, Token)
         self.assertEqual(TokenType.ERROR, token.type)
+
+
+class TestCompiler(unittest.TestCase):
+
+    def setUp(self):
+        self.base_dir = os.path.abspath('../samples')
+
+    def open_samples(self, directory):
+        for dirpath, __, files in os.walk(directory):
+            for filename in files:
+                if not filename.endswith('.pl0'):
+                    continue
+                full_path = os.path.join(dirpath, filename)
+                with open(full_path) as f:
+                    yield f
+
+    def _parse(self, input_stream):
+        return Parser().parse(Lexer(input_stream))
+
+    def testGoodSamples(self):
+        samples = os.path.join(self.base_dir, 'good')
+        for sample_file in self.open_samples(samples):
+            node = self._parse(sample_file)
+            self.assertIsInstance(node, ProgramNode)
+
+    def testBadSampls(self):
+        samples = os.path.join(self.base_dir, 'bad')
+        for sample_file in self.open_samples(samples):
+            self.assertRaises(CompileError, self._parse, sample_file)
