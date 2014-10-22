@@ -831,6 +831,7 @@ class Parser(object):
         '''Parse condition.'''
         token = self.lexer.peek()
         if token.type == TokenType.ODD:
+            self.lexer.get_token()
             return ConditionNode(TokenType.ODD, self.parse_expression(), None)
 
         left_exp = self.parse_expression()
