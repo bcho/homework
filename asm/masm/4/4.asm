@@ -1,184 +1,161 @@
 ;------------------------------------------------------------------------------
 ; 程序描述：
 ;
-;   格式化输出 Power idea 公司从 1975 年到 1995 年的收入情况
-;
-;   TODO
-;   - fix address loading
-;   - fix table filling (make it right align)
+;   格式化输出 Power Idea 公司从 1975 年到 1995 年的收入情况
 ;------------------------------------------------------------------------------
 assume cs:codesg, ds:datasg
 
 datasg segment
 	; 年份信息 :0000h
-	db '1975', '1976', '1977', '1978', '1979', '1980', '1981', '1982', '1983'
-	db '1984', '1985', '1986', '1987', '1988', '1989', '1990', '1991', '1992'
-	db '1993', '1994', '1995'
+	dd 1975,   1976,   1977,   1978,   1979,   1980,   1981,   1982,   1983
+	dd 1984,   1985,   1986,   1987,   1988,   1989,   1990,   1991,   1992
+	dd 1993,   1994,   1995
 
 	; 收入信息 :0054h
-	dd 16,	   22,	   382,	   1356,   2390,   8000,   16000,  24486,  50065
-	dd 97479,  1401417,197514, 345980, 590827, 803530, 1183000, 1843000, 2759000
+	dd 16,	   22,	   382,	   1356,   2390,   8000,   16000,   24486,  50065
+	dd 97479,  140417, 197514, 345980, 590827, 803530, 1183000, 1843000, 2759000
 	dd 3753000,4649000,5937000
 
 	; 雇员人数信息 :00a8h
-	dw 3,	   7,	   9,	   13,	   28,	   38,	   130,    220,    476
-	dw 778,    1001,   1442,   2258,   2793,   4037,   5635,   8226,   11542
-	dw 14430,  15257,  17800
+	dd 3,	   7,	   9,	   13,	   28,	   38,	   130,    220,    476
+	dd 778,    1001,   1442,   2258,   2793,   4037,   5635,   8226,   11542
+	dd 14430,  15257,  17800
+
+	number_buffer db '         $'
 datasg ends
 
-table segment
-	; 每行信息
-	db '    ', 09h, '    ', 09h, '     ', 09h, '          ', 09h, '$'
-	line_break db 13, 10, '$'
-table ends
 
 codesg segment
 
 start:
 	nop
-
-	mov cx, 16h
-	mov si, 0
-
-main:
+	
+	; 建立数据段
 	mov ax, datasg
 	mov ds, ax
-	call print_year
-	inc si
-	loop main
+
+	; 重复 21 次
+	mov cx, 15h
+	jcxz print_year_finish
+print_year_loop:
+	; 计算偏移
+	mov di, 15h
+	sub di, cx
+	mov ax, 4
+	mul di
+	mov di, ax
+
+	; 写入年份
+	mov ax, datasg:[di+0]
+	mov dx, datasg:[di+2]
+	lea si, number_buffer 
+	call dtoc
+	call write_number_buffer
+
+	; 写入制表符
+	mov dl, 09h
+	call write_char
+
+	; 写入总收入
+	mov ax, datasg:[0054h+di]
+	mov dx, datasg:[0054h+di+2]
+	lea si, number_buffer 
+	call dtoc
+	call write_number_buffer
+
+	; 写入制表符
+	mov dl, 09h
+	call write_char
 	
+	; 写入雇员数
+	mov ax, datasg:[00a8h+di]
+	mov dx, 0h			; datasg:[00a8h+di+2]
+	lea si, number_buffer 
+	call dtoc
+	call write_number_buffer
+	
+	; 写入制表符
+	mov dl, 09h
+	call write_char
+	
+	; 求平均收入
+	mov ax, datasg:[0054h+di]
+	mov dx, datasg:[0054h+di+2]
+	push cx
+	mov cx, datasg:[00a8h+di]
+	call divdw
+	pop cx
+	; 写入平均收入
+	lea si, number_buffer 
+	call dtoc
+	call write_number_buffer
+
+	; 写入换行符
+	mov dl, 0dh
+	call write_char
+	mov dl, 0ah
+	call write_char
+
+	loop print_year_loop		; 写入下一年的信息
+
+print_year_finish:
 	jmp terminate
 
 ;------------------------------------------------------------------------------
-; 打印一个年份的信息
+; 将 number_buffer 写入到终端（最多 8 位，右对齐）
 ;
-;   参数：数据段基地址（ds） 位移数（si）
+;   参数： 字符串长度（bx）
 ;   返回：无
-;   改变寄存器：无
+;   修改寄存器：无
 ;------------------------------------------------------------------------------
-print_year:
+write_number_buffer:
 
-print_year_prologue:
-	push dx
+write_number_buffer_prologue:
+	push ax
 	push ds
-	push ax
-	push bx
-	push cx
-
-print_year_body:
-	; 填充年份
-	push si
-	mov ax, datasg
-	mov ds, ax
-	mov ax, [0h+si]
-	mov bx, 0
-	call write_table
-	mov ax, [2h+si]
-	mov bx, 2
-	call write_table
-	pop si
-
-	; 填充总收入
-	mov ax, datasg
-	mov ds, ax
-	mov dx, [54h+si+2]
-	mov ax, [54h+si]
-	push ax
-	mov ax, table
-	mov ds, ax
-	pop ax
-	push si
-	mov si, 5h
-	call dtoc
-	pop si
-
-	; 填充员工数
-	mov ax, datasg
-	mov ds, ax
-	mov dx, 0
-	mov ax, [00a8h+si]
-	push ax
-	mov ax, table
-	mov ds, ax
-	pop ax
-	push si
-	mov si, 0eh
-	call dtoc
-	pop si
-
-	; 计算平均收入
-	mov ax, datasg
-	mov ds, ax
-	mov dx, [54h+si+2]
-	mov ax, [54h+si]
-	mov cx, [00a8h+si]
-	call divdw
-	; 保存平均收入
 	push dx
-	push ax
-	
-	; 填充员工平均收入
+	push cx
+	push si
+
+write_number_buffer_body:
 	mov ax, datasg
 	mov ds, ax
-	pop ax
-	pop dx
-	push ax
-	mov ax, table
-	mov ds, ax
-	pop ax
-	push si
-	mov si, 14h
-	call dtoc
+	lea si, number_buffer		; 字符下标
+	mov cx, bx
+	jcxz write_number_buffer_epilogue
+
+write_number_buffer_str:		; 填充字符串
+	mov dx, [si]
+	call write_char
+	inc si
+	loop write_number_buffer_str
+
+write_number_buffer_epilogue:
 	pop si
-
-	mov ax, table
-	mov ds, ax
-	mov si, 18h
-	mov ax, 24h
-	mov [si], ax
-	
-	; 输出该行
-	mov ax, table
-	mov ds, ax
-	mov dx, 0
-	mov ah, 09h
-	int 21h
-
-	mov ax, table
-	mov ds, ax 
-	lea dx, line_break
-	mov ah, 09h
-	int 21h
-
-print_year_epilogue:
 	pop cx
-	pop bx
-	pop ax
-	pop ds
 	pop dx
+	pop ds
+	pop ax
 	ret
 
 ;------------------------------------------------------------------------------
-; 向 table 写入一个字节的数据
+; 显示一个字符到终端
 ;
-;   参数：table 段的偏移（bx） 写入数据（ax）
+;   参数：显示字符（dl）
 ;   返回：无
 ;   改变寄存器：无
 ;------------------------------------------------------------------------------
-write_table:
+write_char:
 
-write_table_prologue:
-	push ds
-	push si
+write_char_prologue:
+	push ax
 
-write_table_body:
-	mov si, table
-	mov ds, si
-	mov [bx], ax
+write_char_body:
+	mov ah, 02h
+	int 21h
 
-write_table_epilogue:
-	pop si
-	pop ds
+write_char_epilogue:
+	pop ax
 	ret
 
 ;------------------------------------------------------------------------------
@@ -216,16 +193,16 @@ divdw_epilogue:
 ; 将一个字转换成十进制字符串，以 '\0' 结尾
 ;
 ;   参数：待转换数字(dx:ax) 指向字符串首地址 (ds:si)
-;   返回：无
-;   改变寄存器：si 指向字符串最后一位
+;   返回：bx 转换后的字符串长度
+;   改变寄存器：无
 ;------------------------------------------------------------------------------
 dtoc:
 
 dtoc_prologue:
 	push dx
 	push ax
-	push bx
 	push cx
+	push si
 
 dtoc_body:
 	mov bx, 0h			; 记录位数
@@ -255,8 +232,8 @@ dtoc_to_char:
 	mov [si], ax
 	
 dtoc_epilogue:
+	pop si
 	pop cx
-	pop bx
 	pop ax
 	pop dx
 	ret
