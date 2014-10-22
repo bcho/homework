@@ -407,6 +407,25 @@ class ASTNode(object):
     def __str__(self):
         return '<{0}>'.format(self.__class__.__name__)
 
+    def __repr__(self):
+        return self.__str__()
+
+
+class BlockNode(ASTNode):
+    '''Block node.
+
+    :param constants: constants list.
+    :param variables: variables list.
+    :param procedures: procedures list.
+    :param statement: statement.
+    '''
+
+    def __init__(self, constants, variables, procedures, statements):
+        self.constants = constants
+        self.variables = variables
+        self.procedures = procedures
+        self.statements = statements
+
 
 class ProgramNode(ASTNode):
     '''PL/0 program node.
@@ -420,17 +439,11 @@ class ProgramNode(ASTNode):
             a := 1;
         end
 
-    :param constants: program level constants list.
-    :param variables: program level variables list.
-    :param procedures: program level procedures list.
-    :param statements: program level statements list.
+    :param block: program body.
     '''
 
-    def __init__(self, constants, variables, procedures, statements):
-        self.constants = constants
-        self.variables = variables
-        self.procedures = procedures
-        self.statements = statements
+    def __init__(self, block):
+        self.block = block
 
 
 class ProcedureNode(ASTNode):
@@ -445,18 +458,12 @@ class ProcedureNode(ASTNode):
 
     TODO: need parent procedure ref?
     :param name: procedure identity name node.
-    :param constants: procedure level constants list.
-    :param variables: procedure level variables list.
-    :param procedures: procedure level procedures list.
-    :param statements: procedure level statements list.
+    :param block: procedure body.
     '''
 
-    def __init__(self, name, constants, variables, procedures, statements):
+    def __init__(self, name, block):
         self.name = name
-        self.constants = constants
-        self.variables = variables
-        self.procedures = procedures
-        self.statements = statements
+        self.block = block
 
 
 class ConstNode(ASTNode):
@@ -525,6 +532,20 @@ class IfNode(ASTNode):
         self.condition = condition
         self.then_part = then_part
         self.else_part = else_part
+
+
+class ConditionNode(ASTNode):
+    '''If condition node.
+
+    :param operator: operator.
+    :param left_expression: left expression.
+    :param right_expression: right expression.
+    '''
+
+    def __init__(self, operator, left_expression, right_expression):
+        self.operator = operator
+        self.left_expression = left_expression
+        self.right_expression = right_expression
 
 
 class WhileNode(ASTNode):
@@ -606,6 +627,24 @@ class Parser(object):
         # Lexer instance.
         self.lexer = None
 
+    def _expect(self, token_type):
+        '''Check and consume a token from lexer.
+        Raises `CompileError` when token type mismatch.
+
+        :param token_type: expected token type.
+        '''
+        if self.lexer is None:
+            raise CompileError('Lexer not set yet.')
+        # Don't use it yet so the caller can reuse it later.
+        token = self.lexer.peek()
+        if token.type != token_type:
+            raise CompileError('Expect type: {0}, got: {1}'.format(token_type,
+                                                                   token))
+        return self.lexer.get_token()  # Throw the token.
+
+    def __call__(self, lexer):
+        return self.parse(lexer)
+
     def parse(self, lexer):
         '''Create a parse tree.
 
@@ -613,11 +652,291 @@ class Parser(object):
         '''
         self.lexer = lexer
 
-        raise NotImplementedError
+        return self.parse_program()
 
+    def parse_program(self):
+        '''Parse `program` node.'''
+        program = ProgramNode(self.parse_block())
+        self._expect(TokenType.PERIOD)
+        return program
 
-if __name__ == '__main__':
-    from io import StringIO
-    lexer = Lexer(StringIO('(*'))
-    for i in lexer:
-        print(i)
+    def parse_block(self):
+        '''Parse `block` node.'''
+        const_nodes = []
+        var_nodes = []
+        procedure_nodes = []
+        statements = None
+
+        token = self.lexer.peek()
+        if token.type == TokenType.CONST:
+            const_nodes = self.parse_consts()
+            token = self.lexer.peek()
+
+        if token.type == TokenType.VAR:
+            var_nodes = self.parse_vars()
+
+        procedure_nodes = self.parse_procedures()
+        statements = self.parse_statement()
+        if not isinstance(statements, list):
+            statements = [statements]
+
+        return BlockNode(const_nodes, var_nodes, procedure_nodes, statements)
+
+    def parse_consts(self):
+        '''Parse `const` declarations.'''
+        self._expect(TokenType.CONST)
+
+        const_nodes = []
+
+        # Parse first const node.
+        const_nodes.append(self.parse_const())
+
+        # Parse remained const nodes.
+        while True:
+            node = self.lexer.peek()
+            if node.type != TokenType.COMMA:
+                break
+            self.get_token()
+            const_nodes.append(self.parse_const())
+
+        self._expect(TokenType.SEMI)
+
+        return const_nodes
+
+    def parse_const(self):
+        '''Parse a `const` node.'''
+        ident = self._expect(TokenType.IDENT)
+        self._expect(TokenType.EQ)
+        # TODO symbol table
+        self._expect(TokenType.NUM)
+
+        return ConstNode(ident)
+
+    def parse_vars(self):
+        '''Parse `var` declarations.'''
+        self._expect(TokenType.VAR)
+
+        var_nodes = []
+
+        # Parse first var node.
+        var_nodes.append(self.parse_var())
+
+        # Parse remained var nodes.
+        while True:
+            node = self.lexer.peek()
+            if node.type != TokenType.COMMA:
+                break
+            self.lexer.get_token()
+            var_nodes.append(self.parse_var())
+
+        self._expect(TokenType.SEMI)
+
+        return var_nodes
+
+    def parse_var(self):
+        '''Parse a `var` node.'''
+        # TODO symbol table
+        name = self._expect(TokenType.IDENT)
+
+        return VarNode(name)
+
+    def parse_procedures(self):
+        '''Parse `procedure` declarations.'''
+        procedure_nodes = []
+        while True:
+            token = self.lexer.peek()
+            if token.type != TokenType.PROCEDURE:
+                break
+            procedure_nodes.append(self.parse_procedure())
+
+        return procedure_nodes
+
+    def parse_procedure(self):
+        '''Parse a `procedure` node.'''
+        self._expect(TokenType.PROCEDURE)
+        name = self._expect(TokenType.IDENT)
+        self._expect(TokenType.SEMI)
+        block = self.parse_block()
+        self._expect(TokenType.SEMI)
+
+        return ProcedureNode(name, block)
+
+    def parse_statement(self):
+        '''Parse `statement` node.'''
+        token = self.lexer.peek()
+
+        if token.type == TokenType.IDENT:
+            return self.parse_assignment()
+        elif token.type == TokenType.CALL:
+            return self.parse_call_procedure()
+        elif token.type == TokenType.BEGIN:
+            return self.parse_statements()
+        elif token.type == TokenType.IF:
+            return self.parse_if()
+        elif token.type == TokenType.WHILE:
+            return self.parse_while()
+        elif token.type == TokenType.READ:
+            return self.parse_read()
+        elif token.type == TokenType.WRITE:
+            return self.parse_write()
+
+        raise CompileError('Unknown token: {0}'.format(token))
+
+    def parse_statements(self):
+        '''Parse compunded statements.'''
+        self._expect(TokenType.BEGIN)
+        statement_nodes = []
+
+        # Parse first statement.
+        statement_nodes.append(self.parse_statement())
+
+        while True:
+            token = self.lexer.peek()
+            if token.type != TokenType.SEMI:
+                break
+            self.lexer.get_token()
+            statement_nodes.append(self.parse_statement())
+
+        self._expect(TokenType.END)
+        return statement_nodes
+
+    def parse_assignment(self):
+        '''Parse `assignment` node.'''
+        # TODO symbol table
+        name = self._expect(TokenType.IDENT)
+        self._expect(TokenType.ASSIGN)
+        expression = self.parse_expression()
+
+        return AssignmentNode(name, expression)
+
+    def parse_call_procedure(self):
+        '''Parse call procedure node.'''
+        self._expect(TokenType.CALL)
+        procedure_name = self._expect(TokenType.IDENT)
+
+        return CallUserProcedureNode(procedure_name)
+
+    def parse_if(self):
+        '''Parse if statement.'''
+        self._expect(TokenType.IF)
+        condition = self.parse_condition()
+        then_part = self.parse_then_part()
+
+        # TODO support else part
+        else_part = None
+
+        return IfNode(condition, then_part, else_part)
+
+    def parse_condition(self):
+        '''Parse condition.'''
+        token = self.lexer.peek()
+        if token.type == TokenType.ODD:
+            return ConditionNode(TokenType.ODD, self.parse_expression(), None)
+
+        left_exp = self.parse_expression()
+        op = self.lexer.get_token()
+        right_exp = self.parse_expression()
+        return ConditionNode(op.type, left_exp, right_exp)
+
+    def parse_then_part(self):
+        '''Parse then part.'''
+        self._expect(TokenType.THEN)
+        return self.parse_statement()
+
+    def parse_while(self):
+        '''Parse while statement.'''
+        self._expect(TokenType.WHILE)
+        condition = self.parse_condition()
+        self._expect(TokenType.DO)
+        body = self.parse_statement()
+
+        return WhileNode(condition, body)
+
+    def parse_read(self):
+        '''Parse read statement.'''
+        self._expect(TokenType.READ)
+        self._expect(TokenType.LPAREN)
+
+        parameters = []
+
+        parameters.append(self._expect(TokenType.IDENT))
+        while True:
+            token = self.lexer.peek()
+            if token.type != TokenType.COMMA:
+                break
+            self.lexer.get_token()
+            parameters.append(self._expect(TokenType.IDENT))
+
+        self._expect(TokenType.RPAREN)
+
+        return CallBuiltinProcedureNode(TokenType.READ, parameters)
+
+    def parse_write(self):
+        '''Parse write statement.'''
+        self._expect(TokenType.WRITE)
+        self._expect(TokenType.LPAREN)
+
+        parameters = []
+
+        parameters.append(self.parse_expression())
+        while True:
+            token = self.lexer.peek()
+            if token.type != TokenType.COMMA:
+                break
+            self.lexer.get_token()
+            parameters.append(self.parse_expression())
+
+        self._expect(TokenType.RPAREN)
+
+    def parse_expression(self):
+        '''Parse an `expression` node.'''
+        exp_operator_types = [TokenType.PLUS, TokenType.MINUS]
+
+        unary_node = None
+        unary_operator = self.lexer.peek()
+        if unary_operator.type in exp_operator_types:
+            self.lexer.get_token()
+            unary_node = UnaryNode(unary_operator.type, None)
+
+        exp_node = self.parse_term()
+        while True:
+            token = self.lexer.peek()
+            if token.type not in exp_operator_types:
+                break
+            op = self.lexer.get_token()
+            right_factor = self.parse_term()
+            exp_node = BinaryNode(op.type, exp_node, right_factor)
+
+        if unary_node is None:
+            return exp_node
+        else:
+            unary_node.expression = exp_node  # Backfill parsed expression.
+            return unary_node
+
+    def parse_term(self):
+        '''Parse term.'''
+        term_operator_types = [TokenType.TIMES, TokenType.OVER]
+
+        node = self.parse_factor()
+        while True:
+            token = self.lexer.peek()
+            if token.type not in term_operator_types:
+                break
+            op = self.lexer.get_token()
+            right_factor = self.parse_factor()
+            node = BinaryNode(op.type, node, right_factor)
+
+        return node
+
+    def parse_factor(self):
+        '''Parse factor.'''
+        token = self.lexer.peek()
+        if token.type == TokenType.LPAREN:
+            self._expect(TokenType.LPAREN)
+            return self.parse_expression()
+            self._expect(TokenType.RPAREN)
+        # TODO symbol table
+        elif token.type in [TokenType.NUM, TokenType.IDENT]:
+            return self.lexer.get_token()
+
+        raise CompileError('Unknown token: {0}'.format(token))
