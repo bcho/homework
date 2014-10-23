@@ -100,6 +100,9 @@ class Token(object):
             value=self.value or ''
         )
 
+    def __repr__(self):
+        return self.__str__()
+
 
 def _none_is_nonthing(func):
     @wraps(func)
