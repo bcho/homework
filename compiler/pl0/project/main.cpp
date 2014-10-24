@@ -42,6 +42,8 @@ char *SYMOUT[] = {"NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	    "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	    "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
 	    "CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM" };
+// hbc (2014-10-24): make symbols count a macro.
+#define SYMBOLS_COUNT 33
 typedef  int *SYMSET; // SET OF SYMBOL;
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS ;
@@ -94,8 +96,8 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
-  SYMSET S=(SYMSET)malloc(sizeof(int)*33);
-  for (int i=0; i<33; i++)
+  SYMSET S=(SYMSET)malloc(sizeof(int)* SYMBOLS_COUNT);
+  for (int i=0; i< SYMBOLS_COUNT; i++)
 	if (S1[i] || S2[i]) S[i]=1;
 	else S[i]=0;
   return S;
@@ -103,64 +105,64 @@ SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
 //---------------------------------------------------------------------------
 SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
   SYMSET S1;
-  S1=(SYMSET)malloc(sizeof(int)*33);
-  for (int i=0; i<33; i++) S1[i]=S[i];
+  S1=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (int i=0; i<SYMBOLS_COUNT; i++) S1[i]=S[i];
   S1[SY]=1;
   return S1;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;  S[b]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1; S[e]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e, SYMBOL f) {
   SYMSET S; int i,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1; S[e]=1; S[f]=1;
   return S;
 }
 //---------------------------------------------------------------------------
 SYMSET SymSetNULL() {
   SYMSET S; int i,n,k;
-  S=(SYMSET)malloc(sizeof(int)*33);
-  for (i=0; i<33; i++) S[i]=0;
+  S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
   return S;
 }
 //---------------------------------------------------------------------------
@@ -644,10 +646,10 @@ int main(int argc, char *argv[]) {
   strcpy(MNEMONIC[CAL],"CAL");   strcpy(MNEMONIC[INI],"INI");
   strcpy(MNEMONIC[JMP],"JMP");   strcpy(MNEMONIC[JPC],"JPC");
 
-  DECLBEGSYS=(int*)malloc(sizeof(int)*33);
-  STATBEGSYS=(int*)malloc(sizeof(int)*33);
-  FACBEGSYS =(int*)malloc(sizeof(int)*33);
-  for(int j=0; j<33; j++) {
+  DECLBEGSYS=(int*)malloc(sizeof(int)*SYMBOLS_COUNT);
+  STATBEGSYS=(int*)malloc(sizeof(int)*SYMBOLS_COUNT);
+  FACBEGSYS =(int*)malloc(sizeof(int)*SYMBOLS_COUNT);
+  for(int j=0; j<SYMBOLS_COUNT; j++) {
 	DECLBEGSYS[j]=0;  STATBEGSYS[j]=0;  FACBEGSYS[j] =0;
   }
   DECLBEGSYS[CONSTSYM]=1;
