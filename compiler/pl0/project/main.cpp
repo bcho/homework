@@ -614,8 +614,10 @@ void Interpret() {
   fprintf(FOUT,"~~~ END PL0 ~~~\n");
 } /*Interpret*/
 //---------------------------------------------------------------------------
-/* hbc (2014-10-24): clean up c++ builder stuffs.
-void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
+/* hbc (2014-10-24): clean up c++ builder stuffs. */
+// void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
+// hbc (2014-10-24): add main function for cli usage.
+int main(int argc, char *argv[]) {
   for (CH=' '; CH<='^'; CH++) SSYM[CH]=NUL;
   strcpy(KWORD[ 1],"BEGIN");    strcpy(KWORD[ 2],"CALL");
   strcpy(KWORD[ 3],"CONST");    strcpy(KWORD[ 4],"DO");
@@ -660,9 +662,15 @@ void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
   FACBEGSYS[NUMBER]=1;
   FACBEGSYS[LPAREN]=1;
 
-  if ((FIN=fopen((Form1->EditName->Text+".PL0").c_str(),"r"))!=0) {
-	FOUT=fopen((Form1->EditName->Text+".COD").c_str(),"w");
-    Form1->printfs("=== COMPILE PL0 ===");
+  // hbc (2014-10-24): mock file io into cli args.
+  if (argc < 2) {
+    fprintf(stderr, "./main input.pl0");
+    return 1;
+  }
+  if ((FIN=fopen(argv[1], "r"))!=0) {
+    FOUT= stderr;
+    // hbc (2014-10-24): clean up c++ builder stuffs.
+    // Form1->printfs("=== COMPILE PL0 ===");
     fprintf(FOUT,"=== COMPILE PL0 ===\n");
 	ERR=0;
 	CC=0; CX=0; LL=0; CH=' '; GetSym();
@@ -680,16 +688,13 @@ void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
 	if (SYM!=PERIOD) Error(9);
 	if (ERR==0) Interpret();
 	else {
-	  Form1->printfs("ERROR IN PL/0 PROGRAM");
+          // hbc (2014-10-24): clean up c++ builder stuffs.
+	  // Form1->printfs("ERROR IN PL/0 PROGRAM");
 	  fprintf(FOUT,"ERROR IN PL/0 PROGRAM");
 	}
-	fprintf(FOUT,"\n"); fclose(FOUT);
+	fprintf(FOUT,"\n");
+        // hbc (2014-10-24): mock file io.
+        // fclose(FOUT);
   }
 }
-*/
 //---------------------------------------------------------------------------
-
-// hbc (2014-10-24): add main function for cli usage.
-int main(int argc, char *argv[]) {
-    return 0;
-}
