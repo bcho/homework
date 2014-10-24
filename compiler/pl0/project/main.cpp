@@ -1,20 +1,33 @@
 /*** PL0 COMPILER WITH CODE GENERATION ***/
 //---------------------------------------------------------------------------
-#include <vcl.h>
-#pragma hdrstop
-#include "Unit1.h"
+// hbc (2014-10-24): removed form related headers.
+// hbc (2014-10-24): add necessary headers.
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sstream>
+
+// hbc (2014-10-24): replace String with string
+using std::string;
+typedef string String;
+
+// hbc (2014-10-24): handcarfted itoa.
+string IntToStr(int n) {
+    std::stringstream ss;
+    ss << n;
+    return ss.str();
+}
 //---------------------------------------------------------------------------
-#pragma package(smart_init)
-#pragma resource "*.dfm"
-TForm1 *Form1;
 //---------------------------------------------------------------------------
-const  AL    =  10;  /* LENGTH OF IDENTIFIERS */
-const  NORW  =  14;  /* # OF RESERVED WORDS */
-const  TXMAX = 100;  /* LENGTH OF IDENTIFIER TABLE */
-const  NMAX  =  14;  /* MAX NUMBER OF DEGITS IN NUMBERS */
-const  AMAX  =2047;  /* MAXIMUM ADDRESS */
-const  LEVMAX=   3;  /* MAX DEPTH OF BLOCK NESTING */
-const  CXMAX = 200;  /* SIZE OF CODE ARRAY */
+// hbc (2014-10-24): replace constant with #define macros.
+#define AL      10  /* LENGTH OF IDENTIFIERS */
+#define NORW    14  /* # OF RESERVED WORDS */
+#define TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
+#define NMAX    14  /* MAX NUMBER OF DEGITS IN NUMBERS */
+#define AMAX  2047  /* MAXIMUM ADDRESS */
+#define LEVMAX   3  /* MAX DEPTH OF BLOCK NESTING */
+#define CXMAX  200  /* SIZE OF CODE ARRAY */
 
 typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 	            SLASH, ODDSYM, EQL, NEQ, LSS, LEQ, GTR, GEQ,
@@ -35,7 +48,7 @@ typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS ;
 typedef  enum { LIT, OPR, LOD, STO, CAL, INI, JMP, JPC } FCT;
 typedef struct {
 	 FCT F;     /*FUNCTION CODE*/
-	 int L; 	/*0..LEVMAX  LEVEL*/
+	 int L;     /*0..LEVMAX  LEVEL*/
 	 int A;     /*0..AMAX    DISPLACEMENT ADDR*/
 } INSTRUCTION;
 	  /* LIT O A -- LOAD CONSTANT A             */
@@ -151,16 +164,19 @@ SYMSET SymSetNULL() {
   return S;
 }
 //---------------------------------------------------------------------------
+// hbc (2014-10-24): clean c++ builder stuffs.
 void Error(int n) {
-  String s = "***"+AnsiString::StringOfChar(' ', CC-1)+"^";
-  Form1->printls(s.c_str(),n);   fprintf(FOUT,"%s%d\n", s.c_str(), n);
+  //string s = "***"+AnsiString::StringOfChar(' ', CC-1)+"^";
+  //Form1->printls(s.c_str(),n);
+  fprintf(FOUT,"%d\n", n);
   ERR++;
 } /*Error*/
 //---------------------------------------------------------------------------
 void GetCh() {
   if (CC==LL) {
     if (feof(FIN)) {
-	  Form1->printfs("PROGRAM INCOMPLETE");
+          // hbc (2014-10-24): clean c++ builder stuffs.
+	  // Form1->printfs("PROGRAM INCOMPLETE");
 	  fprintf(FOUT,"PROGRAM INCOMPLETE\n");
 	  fclose(FOUT);
 	  exit(0);
@@ -171,10 +187,11 @@ void GetCh() {
       { CH=fgetc(FIN);  LINE[LL++]=CH; }
 	LINE[LL-1]=' ';  LINE[LL]=0;
     String s=IntToStr(CX);
-    while(s.Length()<3) s=" "+s;
+    while(s.length()<3) s=" "+s;
     s=s+" "+LINE;
-	Form1->printfs(s.c_str());
-    fprintf(FOUT,"%s\n",s);
+    // hbc (2014-10-24): cleanup c++ builder stuffs.
+    // Form1->printfs(s.c_str());
+    fprintf(FOUT,"%s\n",s.c_str());
   }
   CH=LINE[CC++];
 } /*GetCh()*/
@@ -231,9 +248,10 @@ void GetSym() {
 //---------------------------------------------------------------------------
 void GEN(FCT X, int Y, int Z) {
   if (CX>CXMAX) {
-    Form1->printfs("PROGRAM TOO LONG");
-	fprintf(FOUT,"PROGRAM TOO LONG\n");
-	fclose(FOUT);
+    // hbc (2014-10-24): cleanup c++ builder stuffs.
+    // Form1->printfs("PROGRAM TOO LONG");
+    fprintf(FOUT,"PROGRAM TOO LONG\n");
+    fclose(FOUT);
     exit(0);
   }
   CODE[CX].F=X; CODE[CX].L=Y; CODE[CX].A=Z;
@@ -291,12 +309,17 @@ void VarDeclaration(int LEV,int &TX,int &DX) {
 } /*VarDeclaration()*/
 //---------------------------------------------------------------------------
 void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
-  if (Form1->ListSwitch->ItemIndex==0)
+  // hbc (2014-10-24): cleanup c++ builder stuffs.
+  // just simply turn off code listing now.
+  //if (Form1->ListSwitch->ItemIndex==0)
+  if (false)
     for (int i=CX0; i<CX; i++) {
       String s=IntToStr(i);
-      while(s.Length()<3)s=" "+s;
+      // hbc (2014-10-24): cleanup c++ builder stuffs.
+      while(s.length()<3)s=" "+s;
       s=s+" "+MNEMONIC[CODE[i].F]+" "+IntToStr(CODE[i].L)+" "+IntToStr(CODE[i].A);
-	  Form1->printfs(s.c_str());
+          // hbc (2014-10-24): cleanup c++ builder stuffs.
+	  // Form1->printfs(s.c_str());
 	  fprintf(FOUT,"%3d%5s%4d%4d\n",i,MNEMONIC[CODE[i].F],CODE[i].L,CODE[i].A);
     }
 } /*ListCode()*/;
@@ -532,11 +555,13 @@ int BASE(int L,int B,int S[]) {
 } /*BASE*/
 //---------------------------------------------------------------------------
 void Interpret() {
-  const STACKSIZE = 500;
+  // hbc (2014-10-24): add explict type for int constant.
+  const int STACKSIZE = 500;
   int P,B,T; 		/*PROGRAM BASE TOPSTACK REGISTERS*/
   INSTRUCTION I;
   int S[STACKSIZE];  	/*DATASTORE*/
-  Form1->printfs("~~~ RUN PL0 ~~~");
+  // hbc (2014-10-24): clean up c++ builder stuffs.
+  // Form1->printfs("~~~ RUN PL0 ~~~");
   fprintf(FOUT,"~~~ RUN PL0 ~~~\n");
   T=0; B=1; P=0;
   S[1]=0; S[2]=0; S[3]=0;
@@ -559,12 +584,19 @@ void Interpret() {
 	      case 11: T--; S[T]=S[T]>=S[T+1];  break;
 	      case 12: T--; S[T]=S[T]>S[T+1];   break;
 	      case 13: T--; S[T]=S[T]<=S[T+1];  break;
-	      case 14: Form1->printls("",S[T]); fprintf(FOUT,"%d\n",S[T]); T--;
+	      case 14:
+                   // hbc (2014-10-24): clean up c++ builder stuffs.
+                   // Form1->printls("",S[T]);
+                   fprintf(FOUT,"%d\n",S[T]); T--;
                    break;
 	      case 15: /*Form1->printfs(""); fprintf(FOUT,"\n"); */ break;
-	      case 16: T++;  S[T]=InputBox("ÊäÈë","Çë¼üÅÌÊäÈë£º", 0).ToInt();
-                   Form1->printls("? ",S[T]); fprintf(FOUT,"? %d\n",S[T]);
-		           break;
+	      case 16:
+                   T++;
+                   // hbc (2014-10-24): clean up c++ builder stuffs.
+                   // S[T]=InputBox("ÊäÈë","Çë¼üÅÌÊäÈë£º", 0).ToInt();
+                   // Form1->printls("? ",S[T]);
+                   fprintf(FOUT,"? %d\n",S[T]);
+                   break;
 	    }
 	    break;
       case LOD: T++; S[T]=S[BASE(I.L,B,S)+I.A]; break;
@@ -577,10 +609,12 @@ void Interpret() {
       case JPC: if (S[T]==0) P=I.A;  T--;  break;
     } /*switch*/
   }while(P!=0);
-  Form1->printfs("~~~ END PL0 ~~~");
+  // hbc (2014-10-24): clean up c++ builder stuffs.
+  // Form1->printfs("~~~ END PL0 ~~~");
   fprintf(FOUT,"~~~ END PL0 ~~~\n");
 } /*Interpret*/
 //---------------------------------------------------------------------------
+/* hbc (2014-10-24): clean up c++ builder stuffs.
 void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
   for (CH=' '; CH<='^'; CH++) SSYM[CH]=NUL;
   strcpy(KWORD[ 1],"BEGIN");    strcpy(KWORD[ 2],"CALL");
@@ -652,5 +686,10 @@ void __fastcall TForm1::ButtonRunClick(TObject *Sender) {
 	fprintf(FOUT,"\n"); fclose(FOUT);
   }
 }
+*/
 //---------------------------------------------------------------------------
 
+// hbc (2014-10-24): add main function for cli usage.
+int main(int argc, char *argv[]) {
+    return 0;
+}
