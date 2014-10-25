@@ -264,7 +264,8 @@ void GetSym() {
 	    if (CH=='<') {
 		  GetCh();
 		  if (CH=='=') { SYM=LEQ; GetCh(); }
-		  else SYM=LSS;
+		  else if (CH == '>') { SYM=NEQ; GetCh(); }
+                  else { SYM = LSS; }
 		}
 		else
 		  if (CH=='>') {
@@ -667,8 +668,7 @@ int main(int argc, char *argv[]) {
   SSYM['*']=TIMES;     SSYM['/']=SLASH;
   SSYM['(']=LPAREN;    SSYM[')']=RPAREN;
   SSYM['=']=EQL;       SSYM[',']=COMMA;
-  SSYM['.']=PERIOD;    SSYM['#']=NEQ;
-  SSYM[';']=SEMICOLON;
+  SSYM['.']=PERIOD;    SSYM[';']=SEMICOLON;
   strcpy(MNEMONIC[LIT],"LIT");   strcpy(MNEMONIC[OPR],"OPR");
   strcpy(MNEMONIC[LOD],"LOD");   strcpy(MNEMONIC[STO],"STO");
   strcpy(MNEMONIC[CAL],"CAL");   strcpy(MNEMONIC[INI],"INI");
