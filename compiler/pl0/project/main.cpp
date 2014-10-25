@@ -235,6 +235,30 @@ void GetSym() {
 		if (CH=='=') { SYM=BECOMES; GetCh(); }
 		else SYM=NUL;
       }
+    else
+      if (CH == '/') {
+            GetCh();   
+            // In comment.
+            if (CH == '*') {
+                GetCh();
+                while (1) {
+                    if (CH == '*') {
+                        GetCh();
+                        // End of comment.
+                        if (CH == '/') {
+                            GetCh();
+                            break;
+                        }
+                    }
+
+                    GetCh();
+                }
+                // Restart tokenizing.
+                GetSym();
+            } else {
+                SYM = SSYM['/'];
+            }
+      }
 	  else /* THE FOLLOWING TWO CHECK WERE ADDED
 	         BECAUSE ASCII DOES NOT HAVE A SINGLE CHARACTER FOR <= OR >= */
 	    if (CH=='<') {
