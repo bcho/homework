@@ -651,7 +651,7 @@ void Interpret() {
 	      case 2: T--; S[T]=S[T]+S[T+1];   break;
 	      case 3: T--; S[T]=S[T]-S[T+1];   break;
 	      case 4: T--; S[T]=S[T]*S[T+1];   break;
-	      case 5: T--; S[T]=S[T] % S[T+1]; break;
+	      case 5: T--; S[T]=S[T] / S[T+1]; break;
 	      case 6: S[T]=(S[T]%2!=0);        break;
 	      case 8: T--; S[T]=S[T]==S[T+1];  break;
 	      case 9: T--; S[T]=S[T]!=S[T+1];  break;
