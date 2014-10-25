@@ -22,7 +22,7 @@ string IntToStr(int n) {
 //---------------------------------------------------------------------------
 // hbc (2014-10-24): replace constant with #define macros.
 #define AL      10  /* LENGTH OF IDENTIFIERS */
-#define NORW    14  /* # OF RESERVED WORDS */
+#define NORW    19  /* # OF RESERVED WORDS */
 #define TXMAX  100  /* LENGTH OF IDENTIFIER TABLE */
 #define NMAX    14  /* MAX NUMBER OF DEGITS IN NUMBERS */
 #define AMAX  2047  /* MAXIMUM ADDRESS */
@@ -34,16 +34,18 @@ typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 	            LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
 	            BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	            WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
-	            CONSTSYM, VARSYM, PROCSYM, PROGSYM
+	            CONSTSYM, VARSYM, PROCSYM, PROGSYM,
+                    ELSESYM, FORSYM, STEPSYM, UNTILSYM, RETURNSYM
         } SYMBOL;
 char *SYMOUT[] = {"NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	    "SLASH", "ODDSYM", "EQL", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
 	    "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
 	    "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	    "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
-	    "CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM" };
+	    "CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM",
+            "ELSESYM", "FORSYM", "STEPSYM", "UNTILSYM", "RETURNSYM" };
 // hbc (2014-10-24): make symbols count a macro.
-#define SYMBOLS_COUNT 33
+#define SYMBOLS_COUNT 38
 typedef  int *SYMSET; // SET OF SYMBOL;
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS ;
@@ -97,7 +99,7 @@ int SymIn(SYMBOL SYM, SYMSET S1) {
 //---------------------------------------------------------------------------
 SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
   SYMSET S=(SYMSET)malloc(sizeof(int)* SYMBOLS_COUNT);
-  for (int i=0; i< SYMBOLS_COUNT; i++)
+  for (int i=0; i< SYMBOLS_COUNT; ++i)
 	if (S1[i] || S2[i]) S[i]=1;
 	else S[i]=0;
   return S;
@@ -106,7 +108,7 @@ SYMSET SymSetUnion(SYMSET S1, SYMSET S2) {
 SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
   SYMSET S1;
   S1=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (int i=0; i<SYMBOLS_COUNT; i++) S1[i]=S[i];
+  for (int i=0; i<SYMBOLS_COUNT; ++i) S1[i]=S[i];
   S1[SY]=1;
   return S1;
 }
@@ -114,7 +116,7 @@ SYMSET SymSetAdd(SYMBOL SY, SYMSET S) {
 SYMSET SymSetNew(SYMBOL a) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;
   return S;
 }
@@ -122,7 +124,7 @@ SYMSET SymSetNew(SYMBOL a) {
 SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;  S[b]=1;
   return S;
 }
@@ -130,7 +132,7 @@ SYMSET SymSetNew(SYMBOL a, SYMBOL b) {
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1;
   return S;
 }
@@ -138,7 +140,7 @@ SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c) {
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1;
   return S;
 }
@@ -146,7 +148,7 @@ SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d) {
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1; S[e]=1;
   return S;
 }
@@ -154,7 +156,7 @@ SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e) {
 SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e, SYMBOL f) {
   SYMSET S; int i,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   S[a]=1;  S[b]=1; S[c]=1; S[d]=1; S[e]=1; S[f]=1;
   return S;
 }
@@ -162,7 +164,7 @@ SYMSET SymSetNew(SYMBOL a, SYMBOL b, SYMBOL c, SYMBOL d,SYMBOL e, SYMBOL f) {
 SYMSET SymSetNULL() {
   SYMSET S; int i,n,k;
   S=(SYMSET)malloc(sizeof(int)*SYMBOLS_COUNT);
-  for (i=0; i<SYMBOLS_COUNT; i++) S[i]=0;
+  for (i=0; i<SYMBOLS_COUNT; ++i) S[i]=0;
   return S;
 }
 //---------------------------------------------------------------------------
@@ -344,7 +346,7 @@ void ListCode(int CX0) {  /*LIST CODE GENERATED FOR THIS Block*/
   // just simply turn off code listing now.
   //if (Form1->ListSwitch->ItemIndex==0)
   if (false)
-    for (int i=CX0; i<CX; i++) {
+    for (int i=CX0; i<CX; ++i) {
       String s=IntToStr(i);
       // hbc (2014-10-24): cleanup c++ builder stuffs.
       while(s.length()<3)s=" "+s;
@@ -651,20 +653,51 @@ void Interpret() {
 // hbc (2014-10-24): add main function for cli usage.
 int main(int argc, char *argv[]) {
   for (CH=' '; CH<='^'; CH++) SSYM[CH]=NUL;
-  strcpy(KWORD[ 1],"BEGIN");    strcpy(KWORD[ 2],"CALL");
-  strcpy(KWORD[ 3],"CONST");    strcpy(KWORD[ 4],"DO");
-  strcpy(KWORD[ 5],"END");      strcpy(KWORD[ 6],"IF");
-  strcpy(KWORD[ 7],"ODD");      strcpy(KWORD[ 8],"PROCEDURE");
-  strcpy(KWORD[ 9],"PROGRAM");  strcpy(KWORD[10],"READ");
-  strcpy(KWORD[11],"THEN");     strcpy(KWORD[12],"VAR");
-  strcpy(KWORD[13],"WHILE");    strcpy(KWORD[14],"WRITE");
-  WSYM[ 1]=BEGINSYM;   WSYM[ 2]=CALLSYM;
-  WSYM[ 3]=CONSTSYM;   WSYM[ 4]=DOSYM;
-  WSYM[ 5]=ENDSYM;     WSYM[ 6]=IFSYM;
-  WSYM[ 7]=ODDSYM;     WSYM[ 8]=PROCSYM;
-  WSYM[ 9]=PROGSYM;    WSYM[10]=READSYM;
-  WSYM[11]=THENSYM;    WSYM[12]=VARSYM;
-  WSYM[13]=WHILESYM;   WSYM[14]=WRITESYM;
+
+  int i;
+  // Prepare keywords. (human sort ~_~)
+  i = 0;
+  strcpy(KWORD[++i],"BEGIN");
+  strcpy(KWORD[++i],"CALL");
+  strcpy(KWORD[++i],"CONST");
+  strcpy(KWORD[++i],"DO");
+  strcpy(KWORD[++i],"ELSE");
+  strcpy(KWORD[++i],"END");
+  strcpy(KWORD[++i],"FOR");
+  strcpy(KWORD[++i],"IF");
+  strcpy(KWORD[++i],"ODD");
+  strcpy(KWORD[++i],"PROCEDURE");
+  strcpy(KWORD[++i],"PROGRAM");
+  strcpy(KWORD[++i],"READ");
+  strcpy(KWORD[++i],"RETURN");
+  strcpy(KWORD[++i],"STEP");
+  strcpy(KWORD[++i],"THEN");
+  strcpy(KWORD[++i],"UNTIL");
+  strcpy(KWORD[++i],"VAR");
+  strcpy(KWORD[++i],"WHILE");
+  strcpy(KWORD[++i],"WRITE");
+
+  i = 0;
+  WSYM[++i]=BEGINSYM;
+  WSYM[++i]=CALLSYM;
+  WSYM[++i]=CONSTSYM;
+  WSYM[++i]=DOSYM;
+  WSYM[++i]=ELSESYM;
+  WSYM[++i]=ENDSYM;
+  WSYM[++i]=FORSYM;
+  WSYM[++i]=IFSYM;
+  WSYM[++i]=ODDSYM;
+  WSYM[++i]=PROCSYM;
+  WSYM[++i]=PROGSYM;
+  WSYM[++i]=READSYM;
+  WSYM[++i]=RETURNSYM;
+  WSYM[++i]=STEPSYM;
+  WSYM[++i]=THENSYM;
+  WSYM[++i]=UNTILSYM;
+  WSYM[++i]=VARSYM;
+  WSYM[++i]=WHILESYM;
+  WSYM[++i]=WRITESYM;
+
   SSYM['+']=PLUS;      SSYM['-']=MINUS;
   SSYM['*']=TIMES;     SSYM['/']=SLASH;
   SSYM['(']=LPAREN;    SSYM[')']=RPAREN;
