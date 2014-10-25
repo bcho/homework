@@ -626,6 +626,7 @@ void Interpret() {
                    // hbc (2014-10-24): clean up c++ builder stuffs.
                    // S[T]=InputBox("ÊäÈë","Çë¼üÅÌÊäÈë£º", 0).ToInt();
                    // Form1->printls("? ",S[T]);
+                   scanf("%d", &S[T]);
                    fprintf(FOUT,"? %d\n",S[T]);
                    break;
 	    }
