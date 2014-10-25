@@ -476,6 +476,43 @@ void CONDITION(SYMSET FSYS,int LEV,int &TX) {
   }
 } /*CONDITION*/
 //---------------------------------------------------------------------------
+// Assignment operations
+void ASSIGNMENT(SYMSET FSYS, int LEV, int &TX, int var_pos) {
+    EXPRESSION(FSYS, LEV, TX);
+
+    GEN(STO, LEV - TABLE[var_pos].vp.LEVEL, TABLE[var_pos].vp.ADR);
+}
+
+void SELF_ASSIGNMENT(SYMSET FSYS, int LEV, int &TX, int var_pos, SYMBOL op) {
+    int opr_type;
+
+    // Load variable.
+    GEN(LOD, LEV - TABLE[var_pos].vp.LEVEL, TABLE[var_pos].vp.ADR);
+
+    // Calculate right hand value.
+    EXPRESSION(FSYS, LEV, TX);
+
+    // Calculate new value.
+    switch (op) {
+        case ADD_ASSIGN:
+            opr_type = 2;
+            break;
+        case SUB_ASSIGN:
+            opr_type = 3;
+            break;
+        case MUL_ASSIGN:
+            opr_type = 4;
+            break;
+        case DIV_ASSIGN:
+            opr_type = 5;
+            break;
+    }
+    GEN(OPR, 0, opr_type);
+    
+    // Store new value.
+    GEN(STO, LEV - TABLE[var_pos].vp.LEVEL, TABLE[var_pos].vp.ADR);
+}
+//---------------------------------------------------------------------------
 void STATEMENT(SYMSET FSYS,int LEV,int &TX) {   /*STATEMENT*/
   int i,CX1,CX2;
   switch (SYM) {
@@ -486,11 +523,21 @@ void STATEMENT(SYMSET FSYS,int LEV,int &TX) {   /*STATEMENT*/
 		  if (TABLE[i].KIND!=VARIABLE) { /*ASSIGNMENT TO NON-VARIABLE*/
 			Error(12); i=0;
 		  }
-        GetSym();
-		if (SYM==BECOMES) GetSym();
-		else Error(13);
-		EXPRESSION(FSYS,LEV,TX);
-		if (i!=0) GEN(STO,LEV-TABLE[i].vp.LEVEL,TABLE[i].vp.ADR);
+                GetSym();
+		if (SYM==BECOMES) {
+                    GetSym();
+                    ASSIGNMENT(FSYS, LEV, TX, i);
+                } else if (SYM == ADD_ASSIGN
+                           || SYM == SUB_ASSIGN
+                           || SYM == MUL_ASSIGN
+                           || SYM == DIV_ASSIGN) {
+                    SYMBOL op_sym = SYM;
+                    GetSym();
+                    SELF_ASSIGNMENT(FSYS, LEV, TX, i, op_sym);
+                }
+                else {
+                    Error(13);
+                }
 		break;
 	case READSYM:
 		GetSym();
@@ -651,7 +698,7 @@ void Interpret() {
 	      case 2: T--; S[T]=S[T]+S[T+1];   break;
 	      case 3: T--; S[T]=S[T]-S[T+1];   break;
 	      case 4: T--; S[T]=S[T]*S[T+1];   break;
-	      case 5: T--; S[T]=S[T] / S[T+1]; break;
+	      case 5: T--; S[T]=S[T]/S[T+1]; break;
 	      case 6: S[T]=(S[T]%2!=0);        break;
 	      case 8: T--; S[T]=S[T]==S[T+1];  break;
 	      case 9: T--; S[T]=S[T]!=S[T+1];  break;
