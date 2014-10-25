@@ -68,13 +68,13 @@ int    NUM; /*LAST NUMBER READ*/
 int    CC;  /*CHARACTER COUNT*/
 int    LL;  /*LINE LENGTH*/
 int    CX;  /*CODE ALLOCATION INDEX*/
-char   LINE[81];
-INSTRUCTION  CODE[CXMAX];
-ALFA    KWORD[NORW+1];
-SYMBOL  WSYM[NORW+1];
-SYMBOL  SSYM['^'+1];
-ALFA    MNEMONIC[9];
-SYMSET  DECLBEGSYS, STATBEGSYS, FACBEGSYS;
+char   LINE[81];                /* current line buffer */
+INSTRUCTION  CODE[CXMAX];       /* code stack */
+ALFA    KWORD[NORW+1];          /* reserved words (?) */
+SYMBOL  WSYM[NORW+1];           /* keywords symbol table */
+SYMBOL  SSYM['^'+1];            /* single character symbol table */
+ALFA    MNEMONIC[9];            /* instructions representing string (?) */
+SYMSET  DECLBEGSYS, STATBEGSYS, FACBEGSYS; /* !! symbol set (?) */
 
 struct {
   ALFA NAME;
@@ -83,7 +83,7 @@ struct {
     int VAL;   /*CONSTANT*/
     struct { int LEVEL,ADR,SIZE; } vp;  /*VARIABLE,PROCEDUR:*/
   };
-} TABLE[TXMAX];
+} TABLE[TXMAX];                 /* symbol table */
 
 FILE *FIN,*FOUT;
 int ERR;
@@ -175,6 +175,7 @@ void Error(int n) {
 } /*Error*/
 //---------------------------------------------------------------------------
 void GetCh() {
+  // Read new line buffer.
   if (CC==LL) {
     if (feof(FIN)) {
           // hbc (2014-10-24): clean c++ builder stuffs.
@@ -188,6 +189,7 @@ void GetCh() {
 	while (!feof(FIN) && CH!=10)
       { CH=fgetc(FIN);  LINE[LL++]=CH; }
 	LINE[LL-1]=' ';  LINE[LL]=0;
+    // ? what CX used for? where does it change?
     String s=IntToStr(CX);
     while(s.length()<3) s=" "+s;
     s=s+" "+LINE;
@@ -209,6 +211,7 @@ void GetSym() {
 	}while((CH>='A' && CH<='Z')||(CH>='0' && CH<='9'));
 	A[K]='\0';
 	strcpy(ID,A); i=1; J=NORW;
+        // Check if the indent is a keyword.
 	do {
 	  K=(i+J) / 2;
 	  if (strcmp(ID,KWORD[K])<=0) J=K-1;
@@ -245,6 +248,7 @@ void GetSym() {
 			if (CH=='=') { SYM=GEQ; GetCh(); }
 			else SYM=GTR;
           }
+                  // Get single character symbol.
 		  else { SYM=SSYM[CH]; GetCh(); }
 } /*GetSym()*/
 //---------------------------------------------------------------------------
