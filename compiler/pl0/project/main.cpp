@@ -32,7 +32,10 @@ string IntToStr(int n) {
 typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 	            SLASH, ODDSYM, EQL, NEQ, LSS, LEQ, GTR, GEQ,
 	            LPAREN, RPAREN, COMMA, SEMICOLON, PERIOD,
-	            BECOMES, BEGINSYM, ENDSYM, IFSYM, THENSYM,
+	            BECOMES,
+                    ADD_ASSIGN, SUB_ASSIGN,
+                    MUL_ASSIGN, DIV_ASSIGN,
+                    BEGINSYM, ENDSYM, IFSYM, THENSYM,
 	            WHILESYM, WRITESYM, READSYM, DOSYM, CALLSYM,
 	            CONSTSYM, VARSYM, PROCSYM, PROGSYM,
                     ELSESYM, FORSYM, STEPSYM, UNTILSYM, RETURNSYM
@@ -40,12 +43,14 @@ typedef enum  { NUL, IDENT, NUMBER, PLUS, MINUS, TIMES,
 char *SYMOUT[] = {"NUL", "IDENT", "NUMBER", "PLUS", "MINUS", "TIMES",
 	    "SLASH", "ODDSYM", "EQL", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
 	    "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
-	    "BECOMES", "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
+	    "BECOMES",
+            "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN",
+            "BEGINSYM", "ENDSYM", "IFSYM", "THENSYM",
 	    "WHILESYM", "WRITESYM", "READSYM", "DOSYM", "CALLSYM",
 	    "CONSTSYM", "VARSYM", "PROCSYM", "PROGSYM",
             "ELSESYM", "FORSYM", "STEPSYM", "UNTILSYM", "RETURNSYM" };
 // hbc (2014-10-24): make symbols count a macro.
-#define SYMBOLS_COUNT 38
+#define SYMBOLS_COUNT (sizeof(SYMOUT) / sizeof(SYMOUT[0]))
 typedef  int *SYMSET; // SET OF SYMBOL;
 typedef  char ALFA[11];
 typedef  enum { CONSTANT, VARIABLE, PROCEDUR } OBJECTS ;
@@ -238,6 +243,39 @@ void GetSym() {
 		else SYM=NUL;
       }
     else
+      if (CH == '+') {
+            GetCh();
+            // Self-assignment.
+            if (CH == '=') {
+                GetCh();
+                SYM = ADD_ASSIGN;
+            } else {
+                SYM = SSYM['+'];
+            }
+      }
+    else
+      if (CH == '-') {
+            GetCh();
+            // Self-assignment.
+            if (CH == '=') {
+                GetCh();
+                SYM = SUB_ASSIGN;
+            } else {
+                SYM = SSYM['-'];
+            }
+      }
+    else
+      if (CH == '*') {
+            GetCh();
+            // Self-assignment.
+            if (CH == '=') {
+                GetCh();
+                SYM = MUL_ASSIGN;
+            } else {
+                SYM = SSYM['*'];
+            }
+      }
+    else
       if (CH == '/') {
             GetCh();   
             // In comment.
@@ -257,6 +295,10 @@ void GetSym() {
                 }
                 // Restart tokenizing.
                 GetSym();
+            // Self-assignment.
+            } else if (CH == '=') {
+                GetCh();
+                SYM = DIV_ASSIGN;
             } else {
                 SYM = SSYM['/'];
             }
@@ -622,7 +664,7 @@ void Interpret() {
                    // Form1->printls("",S[T]);
                    fprintf(FOUT,"%d\n",S[T]); T--;
                    break;
-	      case 15: /*Form1->printfs(""); fprintf(FOUT,"\n"); */ break;
+	      case 15: /*Form1->printfs("");*/ fprintf(FOUT,"\n"); break;
 	      case 16:
                    T++;
                    // hbc (2014-10-24): clean up c++ builder stuffs.
