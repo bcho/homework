@@ -41,7 +41,7 @@ string IntToStr(int n) {
 // Global Constants
 //------------------------------------------------------------------------
 #define NORW        19      /* Counts of reserviced keywords. */
-#define IDMAX       10      /* Maximum length of identifiers. */
+#define IDMAX       10      /* Maximum length of identitys. */
 #define TXMAX       100     /* Size of symbol table. */
 #define LINEMAX     81      /* Maximum length of program line. */
 #define NMAX        14      /* Max number of number digits. */
@@ -102,7 +102,7 @@ typedef enum {
 
 
 typedef int *SYMSET;                /* symbol set */
-typedef char ALFA[IDMAX+1];         /* identifier container */
+typedef char ALFA[IDMAX+1];         /* identity container */
 
 typedef struct {
     ALFA NAME;
@@ -146,7 +146,7 @@ typedef struct {
 //------------------------------------------------------------------------
 char CH;                        /* last read character */
 SYMBOL SYM;                     /* last read symbol */
-ALFA ID;                        /* last read identifier */
+ALFA ID;                        /* last read identity */
 int NUM;                        /* last read number */
 
 // input buffer state
@@ -605,6 +605,9 @@ void Interpret()
                     case 6:                     /* ODD A */
                         S[T] = S[T] % 2 != 0;
                         break;
+                    case 7:                     /* !A */
+                        S[T] = ! S[T];
+                        break;
                     case 8:                     /* A == B */
                         T = T - 1;
                         S[T] = S[T] == S[T + 1];
@@ -643,7 +646,7 @@ void Interpret()
                         scanf("%d", &S[T]);
                         break;
                     default:
-                        panic(0, "unknown op code: %d", I.A);
+                        panic(0, "Interpret: unknown op code: %d", I.A);
                 } /* switch I.A */
                 break; /*case OPR */
 
@@ -704,6 +707,7 @@ void TEST(SYMSET a, SYMSET b, int error_code)
 
 // Record an entity into symbol table.
 // TODO DX?
+// TODO clean ID.
 void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
 {
     TX = TX + 1;
@@ -726,7 +730,7 @@ void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
     }
 }
 
-// Find identifier's position.
+// Find identity's position.
 // Return 0 if not found.
 int POSITION(ALFA ID, int TX)
 {
@@ -738,613 +742,692 @@ int POSITION(ALFA ID, int TX)
 
     return 0;
 }
+
+// Get an identity.
+// Panic if not found.
+void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
+{
+    int pos;
+
+    pos = POSITION(id, TX);
+    if (pos == 0)
+        panic(0, "unable to find identity: %s", id);
+
+    *item = TABLE[pos];
+}
 //------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------
 // Parser
 //------------------------------------------------------------------------
-void EXPRESSION(SYMSET, int, int &);
-void TERM(SYMSET, int, int &);
-void STATEMENT(SYMSET, int, int &);
+void parse_program(int, int &);
+void parse_block(int, int &);
+void parse_const(int, int &, int &);
+void parse_var(int, int &, int &);
+void parse_procedure(int, int &, int &);
+void parse_statement(int, int &);
+void parse_assignment(int, int &);
+void parse_if(int, int &);
+void parse_while(int, int &);
+// TODO make it as expression.
+void parse_call(int, int &);
+void parse_read(int, int &);
+void parse_write(int, int &);
 
-void ConstDelcaration(int level, int &TX, int &DX)
+// expression groups
+void parse_expression(int, int &);
+void parse_or_cond(int, int &);
+void parse_and_cond(int, int &);
+void parse_relational(int, int &);
+void parse_additive(int, int &);
+void parse_multive(int, int &);
+void parse_unary(int, int &);
+void parse_factor(int, int &);
+
+
+/*
+ * Grammar:
+ *
+ *  PROGRAM-BLOCK ::= PROGRAM IDENT; BLOCK "."
+ */
+void parse_program(int level, int &TX)
 {
-    if (SYM == SYM_IDENT) {
-        GetSym();
+    if (SYM != SYM_PROG)
+        panic(0, "PROGRAM-BLOCK: expect PROGRAM, got: %s", SYMOUT[SYM]);
+    GetSym();
 
-        if (SYM == SYM_EQL) {
-            GetSym();
+    if (SYM != SYM_IDENT)
+        panic(0, "PROGRAM-BLOCK: expect program name, got: %s", SYMOUT[SYM]);
+    GetSym();
 
-            if (SYM == SYM_NUMBER) {
-                ENTER(KIND_CONSTANT, level, TX, DX);
-                GetSym();
-            } else {
-                panic(3, "expect NUMBER, got: %s", SYMOUT[SYM]);
-            }
-        }
-    } else {
-        panic(4, "expect IDENT, got: %s", SYMOUT[SYM]);
-    }
-}
+    if (SYM != SYM_SEMICOLON)
+        panic(5, "PROGRAM-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
 
-void VarDeclaration(int level, int &TX, int &DX)
-{
-    if (SYM == SYM_IDENT) {
-        ENTER(KIND_VARIABLE, level, TX, DX);
-        GetSym();
-    } else {
-        panic(4, "expect IDENT, got: %s", SYMOUT[SYM]);
-    }
-}
+    parse_block(level, TX);
 
-
-void FACTOR(SYMSET FSYS, int level, int &TX)
-{
-    int ident_pos;
-    TABLE_ITEM ident;
-    SYMSET set;
-
-    TEST(FACBEGSYS, FSYS, 24);
-
-    while (SymIn(SYM, FACBEGSYS)) {
-        if (SYM == SYM_IDENT) {
-            ident_pos = POSITION(ID, TX);
-            if (ident_pos == 0) {
-                panic(11, "FACTOR: unable to find identify: %s", ID);
-            } else {
-                ident = TABLE[ident_pos];
-                switch (ident.KIND) {
-                    case KIND_CONSTANT:
-                        GEN(LIT, 0, ident.VAL);
-                        break;
-                    case KIND_VARIABLE:
-                        // TODO address calculating?
-                        GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
-                        break;
-                    default:
-                        panic(21, "FACTOR: identify type should be CONST or VARIABLE");
-                }
-            }
-            GetSym();
-        } /* SYM == SYM_IDENT */
-        
-        else if (SYM == SYM_NUMBER) {
-            // FIXME why this check?
-            if (NUM > AMAX) {
-                panic(31, "FACTOR: number too large: %d", NUM);
-                NUM = 0;
-            }
-
-            GEN(LIT, 0, NUM);
-            GetSym();
-        } /* SYM == SYM_NUMBER */
-        
-        else if (SYM == SYM_LPAREN) {
-            GetSym();
-
-            set = SymSetAdd(SYM_RPAREN, FSYS);
-            EXPRESSION(set, level, TX);
-            SymSetDestory(set);
-
-            if (SYM == SYM_RPAREN)
-                GetSym();
-            else
-                panic(22, "missing `)`");
-        } /* SYM == SYM_LPAREN */
-
-        TEST(FSYS, FACBEGSYS, 23);
-
-    } /* while */
-}
-
-void TERM(SYMSET FSYS, int level, int &TX)
-{
-    SYMSET factor_set, op_set;
-    SYMBOL MULOP;
-
-    op_set = SymSetNew(2, SYM_TIMES, SYM_OVER);
-    factor_set = SymSetUnion(FSYS, op_set);
-    SymSetDestory(op_set);
-
-    FACTOR(factor_set, level, TX);
-    while (SYM == SYM_TIMES || SYM == SYM_OVER) {
-        MULOP = SYM;
-        GetSym();
-
-        FACTOR(factor_set, level, TX);
-
-        if (MULOP == SYM_TIMES)
-            GEN(OPR, 0, 4);
-        else
-            GEN(OPR, 0, 5);
-    }
-
-    SymSetDestory(factor_set);
-}
-
-void EXPRESSION(SYMSET FSYS, int level, int &TX)
-{
-    SYMSET term_set, op_set;
-    SYMBOL ADDOP;
-
-    op_set = SymSetNew(2, SYM_PLUS, SYM_MINUS);
-    term_set = SymSetUnion(FSYS, op_set);
-    SymSetDestory(op_set);
-
-    if (SYM == SYM_PLUS || SYM == SYM_MINUS) {
-        ADDOP = SYM;
-        GetSym();
-
-        TERM(term_set, level, TX);
-
-        if (ADDOP == SYM_MINUS)
-            GEN(OPR, 0, 1);
-    } /* SYM == SYM_PLUS || SYM == SYM_MINUS */
-    else {
-        TERM(term_set, level, TX);
-    }
-
-    while (SYM == SYM_PLUS || SYM == SYM_MINUS) {
-        ADDOP = SYM;
-        GetSym();
-
-        TERM(term_set, level, TX);
-
-        if (ADDOP == SYM_PLUS)
-            GEN(OPR, 0, 2);
-        else
-            GEN(OPR, 0, 3);
-    }
-
-    SymSetDestory(term_set);
-}
-
-void CONDITION(SYMSET FSYS, int level, int &TX)
-{
-    SYMSET set, op_set;
-    int op_code;
-    SYMBOL RELOP;
-
-    if (SYM == SYM_ODD) {
-        GetSym();
-        
-        EXPRESSION(FSYS, level, TX);
-        GEN(OPR, 0, 6);
-    } else {
-        op_set = SymSetNew(6, SYM_EQL, SYM_NEQ, SYM_LSS, SYM_LEQ, SYM_GTR, SYM_GEQ);
-        set = SymSetUnion(FSYS, op_set);
-        EXPRESSION(set, level, TX);
-
-        if (!SymIn(SYM, op_set))
-            panic(20, "unsupproted compare operator: %s", SYMOUT[SYM]);
-        SymSetDestory(set);
-        SymSetDestory(op_set);
-
-        RELOP = SYM;
-        GetSym();
-        EXPRESSION(FSYS, level, TX);
-
-        switch (RELOP) {
-            case SYM_EQL:
-                op_code = 8;
-                break;
-            case SYM_NEQ:
-                op_code = 9;
-                break;
-            case SYM_LSS:
-                op_code = 10;
-                break;
-            case SYM_GEQ:
-                op_code = 11;
-                break;
-            case SYM_GTR:
-                op_code = 12;
-                break;
-            case SYM_LEQ:
-                op_code = 13;
-                break;
-            default:
-                panic(0, "CONDITION: unknown operator: %s", SYMOUT[SYM]);
-        }
-
-        GEN(OPR, 0, op_code);
-    }
-}
-
-void ASSIGNMENT(SYMSET FSYS, int level, int &TX, TABLE_ITEM inst)
-{
-    EXPRESSION(FSYS, level, TX);
-
-    GEN(STO, level - inst.vp.LEVEL, inst.vp.ADDRESS);
-}
-
-void SELF_ASSIGNMENT(SYMSET FSYS, int level, int &TX, TABLE_ITEM inst, SYMBOL op)
-{
-    int op_code;
-
-    // load variable for calculating.
-    GEN(LOD, level - inst.vp.LEVEL, inst.vp.ADDRESS);
-
-    // calculate right side value.
-    EXPRESSION(FSYS, level, TX);
-
-    // calculate new value.
-    switch (op) {
-        case SYM_ADD_ASSIGN:
-            op_code = 2;
-            break;
-        case SYM_SUB_ASSIGN:
-            op_code = 3;
-            break;
-        case SYM_MUL_ASSIGN:
-            op_code = 4;
-            break;
-        case SYM_DIV_ASSIGN:
-            op_code = 5;
-            break;
-        default:
-            panic(0, "SELF_ASSIGNMENT: unsupproted operator: %s", SYMOUT[op]);
-    }
-    GEN(OPR, 0, op_code);
-    
-    // Store new value.
-    GEN(STO, inst.vp.LEVEL, inst.vp.ADDRESS);
+    if (SYM != SYM_PERIOD)
+        panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
 }
 
 /*
  * Grammar:
  *
- *  IF-STAT ::= IF EXPRESSION THEN STATEMENT
- *           |  IF EXPRESSION THEN STATEMENT ELSE STATEMENT
+ *   BLOCK ::= {CONST-BLOCK} {VAR-BLOCK} [PROCEDURE-BLOCK] STATEMENT
  *
- * PC layout:
+ * Instructions Layout:
  *
- * - If ELSE is not presented, THEN_PC should be exactly ELSE_PC.
- *
+ * TODO
  * +----------------------------------------------------+
  * |                                                    |
- * |                condition sequences                 |
+ * |                block instructions                  |
+ * |                                                    |
+ * +----------------------------------------------------+
+ */
+void parse_block(int level, int &TX)
+{
+    int DX, TX0, CX0;
+
+    DX = 3;                                 /* data storage index */
+    TX0 = TX;                               /* initial table index */
+    CX0 = CX;                               /* initial code index */
+    TABLE[TX].vp.ADDRESS = CX;              /* body entry address */
+    GEN(JMP, 0, 0);
+
+    if (level > LEVMAX)
+        panic(32, "BLOCK: level too deep: %d", level);
+
+    if (SYM == SYM_CONST)
+        parse_const(level, TX, DX);
+    if (SYM == SYM_VAR)
+        parse_var(level, TX, DX);
+    while (SYM == SYM_PROC)
+        parse_procedure(level, TX, DX);
+
+    CODE[TABLE[TX0].vp.ADDRESS].A = CX;
+    TABLE[TX0].vp.ADDRESS = CX;                 /* start address of body (?) */
+    TABLE[TX0].vp.SIZE = DX;                    /* size of data segment */
+    GEN(INI, 0, DX);
+
+    parse_statement(level, TX);
+    GEN(OPR, 0, 0);                             /* return */
+}
+
+/*
+ * Grammar:
+ *
+ *  CONST-BLOCK ::= CONST IDENT "=" NUMBER ["," IDENT "=" NUMBER] ";"
+ */
+void parse_const(int level, int &TX, int &DX)
+{
+    if (SYM != SYM_CONST)
+        panic(0, "CONST-BLOCK: expect CONST, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    do {
+        if (SYM != SYM_IDENT)
+            panic(4, "CONST-BLOCK: expect IDENT, got: %s", SYMOUT[SYM]);
+        GetSym();
+
+        if (SYM != SYM_EQL)
+            panic(4, "CONST-BLOCK: expect '=', got: %s", SYMOUT[SYM]);
+        GetSym();
+
+        if (SYM != SYM_NUMBER)
+            panic(3, "CONST-BLOCK: expect NUMBER, got: %s", SYMOUT[SYM]);
+        ENTER(KIND_CONSTANT, level, TX, DX);
+        GetSym();
+
+        if (SYM != SYM_COMMA)
+            break;
+        GetSym();
+    } while (SYM != SYM_SEMICOLON);
+
+    if (SYM != SYM_SEMICOLON)
+        panic(0, "CONST-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+}
+
+/*
+ * Grammar:
+ *
+ *  VAR-BLOCK ::= VAR IDENT ["," IDENT] ";"
+ */
+void parse_var(int level, int &TX, int &DX)
+{
+    if (SYM != SYM_VAR)
+        panic(0, "VAR-BLOCK: expect VAR, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    do {
+        if (SYM != SYM_IDENT)
+            panic(4, "VAR-BLOCK: expect IDENT, got: %s", SYMOUT[SYM]);
+        ENTER(KIND_VARIABLE, level, TX, DX);
+        GetSym();
+
+        if (SYM != SYM_COMMA)
+            break;
+        GetSym();
+    } while (SYM != SYM_SEMICOLON);
+
+    if (SYM != SYM_SEMICOLON)
+        panic(0, "VAR-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+}
+
+/*
+ * Grammar:
+ *
+ *  PROCEDURE-BLOCK ::= PROCEDURE IDENT ";" BLOCK ";"
+ */
+void parse_procedure(int level, int &TX, int &DX)
+{
+    if (SYM != SYM_PROC)
+        panic(0, "PROCEDURE-BLOCK: expect PROCEDURE, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    if (SYM != SYM_IDENT)
+        panic(4, "PROCEDURE-BLOCK: expect identity, got: %s", SYMOUT[SYM]);
+    ENTER(KIND_PROCEDURE, level, TX, DX);
+    GetSym();
+
+    if (SYM != SYM_SEMICOLON)
+        panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    parse_block(level + 1, TX);
+
+    if (SYM != SYM_SEMICOLON)
+        panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+}
+
+/*
+ * Grammar:
+ *
+ *  STATEMENT ::= BEGIN STATEMENT [";" STATEMENT] END
+ *              | ASSIGN-STMT
+ *              | CALL-STMT
+ *              | IF-STMT
+ *              | WHILE-STMT
+ *              | CALL-STMT
+ *              | READ-STMT
+ *              | WRITE-STMT
+ */
+void parse_statement(int level, int &TX)
+{
+    switch (SYM) {
+        case SYM_IDENT:
+            parse_assignment(level, TX);
+            break;
+        case SYM_IF:
+            parse_if(level, TX);
+            break;
+        case SYM_WHILE:
+            parse_while(level, TX);
+            break;
+        case SYM_CALL:
+            parse_call(level, TX);
+            break;
+        case SYM_READ:
+            parse_read(level, TX);
+            break;
+        case SYM_WRITE:
+            parse_write(level, TX);
+            break;
+        case SYM_BEGIN:
+            GetSym();
+
+            parse_statement(level, TX);
+
+            while (SYM == SYM_SEMICOLON) {
+                GetSym();
+                parse_statement(level, TX);
+            }
+
+            if (SYM != SYM_END)
+                panic(17, "STATEMENT: expect END, got: %s", SYMOUT[SYM]);
+            GetSym();
+
+            break;
+        default:
+            panic(0, "STATEMENT: unexpected token: %s", SYMOUT[SYM]);
+    }
+}
+
+/*
+ * Grammar:
+ *
+ *  ASSIGNMENT ::= IDENT ASSIGNOP EXPRESSION
+ *  ASSIGNOP ::= ":=" | "+=" | "-=" | "*=" | "/="
+ */
+void parse_assignment(int level, int &TX)
+{
+    TABLE_ITEM ident;
+    SYMBOL assign_op;
+    int op_code;
+
+    GET_IDENT(ID, TX, &ident);
+    if (ident.KIND != KIND_VARIABLE)
+        panic(12, "ASSIGNMENT: cannot assign to non-variable %s", ID);
+    GetSym();
+
+    if (SYM != SYM_ASSIGN && SYM != SYM_ADD_ASSIGN && SYM != SYM_SUB_ASSIGN
+        && SYM != SYM_MUL_ASSIGN && SYM != SYM_DIV_ASSIGN)
+        panic(13, "ASSIGNMENT: unexpected token: %s", SYMOUT[SYM]);
+    assign_op = SYM;
+    GetSym();
+
+    if (assign_op == SYM_ASSIGN) {
+        // calculate right side value
+        parse_expression(level, TX);
+    } else {
+        // load variable
+        GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+
+        // calculate right side value
+        parse_expression(level, TX);
+
+        // calculate new value
+        switch (assign_op) {
+            case SYM_ADD_ASSIGN: op_code = 2; break;
+            case SYM_SUB_ASSIGN: op_code = 3; break;
+            case SYM_MUL_ASSIGN: op_code = 4; break;
+            case SYM_DIV_ASSIGN: op_code = 5; break;
+            default:
+                panic(0, "ASSIGNMENT: unsupported operator: %s", SYMOUT[assign_op]);
+        }
+        GEN(OPR, 0, op_code);
+    }
+
+    // store value
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+}
+
+/*
+ * Grammar:
+ *
+ *  IF-STMT ::= IF EXPRESSION THEN STATEMENT
+ *            | IF EXPRESSION THEN STATEMENT ELSE STATEMENT
+ *
+ * Instructions Layout:
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                    conditions                      |
  * |                                                    |
  * +----------------------------------------------------+
  * |                JPC 0 THEN_PC                       |
  * +----------------------------------------------------+
  * |                                                    |
- * |                then sequences                      |
+ * |                then-stmt                           |
  * |                                                    |
  * +----------------------------------------------------+ <- THEN_PC
  * |                JMP 0 ELSE_PC (if ELSE exists)      |
  * +----------------------------------------------------+
  * |                                                    |
- * |                else sequences (if ELSE exists)     |
+ * |                else-stmt (if ELSE exists)          |
  * |                                                    |
- * +----------------------------------------------------+ <- ELSE_PC
- * |                                                    |
- * |                next statement                      |
- * |                                                    |
- * +----------------------------------------------------+
+ * +----------------------------------------------------+ <- ELSE_PC (*)
+ *
+ * * If ELSE is not presented, THEN_PC should be exactly ELSE_PC.
  */
-void IF(SYMSET FSYS, int level, int &TX)
+void parse_if(int level, int &TX)
 {
-    SYMSET op_set, first_set;
     int cond_jmp_cx, then_jmp_cx;
 
     GetSym();
 
-    // parse CONDITION
-    op_set = SymSetNew(2, SYM_THEN, SYM_DO);
-    first_set = SymSetUnion(FSYS, op_set);
-    SymSetDestory(op_set);
-    CONDITION(first_set, level, TX);
-    SymSetDestory(first_set);
-
+    // parse condition
+    parse_expression(level, TX);
     cond_jmp_cx = GEN(JPC, 0, 0);
 
-    // parse THEN part
+    // parse then part
     if (SYM != SYM_THEN)
-        panic(16, "IF: expected THEN, got %s", SYMOUT[SYM]);
+        panic(16, "IF-STMT: expected THEN, got: %s", SYMOUT[SYM]);
     GetSym();
-    STATEMENT(FSYS, level, TX);
+    parse_statement(level, TX);
 
-    // parse ELSE part if exists
-    GetSym();
+    // parse else part if exists
     if (SYM == SYM_ELSE) {
         GetSym();
 
         then_jmp_cx = GEN(JMP, 0, 0);
         CODE[cond_jmp_cx].A = CX;
-        STATEMENT(FSYS, level, TX);
+        parse_statement(level, TX);
         CODE[then_jmp_cx].A = CX;
     } else {
         CODE[cond_jmp_cx].A = CX;
     }
 }
 
-void STATEMENT(SYMSET FSYS, int level, int &TX)
+/*
+ * Grammar:
+ *
+ *  WHILE-STMT ::= WHILE EXPRESSION DO STATEMENT
+ *
+ * Instructions Layout:
+ * +----------------------------------------------------+ <- WHILE_CX
+ * |                                                    |
+ * |                    conditions                      |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                    JPC 0 OUT_CX                    |
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                    loop body                       |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                    JMP WHILE_CX                    |
+ * +----------------------------------------------------+ <- OUT_CX
+ */
+void parse_while(int level, int &TX)
 {
-    SYMSET set, op_set;
-    SYMBOL op_sym;
-    int ident_pos, CX1, CX2;
+    int while_cx, cond_jmp_cx;
+
+    GetSym();
+
+    while_cx = CX;
+
+    // parse expression
+    parse_expression(level, TX);
+    cond_jmp_cx = GEN(JPC, 0, 0);
+    
+    if (SYM != SYM_DO)
+        panic(18, "WHILE-STMT: expect DO, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // parse body
+    parse_statement(level, TX);
+    GEN(JMP, 0, while_cx);
+    
+    // back patch
+    CODE[cond_jmp_cx].A = CX;
+}
+
+/*
+ * Grammar:
+ *
+ *  CALL-STMT ::= CALL IDENT
+ */
+void parse_call(int level, int &TX)
+{
     TABLE_ITEM ident;
 
-    switch (SYM) {
-        case SYM_IDENT:
-            ident_pos = POSITION(ID, TX);
-            if (ident_pos == 0)
-                panic(11, "STATEMENT: unable to find identify: %s", ID);
-            ident = TABLE[ident_pos];
-            if (ident.KIND != KIND_VARIABLE)
-                panic(12, "STATEMENT: canont assign to non-variable");
-            GetSym();
+    GetSym();
 
-            if (SYM == SYM_ASSIGN) {
-                GetSym();
-                ASSIGNMENT(FSYS, level, TX, ident);
-            } else if (SYM == SYM_ADD_ASSIGN
-                       || SYM == SYM_SUB_ASSIGN
-                       || SYM == SYM_MUL_ASSIGN
-                       || SYM == SYM_DIV_ASSIGN) {
-                op_sym = SYM;
-                GetSym();
-                SELF_ASSIGNMENT(FSYS, level, TX, ident, op_sym);
-            } else {
-                panic(13, "STATEMENT: unexpected token %s", SYMOUT[SYM]);
-            }
-            break; /* case SYM_IDENT */
+    if (SYM != SYM_IDENT)
+        panic(14, "CALL-STMT: expected procedure name, got: %s", SYMOUT[SYM]);
+    
+    GET_IDENT(ID, TX, &ident);
+    if (ident.KIND != KIND_PROCEDURE)
+        panic(15, "CALL-STMT: %s should be a procedure", ID);
 
-        case SYM_READ:
-            GetSym();
-            if (SYM != SYM_LPAREN)
-                panic(34, "STATEMENT: expect '(', got: %s", SYMOUT[SYM]);
-            do {
-                GetSym();
-                if (SYM == SYM_IDENT) {
-                    ident_pos = POSITION(ID, TX);
-                    if (ident_pos == 0)
-                        panic(35, "unable to find identify: %s", ID);
-                    ident = TABLE[ident_pos];
-                    if (ident.KIND != KIND_VARIABLE) {
-                        panic(35, "READ: identify type should be variable");
-                    } else {
-                        GEN(OPR, 0, 16);
-                        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
-                    }
-                } else {
-                    panic(35, "expected identify, got: %s", SYMOUT[SYM]);
-                }
-
-                GetSym();
-            } while (SYM == SYM_COMMA);
-
-            if (SYM != SYM_RPAREN)
-                panic(33, "READ: expected ')', got: %s", SYMOUT[SYM]);
-            
-            GetSym();
-            break; /* case SYM_READ */
-
-        case SYM_WRITE:
-            GetSym();
-            if (SYM == SYM_LPAREN) {
-                op_set = SymSetNew(2, SYM_RPAREN, SYM_COMMA);
-                set = SymSetUnion(FSYS, op_set);
-                SymSetDestory(op_set);
-
-                do {
-                    GetSym();
-                    EXPRESSION(set, level, TX);
-                    GEN(OPR, 0, 14);
-                } while (SYM == SYM_COMMA);
-                SymSetDestory(set);
-
-                if (SYM != SYM_RPAREN)
-                    panic(33, "WRITE: expected ')', got: %s", SYMOUT[SYM]);
-                GetSym();
-            }
-
-            GEN(OPR, 0, 15);
-            break; /* case SYM_WRITE */
-
-        case SYM_CALL:
-            GetSym();
-            if (SYM != SYM_IDENT)
-                panic(14, "CALL: expected procedure name, got: %s", SYMOUT[SYM]);
-
-            ident_pos = POSITION(ID, TX);
-            if (ident_pos == 0)
-                panic(11, "CALL: unable to find procedure: %s", ID);
-            
-            ident = TABLE[ident_pos];
-            if (ident.KIND != KIND_PROCEDURE)
-                panic(15, "CALL: %s should be a procedure", ID);
-   
-            GEN(CAL, level - ident.vp.LEVEL, ident.vp.ADDRESS);
-            GetSym();
-            break; /* case SYM_CALL */
-
-        case SYM_IF:
-            IF(FSYS, level, TX);
-
-            break; /* case SYM_IF */
-
-        case SYM_BEGIN:
-            GetSym();
-
-            op_set = SymSetNew(2, SYM_SEMICOLON, SYM_END);
-            set = SymSetUnion(FSYS, op_set);
-            SymSetDestory(op_set);
-
-            STATEMENT(set, level, TX);
-
-            // TODO ??
-            op_set = SymSetAdd(SYM_SEMICOLON, STATBEGSYS);
-            while (SymIn(SYM, op_set)) {
-                if (SYM != SYM_SEMICOLON)
-                    panic(10, "expect ';', got: %s", SYMOUT[SYM]);
-                
-                GetSym();
-                STATEMENT(set, level, TX);
-            }
-            SymSetDestory(set);
-            SymSetDestory(op_set);
-
-            if (SYM != SYM_END)
-                panic(17, "expect END, got %s", SYMOUT[SYM]);
-            GetSym();
-            
-            break; /* case SYM_BEGIN */
-
-        case SYM_WHILE:
-            CX1 = CX;
-            GetSym();
-
-            op_set = SymSetAdd(SYM_DO, FSYS);
-            CONDITION(op_set, level, TX);
-            SymSetDestory(op_set);
-            CX2 = CX;
-
-            GEN(JPC, 0, 0);
-
-            if (SYM != SYM_DO)
-                panic(18, "expect DO, got %s", SYMOUT[SYM]);
-            GetSym();
-
-            STATEMENT(FSYS, level, TX);
-            GEN(JMP, 0, CX1);
-            CODE[CX2].A = CX;
-
-            break; /* case SYM_WHILE */
-
-        default:
-            ;
-    } /* switch SYM */
-
-    set = SymSetNew(0);
-    TEST(FSYS, set, 19);
-    SymSetDestory(set);
+    GEN(CAL, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GetSym();
 }
 
-void BLOCK(int level, int TX, SYMSET FSYS)
+/*
+ * Grammar:
+ *
+ *  READ-STMT ::= READ "(" IDENT, ["," IDENT] ")"
+ */
+void parse_read(int level, int &TX)
 {
-    int DX, TX0, CX0;
-    SYMSET op_set, set;
+    TABLE_ITEM ident;
 
-    DX = 3;                                 /* data storage index */
-    TX0 = TX;                               /* initial table index */
-    CX0 = CX;                               /* initial code index */
-    TABLE[TX].vp.ADDRESS = CX;
-    GEN(JMP, 0, 0);
+    GetSym();
 
-    if (level > LEVMAX)
-        panic(32, "block levels too deep: %d", level);
+    if (SYM != SYM_LPAREN)
+        panic(34, "READ-STMT: expect '(', got: %s", SYMOUT[SYM]);
 
     do {
-        if (SYM == SYM_CONST) {
-            GetSym();
+        GetSym();
+        if (SYM != SYM_IDENT)
+            panic(35, "READ-STMT: expect identity, got: %s", SYMOUT[SYM]);
 
-            do {
-                ConstDelcaration(level, TX, DX);
+        GET_IDENT(ID, TX, &ident);
+        if (ident.KIND != KIND_VARIABLE)
+            panic(35, "READ-STMT: identity %s should be variable", ID);
+        GEN(OPR, 0, 16);
+        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+        
+        GetSym();
+    } while (SYM == SYM_COMMA);
 
-                while (SYM == SYM_COMMA) {
-                    GetSym();
-                    ConstDelcaration(level, TX, DX);
-                }
-
-                if (SYM != SYM_SEMICOLON)
-                    panic(5, "expected ';', got: %s", SYMOUT[SYM]);
-                GetSym();
-            } while (SYM == SYM_IDENT);
-        }
-
-        if (SYM == SYM_VAR) {
-            GetSym();
-
-            do {
-                VarDeclaration(level, TX, DX);
-
-                while (SYM == SYM_COMMA) {
-                    GetSym();
-                    VarDeclaration(level, TX, DX);
-                }
-
-                if (SYM != SYM_SEMICOLON)
-                    panic(5, "expected ';', got: %s", SYMOUT[SYM]);
-                GetSym();
-            } while (SYM == SYM_IDENT);
-        }
-
-        while (SYM == SYM_PROC) {
-            GetSym();
-            if (SYM != SYM_IDENT)
-                panic(4, "expected identify, got: %s", SYMOUT[SYM]);
-            GetSym();
-            
-            ENTER(KIND_PROCEDURE, level, TX, DX);
-            
-            if (SYM != SYM_SEMICOLON)
-                panic(5, "expected ';', got %s", SYMOUT[SYM]);
-            GetSym();
-
-            set = SymSetAdd(SYM_SEMICOLON, FSYS);
-            BLOCK(level + 1, TX, set);
-            SymSetDestory(set);
-
-            if (SYM != SYM_SEMICOLON)
-                panic(5, "expected ';', got %s", SYMOUT[SYM]);
-            GetSym();
-
-            op_set = SymSetNew(2, SYM_IDENT, SYM_PROC);
-            set = SymSetUnion(STATBEGSYS, op_set);
-            SymSetDestory(op_set);
-            TEST(set, FSYS, 6);
-            SymSetDestory(set);
-        }
-
-        set = SymSetAdd(SYM_IDENT, STATBEGSYS);
-        TEST(set, DECLBEGSYS, 7);
-        SymSetDestory(set);
-    } while (SymIn(SYM, DECLBEGSYS));
-
-    CODE[TABLE[TX0].vp.ADDRESS].A = CX;
-    TABLE[TX0].vp.ADDRESS = CX;                 /* start address of body */
-    TABLE[TX0].vp.SIZE = DX;                    /* size of data segment */
-    GEN(INI, 0, DX);
-
-    op_set = SymSetNew(2, SYM_SEMICOLON, SYM_END);
-    set = SymSetUnion(FSYS, op_set);
-    SymSetDestory(op_set);
-    STATEMENT(set, level, TX);
-    SymSetDestory(set);
-    
-    GEN(OPR, 0, 0);                             /* return */
-    TEST(FSYS, SymSetNew(0), 8);
-    ListCode(CX0);
+    if (SYM != SYM_RPAREN)
+        panic(33, "READ-STMT: expected ')', got: %s", SYMOUT[SYM]);
+    GetSym();
 }
 
-void PROGRAM()
+/*
+ * Grammar:
+ *
+ *  WRITE-STMT ::= WRITE "(" EXPRESSION,  ["," EXPRESSION] ")"
+ *               | WRITE
+ */
+void parse_write(int level, int &TX)
 {
-    SYMSET op_set, set;
-
     GetSym();
-    if (SYM != SYM_PROG)
-        panic(0, "expected PROGRAM, got: %s", SYMOUT[SYM]);
+    if (SYM == SYM_LPAREN) {
+        GetSym();
 
-    GetSym();
-    if (SYM != SYM_IDENT)
-        panic(0, "expected program name, got: %s", SYMOUT[SYM]);
+        parse_expression(level, TX);
+        GEN(OPR, 0, 14);
+        while (SYM == SYM_COMMA) {
+            GetSym();
 
-    GetSym();
-    if (SYM != SYM_SEMICOLON)
-        panic(5, "expected ';', got: %s", SYMOUT[SYM]);
-    GetSym();
+            parse_expression(level, TX);
+            GEN(OPR, 0, 14);
+        }
 
-    op_set = SymSetUnion(DECLBEGSYS, STATBEGSYS);
-    set = SymSetAdd(SYM_PERIOD, op_set);
-    SymSetDestory(op_set);
-    BLOCK(0, 0, set);
-    SymSetDestory(set);
+        if (SYM != SYM_RPAREN)
+            panic(33, "WEITE-STMT: expected ')', got: %s", SYMOUT[SYM]);
+        GetSym();
+    } /* SYM == SYM_LPAREN */
+    
+    else {
+        GEN(OPR, 0, 15);
+    }
+}
 
-    if (SYM != SYM_PERIOD)
-        panic(9, "expected '.', got: %s", SYMOUT[SYM]);
+void parse_expression(int level, int &TX)
+{
+    parse_or_cond(level, TX);
+}
+
+/*
+ * Grammar:
+ *
+ *  OR_COND ::= AND_COND ["||" OR_COND]
+ */
+void parse_or_cond(int level, int &TX)
+{
+    // TODO
+    parse_and_cond(level, TX);
+}
+
+/*
+ * Grammar:
+ *
+ *  AND_COND ::= RELATIONAL ["&&" RELATIONAL]
+ */
+void parse_and_cond(int level, int &TX)
+{
+    // TODO
+    parse_relational(level, TX);
+}
+
+/*
+ * Grammar:
+ *
+ *  RELATIONAL ::= ADDITIVE [RELOP ADDITIVE]
+ *               | ODD ADDITIVE
+ *  RELOP ::= "=" / "<" / "<=" / ">" / ">=" / "<>"
+ */
+void parse_relational(int level, int &TX)
+{
+    SYMBOL rel_symbol;
+    int op_code;
+
+    if (SYM == SYM_ODD) {
+        GetSym();
+
+        parse_additive(level, TX);
+        GEN(OPR, 0, 6);
+    } /* SYM == SYM_ODD */
+
+    else {
+        parse_additive(level, TX);
+        while (SYM == SYM_EQL || SYM == SYM_NEQ
+               || SYM == SYM_LSS || SYM == SYM_LEQ
+               || SYM == SYM_GTR || SYM == SYM_GEQ) {
+            rel_symbol = SYM;
+            GetSym();
+            parse_additive(level, TX);
+
+            switch (rel_symbol) {
+                case SYM_EQL: op_code = 8;  break;
+                case SYM_NEQ: op_code = 9;  break;
+                case SYM_LSS: op_code = 10; break;
+                case SYM_GEQ: op_code = 11; break;
+                case SYM_GTR: op_code = 12; break;
+                case SYM_LEQ: op_code = 13; break;
+                default:
+                    panic(0, "RELATIONAL: unknown operator: %s", SYMOUT[SYM]);
+            }
+            GEN(OPR, 0, op_code);
+        }
+    }
+}
+
+/*
+ * Grammar:
+ *
+ *  ADDITIVE ::= MULTIVE ["+" / "-" MULTIVE]
+ */
+void parse_additive(int level, int &TX)
+{
+    SYMBOL op_symbol;
+
+    parse_multive(level, TX);
+    while (SYM == SYM_PLUS || SYM == SYM_MINUS) {
+        op_symbol = SYM;
+        GetSym();
+
+        parse_multive(level, TX);
+
+        if (op_symbol == SYM_PLUS)
+            GEN(OPR, 0, 2);
+        else
+            GEN(OPR, 0, 3);
+    }
+}
+
+/*
+ * Grammar:
+ *
+ *  MULTIVE ::= UNARY ["*" / "/" UNARY]
+ */
+void parse_multive(int level, int &TX)
+{
+    SYMBOL op_symbol;
+
+    parse_unary(level, TX);
+    while (SYM == SYM_TIMES || SYM == SYM_OVER) {
+        op_symbol = SYM;
+        GetSym();
+
+        parse_unary(level, TX);
+
+        if (op_symbol == SYM_TIMES)
+            GEN(OPR, 0, 4);
+        else
+            GEN(OPR, 0, 5);
+    }
+}
+
+/*
+ * Grammar:
+ *
+ *  UNARY ::= ["-" / "+" / "!"] UNARY
+ *          | FACTOR
+ */
+void parse_unary(int level, int &TX)
+{
+    if (SYM == SYM_MINUS) {
+        GetSym();
+        parse_unary(level, TX);
+        GEN(OPR, 0, 1);
+    } /* SYM == SYM_MINUS */
+    
+    else if (SYM == SYM_PLUS) {
+        GetSym();
+        parse_unary(level, TX);
+    } /* SYM == SYM_PLUS */
+
+    else if (SYM == SYM_NOT) {
+        GetSym();
+        parse_unary(level, TX);
+        GEN(OPR, 0, 7);
+    } /* SYM == SYM_NOT */
+
+    else {
+        parse_factor(level, TX);
+    }
+}
+
+/*
+ * Grammar:
+ *
+ *  FACTOR ::= IDENT
+ *           | NUMBER
+ *           | "(" EXPRESSION ")"
+ */
+void parse_factor(int level, int &TX)
+{
+    TABLE_ITEM ident;
+
+    if (SYM == SYM_IDENT) {
+        GET_IDENT(ID, TX, &ident);
+        switch (ident.KIND) {
+            case KIND_CONSTANT:
+                GEN(LIT, 0, ident.VAL);
+                break;
+            case KIND_VARIABLE:
+                // TODO address calculating
+                GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+                break;
+            default:
+                panic(21, "FACTOR: identity %s type should be CONST or VARIABLE", ID);
+        }
+        GetSym();
+    } /* SYM == SYM_IDENT */
+
+    else if (SYM == SYM_NUMBER) {
+        // FIXME why this check?
+        if (NUM > AMAX) {
+            panic(31, "FACTOR: number too large: %d", NUM);
+            NUM = 0;
+        }
+
+        GEN(LIT, 0, NUM);
+        GetSym();
+    } /* SYM == SYM_NUMBER */
+
+    else if (SYM == SYM_LPAREN) {
+        GetSym();
+
+        parse_expression(level, TX);
+
+        if (SYM != SYM_RPAREN)
+            panic(22, "missing `)`");
+        GetSym();
+    } /* SYM == SYM_LPAREN */
+
+    else {
+        panic(0, "FACTOR: unexpected symbol: %s", SYMOUT[SYM]);
+    }
 }
 //------------------------------------------------------------------------
 
@@ -1413,25 +1496,26 @@ void SetupLanguage()
     strcpy(INST_ALFA[LOD], "LOD");   strcpy(INST_ALFA[STO], "STO");
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
-
-    DECLBEGSYS = SymSetNew(3, SYM_CONST, SYM_VAR, SYM_PROC);
-    STATBEGSYS = SymSetNew(5, SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_WRITE);
-    FACBEGSYS = SymSetNew(3, SYM_IDENT, SYM_NUMBER, SYM_LPAREN);
 }
 
 // Initialize program.
 void Init()
 {
+    SetupLanguage();
     ResetLexer();
 }
 
 void Main()
 {
-    SetupLanguage();
-    ResetLexer();
+    int TX;
+
+    Init();
 
     log(FOUT, "Start compiling program.");
-    PROGRAM();
+    GetSym();
+    TX = 0;
+    parse_program(0, TX);
+    ListCode(0);
     log(FOUT, "Compile finish.");
 
     log(FOUT, "Start executing program.");
