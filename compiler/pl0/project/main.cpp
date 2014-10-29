@@ -18,6 +18,7 @@ TForm1 *Form1;
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 #include <string>
 #include <sstream>
 
@@ -76,8 +77,8 @@ typedef enum {
 const char *SYMOUT[] = {
     "NUL", "IDENT", "NUMBER",
 
-    "PLUS", "MINUS", "TIMES", "SLASH",
-    "ODD", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
+    "PLUS", "MINUS", "TIMES", "OVER",
+    "ODD", "EQ", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
     "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
     "ASSIGN", "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN",
     "AND", "OR", "NOT",
@@ -177,19 +178,46 @@ FILE *FIN, *FOUT, *FERR;            /* STDIN/STDOUT/STDERR file object */
 // Utilities
 //------------------------------------------------------------------------
 // Don't panic!
-// TODO var args
-void panic(int errorcode, const char *msg)
+void panic(int errorcode, const char *fmt, ...)
 {
-    // TODO handle GUI
-    fprintf(FERR, "error (%d): %s\n", errorcode, msg);
+    va_list args;
 
-    // TODO cleanup.
+    // TODO handle GUI
+    fprintf(FERR, "error(%d): ", errorcode);
+    va_start(args, fmt);
+    vfprintf(FERR, fmt, args);
+    va_end(args);
+    fprintf(FERR, "\n");
 
 #ifdef CPP_BUILDER
 #else
     exit(1);
 #endif  /* #ifdef CPP_BUILDER */
 }
+
+const std::string current_date_time()
+{
+    time_t now;
+    struct tm datetime;
+    char buf[80];
+
+    now = time(0);
+    datetime = *localtime(&now);
+    strftime(buf, sizeof(buf), "%Y-%m-%d %X", &datetime);
+
+    return buf;
+}
+
+// Print something.
+void log(FILE *dest, const char *content)
+{
+    fprintf(dest,
+    "//------------------------------------------------------------------------\n");
+    fprintf(dest, "// %s\n// %s\n", content, current_date_time().c_str());
+    fprintf(dest,
+    "//------------------------------------------------------------------------\n");
+}
+
 
 // List generated instructions start from CX0.
 void ListCode(int CX0)
@@ -583,8 +611,7 @@ void Interpret()
                         scanf("%d", &S[T]);
                         break;
                     default:
-                        // TODO var args
-                        panic(0, "unknown opr");
+                        panic(0, "unknown op code: %d", I.A);
                 } /* switch I.A */
                 break; /*case OPR */
 
@@ -700,13 +727,11 @@ void ConstDelcaration(int level, int &TX, int &DX)
                 ENTER(KIND_CONSTANT, level, TX, DX);
                 GetSym();
             } else {
-                // TODO var args.
-                panic(3, "unexpected token");
+                panic(3, "expect NUMBER, got: %s", SYMOUT[SYM]);
             }
         }
     } else {
-        // TODO var args.
-        panic(4, "unexpected token");
+        panic(4, "expect IDENT, got: %s", SYMOUT[SYM]);
     }
 }
 
@@ -716,8 +741,7 @@ void VarDeclaration(int level, int &TX, int &DX)
         ENTER(KIND_VARIABLE, level, TX, DX);
         GetSym();
     } else {
-        // TODO var args.
-        panic(4, "unexpected token");
+        panic(4, "expect IDENT, got: %s", SYMOUT[SYM]);
     }
 }
 
@@ -734,8 +758,7 @@ void FACTOR(SYMSET FSYS, int level, int &TX)
         if (SYM == SYM_IDENT) {
             ident_pos = POSITION(ID, TX);
             if (ident_pos == 0) {
-                // TODO  var args
-                panic(11, "FACTOR: unable to find ident");
+                panic(11, "FACTOR: unable to find identify: %s", ID);
             } else {
                 ident = TABLE[ident_pos];
                 switch (ident.KIND) {
@@ -747,8 +770,7 @@ void FACTOR(SYMSET FSYS, int level, int &TX)
                         GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
                         break;
                     default:
-                        // TODO var args.
-                        panic(21, "FACTOR: unsupported type");
+                        panic(21, "FACTOR: identify type should be CONST or VARIABLE");
                 }
             }
             GetSym();
@@ -757,8 +779,7 @@ void FACTOR(SYMSET FSYS, int level, int &TX)
         else if (SYM == SYM_NUMBER) {
             // FIXME why this check?
             if (NUM > AMAX) {
-                // TODO var args.
-                panic(31, "FACTOR: number too large");
+                panic(31, "FACTOR: number too large: %d", NUM);
                 NUM = 0;
             }
 
@@ -863,8 +884,7 @@ void CONDITION(SYMSET FSYS, int level, int &TX)
         EXPRESSION(set, level, TX);
 
         if (!SymIn(SYM, op_set))
-            // TODO var args
-            panic(20, "unsupproted compare operator");
+            panic(20, "unsupproted compare operator: %s", SYMOUT[SYM]);
         SymSetDestory(set);
         SymSetDestory(op_set);
 
@@ -892,8 +912,7 @@ void CONDITION(SYMSET FSYS, int level, int &TX)
                 op_code = 13;
                 break;
             default:
-                // TODO var args
-                panic(0, "CONDITION: unknown operator");
+                panic(0, "CONDITION: unknown operator: %s", SYMOUT[SYM]);
         }
 
         GEN(OPR, 0, op_code);
@@ -932,8 +951,7 @@ void SELF_ASSIGNMENT(SYMSET FSYS, int level, int &TX, TABLE_ITEM inst, SYMBOL op
             op_code = 5;
             break;
         default:
-            // TODO var args
-            panic(0, "SELF_ASSIGNMENT: unsupproted operator");
+            panic(0, "SELF_ASSIGNMENT: unsupproted operator: %s", SYMOUT[op]);
     }
     GEN(OPR, 0, op_code);
     
@@ -952,8 +970,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
         case SYM_IDENT:
             ident_pos = POSITION(ID, TX);
             if (ident_pos == 0)
-                // TODO var args
-                panic(11, "STATEMENT: unable to find ident");
+                panic(11, "STATEMENT: unable to find identify: %s", ID);
             ident = TABLE[ident_pos];
             if (ident.KIND != KIND_VARIABLE)
                 panic(12, "STATEMENT: canont assign to non-variable");
@@ -970,41 +987,36 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
                 GetSym();
                 SELF_ASSIGNMENT(FSYS, level, TX, ident, op_sym);
             } else {
-                // TODO var args
-                panic(13, "STATEMENT: unexpected token");
+                panic(13, "STATEMENT: unexpected token %s", SYMOUT[SYM]);
             }
             break; /* case SYM_IDENT */
 
         case SYM_READ:
             GetSym();
             if (SYM != SYM_LPAREN)
-                // TODO var args
-                panic(34, "STATEMENT: unexpected token");
+                panic(34, "STATEMENT: expect '(', got: %s", SYMOUT[SYM]);
             do {
                 GetSym();
                 if (SYM == SYM_IDENT) {
                     ident_pos = POSITION(ID, TX);
                     if (ident_pos == 0)
-                        // TODO var args
-                        panic(35, "unable to find ident");
+                        panic(35, "unable to find identify: %s", ID);
                     ident = TABLE[ident_pos];
                     if (ident.KIND != KIND_VARIABLE) {
-                        // TODO var args
-                        panic(35, "expected variable");
+                        panic(35, "READ: identify type should be variable");
                     } else {
                         GEN(OPR, 0, 16);
                         GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
                     }
                 } else {
-                    // TODO var args
-                    panic(35, "expected variable");
+                    panic(35, "expected identify, got: %s", SYMOUT[SYM]);
                 }
 
                 GetSym();
             } while (SYM == SYM_COMMA);
 
             if (SYM != SYM_RPAREN)
-                panic(33, "READ: expected ')'");
+                panic(33, "READ: expected ')', got: %s", SYMOUT[SYM]);
             
             GetSym();
             break; /* case SYM_READ */
@@ -1024,7 +1036,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
                 SymSetDestory(set);
 
                 if (SYM != SYM_RPAREN)
-                    panic(33, "WRITE: expected ')'");
+                    panic(33, "WRITE: expected ')', got: %s", SYMOUT[SYM]);
                 GetSym();
             }
 
@@ -1034,21 +1046,17 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
         case SYM_CALL:
             GetSym();
             if (SYM != SYM_IDENT)
-                // TODO var args
-                panic(14, "CALL: expected ident");
+                panic(14, "CALL: expected procedure name, got: %s", SYMOUT[SYM]);
 
             ident_pos = POSITION(ID, TX);
             if (ident_pos == 0)
-                // TODO var args
-                panic(11, "CALL: unable to find ident");
+                panic(11, "CALL: unable to find procedure: %s", ID);
             
             ident = TABLE[ident_pos];
-            if (ident.KIND == KIND_PROCEDURE)
-                GEN(CAL, level - ident.vp.LEVEL, ident.vp.ADDRESS);
-            else
-                // TODO var args
-                panic(15, "CALL: expected procedure");
-            
+            if (ident.KIND != KIND_PROCEDURE)
+                panic(15, "CALL: %s should be a procedure", ID);
+   
+            GEN(CAL, level - ident.vp.LEVEL, ident.vp.ADDRESS);
             GetSym();
             break; /* case SYM_CALL */
 
@@ -1063,8 +1071,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             SymSetDestory(set);
 
             if (SYM != SYM_THEN)
-                // TODO var args
-                panic(16, "IF: expected THEN");
+                panic(16, "IF: expected THEN, got %s", SYMOUT[SYM]);
             GetSym();
 
             CX1 = CX;
@@ -1086,8 +1093,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             op_set = SymSetAdd(SYM_SEMICOLON, STATBEGSYS);
             while (SymIn(SYM, op_set)) {
                 if (SYM != SYM_SEMICOLON)
-                    // TODO var args
-                    panic(10, "unexpected token");
+                    panic(10, "expect ';', got: %s", SYMOUT[SYM]);
                 
                 GetSym();
                 STATEMENT(set, level, TX);
@@ -1096,8 +1102,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             SymSetDestory(op_set);
 
             if (SYM != SYM_END)
-                // TODO var args
-                panic(17, "unexpected token");
+                panic(17, "expect END, got %s", SYMOUT[SYM]);
             GetSym();
             
             break; /* case SYM_BEGIN */
@@ -1114,8 +1119,7 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             GEN(JPC, 0, 0);
 
             if (SYM != SYM_DO)
-                // TODO var args
-                panic(18, "unexpected token");
+                panic(18, "expect DO, got %s", SYMOUT[SYM]);
             GetSym();
 
             STATEMENT(FSYS, level, TX);
@@ -1125,7 +1129,6 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             break; /* case SYM_WHILE */
 
         default:
-            //panic(0, "STATEMENT: undefined symbol");
             ;
     } /* switch SYM */
 
@@ -1146,8 +1149,7 @@ void BLOCK(int level, int TX, SYMSET FSYS)
     GEN(JMP, 0, 0);
 
     if (level > LEVMAX)
-        // TODO var args
-        panic(32, "level too deep");
+        panic(32, "block levels too deep: %d", level);
 
     do {
         if (SYM == SYM_CONST) {
@@ -1162,8 +1164,7 @@ void BLOCK(int level, int TX, SYMSET FSYS)
                 }
 
                 if (SYM != SYM_SEMICOLON)
-                    // TODO var args
-                    panic(5, "expected ';'");
+                    panic(5, "expected ';', got: %s", SYMOUT[SYM]);
                 GetSym();
             } while (SYM == SYM_IDENT);
         }
@@ -1180,8 +1181,7 @@ void BLOCK(int level, int TX, SYMSET FSYS)
                 }
 
                 if (SYM != SYM_SEMICOLON)
-                    // TODO var args
-                    panic(5, "expected ';'");
+                    panic(5, "expected ';', got: %s", SYMOUT[SYM]);
                 GetSym();
             } while (SYM == SYM_IDENT);
         }
@@ -1189,15 +1189,13 @@ void BLOCK(int level, int TX, SYMSET FSYS)
         while (SYM == SYM_PROC) {
             GetSym();
             if (SYM != SYM_IDENT)
-                // TODO var args
-                panic(4, "expected ident");
+                panic(4, "expected identify, got: %s", SYMOUT[SYM]);
             GetSym();
             
             ENTER(KIND_PROCEDURE, level, TX, DX);
             
             if (SYM != SYM_SEMICOLON)
-                // TODO var args
-                panic(5, "expected ';'");
+                panic(5, "expected ';', got %s", SYMOUT[SYM]);
             GetSym();
 
             set = SymSetAdd(SYM_SEMICOLON, FSYS);
@@ -1205,8 +1203,7 @@ void BLOCK(int level, int TX, SYMSET FSYS)
             SymSetDestory(set);
 
             if (SYM != SYM_SEMICOLON)
-                // TODO var args
-                panic(5, "expected ';'");
+                panic(5, "expected ';', got %s", SYMOUT[SYM]);
             GetSym();
 
             op_set = SymSetNew(2, SYM_IDENT, SYM_PROC);
@@ -1243,18 +1240,15 @@ void PROGRAM()
 
     GetSym();
     if (SYM != SYM_PROG)
-        // TODO var args
-        panic(0, "expected PROGRAM");
+        panic(0, "expected PROGRAM, got: %s", SYMOUT[SYM]);
 
     GetSym();
     if (SYM != SYM_IDENT)
-        // TODO var args
-        panic(0, "expected IDENT");
+        panic(0, "expected program name, got: %s", SYMOUT[SYM]);
 
     GetSym();
     if (SYM != SYM_SEMICOLON)
-        // TODO var args
-        panic(5, "expected ';'");
+        panic(5, "expected ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
     op_set = SymSetUnion(DECLBEGSYS, STATBEGSYS);
@@ -1264,8 +1258,7 @@ void PROGRAM()
     SymSetDestory(set);
 
     if (SYM != SYM_PERIOD)
-        // TODO var args
-        panic(9, "expected '.'");
+        panic(9, "expected '.', got: %s", SYMOUT[SYM]);
 }
 //------------------------------------------------------------------------
 
@@ -1348,14 +1341,15 @@ void Init()
 void Main()
 {
     SetupLanguage();
+    ResetLexer();
 
-    fprintf(FOUT, "~~~ start compiling program ~~~\n");
+    log(FOUT, "Start compiling program.");
     PROGRAM();
-    fprintf(FOUT, "~~~ compile finish ~~~\n");
+    log(FOUT, "Compile finish.");
 
-    fprintf(FOUT, "~~~ start executing program ~~~\n");
+    log(FOUT, "Start executing program.");
     Interpret();
-    fprintf(FOUT, "~~~ execute finish ~~~\n");
+    log(FOUT, "Execute finish.");
 }
 
 #ifdef CPP_BUILDER
@@ -1368,13 +1362,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if ((FIN = fopen(argv[1], "r")) == NULL)
-        // TODO  var args
-        panic(0, "cannot open source file.");
     FOUT = stdout;
     FERR = stderr;
-
-    ResetLexer();
+    if ((FIN = fopen(argv[1], "r")) == NULL)
+        panic(0, "cannot open source file: %s", argv[1]);
 
     Main();
 
