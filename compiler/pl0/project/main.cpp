@@ -746,6 +746,7 @@ int POSITION(ALFA ID, int TX)
 //------------------------------------------------------------------------
 void EXPRESSION(SYMSET, int, int &);
 void TERM(SYMSET, int, int &);
+void STATEMENT(SYMSET, int, int &);
 
 void ConstDelcaration(int level, int &TX, int &DX)
 {
@@ -991,6 +992,69 @@ void SELF_ASSIGNMENT(SYMSET FSYS, int level, int &TX, TABLE_ITEM inst, SYMBOL op
     GEN(STO, inst.vp.LEVEL, inst.vp.ADDRESS);
 }
 
+/*
+ * PC layout:
+ *
+ * - If ELSE is not presented, THEN_PC should be exactly ELSE_PC.
+ *
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                condition sequences                 |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                JPC 0 THEN_PC                       |
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                then sequences                      |
+ * |                                                    |
+ * +----------------------------------------------------+ <- THEN_PC
+ * |                JMP 0 ELSE_PC (if ELSE exists)      |
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                else sequences (if ELSE exists)     |
+ * |                                                    |
+ * +----------------------------------------------------+ <- ELSE_PC
+ * |                                                    |
+ * |                next statement                      |
+ * |                                                    |
+ * +----------------------------------------------------+
+ */
+void IF(SYMSET FSYS, int level, int &TX)
+{
+    SYMSET op_set, first_set;
+    int cond_jmp_cx, then_jmp_cx;
+
+    GetSym();
+
+    // parse CONDITION
+    op_set = SymSetNew(2, SYM_THEN, SYM_DO);
+    first_set = SymSetUnion(FSYS, op_set);
+    SymSetDestory(op_set);
+    CONDITION(first_set, level, TX);
+    SymSetDestory(first_set);
+
+    cond_jmp_cx = GEN(JPC, 0, 0);
+
+    // parse THEN part
+    if (SYM != SYM_THEN)
+        panic(16, "IF: expected THEN, got %s", SYMOUT[SYM]);
+    GetSym();
+    STATEMENT(FSYS, level, TX);
+
+    // parse ELSE part if exists
+    GetSym();
+    if (SYM == SYM_ELSE) {
+        GetSym();
+
+        then_jmp_cx = GEN(JMP, 0, 0);
+        CODE[cond_jmp_cx].A = CX;
+        STATEMENT(FSYS, level, TX);
+        CODE[then_jmp_cx].A = CX;
+    } else {
+        CODE[cond_jmp_cx].A = CX;
+    }
+}
+
 void STATEMENT(SYMSET FSYS, int level, int &TX)
 {
     SYMSET set, op_set;
@@ -1093,23 +1157,8 @@ void STATEMENT(SYMSET FSYS, int level, int &TX)
             break; /* case SYM_CALL */
 
         case SYM_IF:
-            GetSym();
-            
-            op_set = SymSetNew(2, SYM_THEN, SYM_DO);
-            set = SymSetUnion(FSYS, op_set);
-            SymSetDestory(op_set);
-            
-            CONDITION(set, level, TX);
-            SymSetDestory(set);
+            IF(FSYS, level, TX);
 
-            if (SYM != SYM_THEN)
-                panic(16, "IF: expected THEN, got %s", SYMOUT[SYM]);
-            GetSym();
-
-            CX1 = CX;
-            GEN(JPC, 0, 0);
-            STATEMENT(FSYS, level, TX);
-            CODE[CX1].A = CX;
             break; /* case SYM_IF */
 
         case SYM_BEGIN:
