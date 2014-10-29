@@ -152,6 +152,7 @@ int NUM;                        /* last read number */
 // input buffer state
 int CC;                         /* line buffer index */
 int LL;                         /* line buffer length */
+int LINENO;                     /* current line number */
 char LINE[LINEMAX];             /* current line buffer */
 
 int CX;                         /* code storage index */
@@ -203,7 +204,7 @@ const std::string current_date_time()
 
     now = time(0);
     datetime = *localtime(&now);
-    strftime(buf, sizeof(buf), "%Y-%m-%d %X", &datetime);
+    strftime(buf, sizeof(buf), "%x %X", &datetime);
 
     return buf;
 }
@@ -326,6 +327,8 @@ void ResetLineBuffer()
 void ResetLexer()
 {
     ResetLineBuffer();
+
+    LINENO = 0;
 }
 
 void GetCh()
@@ -334,9 +337,10 @@ void GetCh()
 
     if (CC == LL) {
         if (feof(FIN))
-            panic(0, "unexpected EOF, program maybe incomplete");
+            panic(0, "unexpected EOF, maybe program is incomplete");
 
         ResetLineBuffer();
+        LINENO = LINENO + 1;
 
         // read a line
         while (!feof(FIN) && CH != '\n') {
@@ -346,7 +350,7 @@ void GetCh()
         LINE[LL - 1] = ' '; LINE[LL] = 0;
 
         // list program.
-        s = IntToStr(CX);
+        s = IntToStr(LINENO);
         while (GET_STRING_LENGTH(s) < 3)
             s = " " + s;
         s = s + " " + LINE;
