@@ -993,6 +993,11 @@ void SELF_ASSIGNMENT(SYMSET FSYS, int level, int &TX, TABLE_ITEM inst, SYMBOL op
 }
 
 /*
+ * Grammar:
+ *
+ *  IF-STAT ::= IF EXPRESSION THEN STATEMENT
+ *           |  IF EXPRESSION THEN STATEMENT ELSE STATEMENT
+ *
  * PC layout:
  *
  * - If ELSE is not presented, THEN_PC should be exactly ELSE_PC.
