@@ -528,15 +528,21 @@ void GetSym()
 // Machine
 //------------------------------------------------------------------------
 // Generate instruction.
-void GEN(FUNCTION_TYPE F, int L, int A)
+// Returns new instruction filled address.
+int GEN(FUNCTION_TYPE F, int L, int A)
 {
+    int filled_cx;
+
     if (CX > CXMAX)
         panic(0, "program too long");
+    filled_cx = CX;
 
     CODE[CX].F = F;
     CODE[CX].L = L;
     CODE[CX].A = A;
     CX = CX + 1;
+
+    return filled_cx;
 }
 
 // Calculate base address for B with level L.
