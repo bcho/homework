@@ -101,7 +101,6 @@ typedef enum {
 
 
 
-typedef int *SYMSET;                /* symbol set */
 typedef char ALFA[IDMAX+1];         /* identity container */
 
 typedef struct {
@@ -162,10 +161,6 @@ ALFA KW_ALFA[NORW + 1];         /* keywords table, used for ident matching */
 SYMBOL KW_SYMBOL[NORW + 1];     /* keyword symbols table, used for ident matching */
 SYMBOL ASCII_SYMBOL[128];       /* ascii character symbol table */
 ALFA INST_ALFA[INST_COUNT];     /* machine instruction table */
-
-// FIXME
-SYMSET DECLBEGSYS, STATBEGSYS, FACBEGSYS;
-
 
 // symbols table
 TABLE_ITEM TABLE[TXMAX];
@@ -237,79 +232,6 @@ void ListCode(int CX0)
         // TODO handle GUI.
         fprintf(FOUT, "%s\n", s.c_str());
     }
-}
-//------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------
-// Symbol Set
-//------------------------------------------------------------------------
-
-// Create a new symbol set, mark all field as 0.
-// Returns **NULL** if error occurred.
-SYMSET SymSetNew(int marked_count, ...)
-{
-    int i;
-    SYMSET s;
-    va_list marked_symbols;
-
-    s = (SYMSET) malloc(sizeof(int) * SYMBOLS_COUNT);
-    if (s == NULL)
-        goto finish;
-
-    for (i = 0; i < SYMBOLS_COUNT; i++)
-        s[i] = 0;
-
-    va_start(marked_symbols, marked_count);
-    for (i = 0; i < marked_count; i++)
-        s[va_arg(marked_symbols, int)] = 1;
-    va_end(marked_symbols);
-
-finish:
-    return s;
-}
-
-// Destory a symbol set.
-void SymSetDestory(SYMSET s)
-{
-    free(s);
-}
-
-// Check if a symbol belongs to a set.
-int SymIn(SYMBOL symbol, SYMSET set)
-{
-    return (set[symbol] != 0);
-}
-
-// Union two set with a new set.
-SYMSET SymSetUnion(SYMSET a, SYMSET b)
-{
-    int i;
-    SYMSET s;
-
-    if ((s = SymSetNew(0)) == NULL)
-        panic(0, "SymSetUnion: cannot alloc memory");
-    for (i = 0; i < SYMBOLS_COUNT; i++)
-        if (a[i] || b[i])
-            s[i] = 1;
-
-    return s;
-}
-
-// Add a member and return a new set.
-SYMSET SymSetAdd(SYMBOL symbol, SYMSET set)
-{
-    int i;
-    SYMSET s;
-
-    if ((s = SymSetNew(0)) == NULL)
-        panic(0, "SymSetAdd: cannot alloc memory");
-    for (i = 0; i < SYMBOLS_COUNT; i++)
-        s[i] = set[i];
-
-    s[symbol] = 1;
-
-    return s;
 }
 //------------------------------------------------------------------------
 
@@ -690,21 +612,6 @@ void Interpret()
 //------------------------------------------------------------------------
 // Symbol Table
 //------------------------------------------------------------------------
-// TODO ?
-void TEST(SYMSET a, SYMSET b, int error_code)
-{
-    SYMSET c;
-
-    if (!SymIn(SYM, a))
-        panic(error_code, "TEST: symbol %s not in set a", SYMOUT[SYM]);
-
-    c = SymSetUnion(a, b);
-    while (!SymIn(SYM, c))
-        GetSym();
-
-    SymSetDestory(c);
-}
-
 // Record an entity into symbol table.
 // TODO DX?
 // TODO clean ID.
