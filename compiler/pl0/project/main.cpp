@@ -494,6 +494,28 @@ void GetSym()
         }
     } /* </<= */
 
+    else if (CH == '&') {   /* && */
+        GetCh();
+
+        if (CH == '&') {
+            GetCh();
+            SYM = SYM_AND;
+        } else {
+            SYM = SYM_NUL;
+        }
+    } /* && */
+
+    else if (CH == '|') {   /* || */
+        GetCh();
+
+        if (CH == '|') {
+            GetCh();
+            SYM = SYM_OR;
+        } else {
+            SYM = SYM_NUL;
+        }
+    } /* || */
+
     else {  /* ascii character symbols */
         SYM = ASCII_SYMBOL[(int) CH];
         GetCh();
@@ -665,7 +687,7 @@ void TEST(SYMSET a, SYMSET b, int error_code)
     SYMSET c;
 
     if (!SymIn(SYM, a))
-        panic(error_code, "error in TEST");
+        panic(error_code, "TEST: symbol %s not in set a", SYMOUT[SYM]);
 
     c = SymSetUnion(a, b);
     while (!SymIn(SYM, c))
@@ -1283,6 +1305,7 @@ void SetupLanguage()
     ASCII_SYMBOL['('] = SYM_LPAREN;     ASCII_SYMBOL[')'] = SYM_RPAREN;
     ASCII_SYMBOL['='] = SYM_EQL;        ASCII_SYMBOL[','] = SYM_COMMA;
     ASCII_SYMBOL['.'] = SYM_PERIOD;     ASCII_SYMBOL[';'] = SYM_SEMICOLON;
+    ASCII_SYMBOL['!'] = SYM_NOT;
 
     i = -1;
     strcpy(KW_ALFA[++i], "BEGIN");
