@@ -567,6 +567,14 @@ void Interpret()
                         T = T + 1;
                         scanf("%d", &S[T]);
                         break;
+                    case 17:                    /* A && B */
+                        T = T - 1;
+                        S[T] = S[T] && S[T + 1];
+                        break;
+                    case 18:                    /* A || B */
+                        T = T - 1;
+                        S[T] = S[T] || S[T + 1];
+                        break;
                     default:
                         panic(0, "Interpret: unknown op code: %d", I.A);
                 } /* switch I.A */
@@ -1150,8 +1158,14 @@ void parse_expression(int level, int &TX)
  */
 void parse_or_cond(int level, int &TX)
 {
-    // TODO
     parse_and_cond(level, TX);
+
+    while (SYM == SYM_OR) {
+        GetSym();
+
+        parse_and_cond(level, TX);
+        GEN(OPR, 0, 18);
+    }
 }
 
 /*
@@ -1161,8 +1175,14 @@ void parse_or_cond(int level, int &TX)
  */
 void parse_and_cond(int level, int &TX)
 {
-    // TODO
     parse_relational(level, TX);
+
+    while (SYM == SYM_AND) {
+        GetSym();
+
+        parse_relational(level, TX);
+        GEN(OPR, 0, 17);
+    }
 }
 
 /*
