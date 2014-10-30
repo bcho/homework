@@ -141,7 +141,7 @@ typedef struct {
 
 
 //------------------------------------------------------------------------
-// Global Constants
+// Global Variables
 //------------------------------------------------------------------------
 char CH;                        /* last read character */
 SYMBOL SYM;                     /* last read symbol */
@@ -166,28 +166,75 @@ ALFA INST_ALFA[INST_COUNT];     /* machine instruction table */
 TABLE_ITEM TABLE[TXMAX];
 
 
-FILE *FIN, *FOUT, *FERR;            /* STDIN/STDOUT/STDERR file object */
+FILE *FIN, *FOUT, *UIN;               /* STDIN/STDOUT/USER STDIN file object */
 //------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------
 // Utilities
 //------------------------------------------------------------------------
+
+// Write a line to OUTPUT
+//
+// Default destination is FOUT,
+// If CPP_BUILDER is defined, also write to the FORM.
+void _writeln(const char *fmt, va_list args)
+{
+    vfprintf(FOUT, fmt, args);
+    fprintf(FOUT, "\n");
+
+#ifdef CPP_BUILDER
+    Form1->vprintfs(fmt, args);
+#endif /* #ifdef CPP_BUILDER */
+}
+
+// Write to OUTPUT
+//
+// Default destination is FOUT,
+// If CPP_BUILDER is defined, also write to the FORM.
+void _writeln(const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    _writeln(fmt, args);
+    va_end(args);
+}
+
+// Read from user input.
+void _scanf(const char *fmt, ...)
+{
+    va_list args;
+
+#ifdef CPP_BUILDER
+    String input;
+    
+    input = InputBox("输入", "请键盘输入：", 0);
+    va_start(args, fmt);
+    vsscanf(input.c_str(), fmt, args);
+    va_end(args);
+#else
+
+    _writeln("Please input:");
+    va_start(args, fmt);
+    vfscanf(UIN, fmt, args);
+    va_end(args);
+#endif /* #ifdef CPP_BUILDER */
+}
+
 // Don't panic!
 void panic(int errorcode, const char *fmt, ...)
 {
     va_list args;
 
-    // TODO handle GUI
-    fprintf(FERR, "error(%d): ", errorcode);
-    va_start(args, fmt);
-    vfprintf(FERR, fmt, args);
-    va_end(args);
-    fprintf(FERR, "\n");
+    _writeln("error: %d", errorcode);
 
-#ifdef CPP_BUILDER
-#else
-    exit(1);
+    va_start(args, fmt);
+    _writeln(fmt, args);
+    va_end(args);
+
+#ifndef CPP_BUILDER
+    exit(errorcode);
 #endif  /* #ifdef CPP_BUILDER */
 }
 
@@ -205,15 +252,13 @@ const std::string current_date_time()
 }
 
 // Print something.
-void log(FILE *dest, const char *content)
+void log(const char *content)
 {
-    fprintf(dest,
-    "//------------------------------------------------------------------------\n");
-    fprintf(dest, "// %s\n// %s\n", content, current_date_time().c_str());
-    fprintf(dest,
-    "//------------------------------------------------------------------------\n");
+    _writeln("//------------------------------------------------------------------------");
+    _writeln("// %s", content);
+    _writeln("// %s", current_date_time().c_str());
+    _writeln("//------------------------------------------------------------------------");
 }
-
 
 // List generated instructions start from CX0.
 void ListCode(int CX0)
@@ -229,8 +274,7 @@ void ListCode(int CX0)
         while (GET_STRING_LENGTH(s) < 3)
             s = " " + s;
         s = s + " " + INST_ALFA[inst.F] + " " + IntToStr(inst.L) + " " + IntToStr(inst.A);
-        // TODO handle GUI.
-        fprintf(FOUT, "%s\n", s.c_str());
+        _writeln(s.c_str());
     }
 }
 //------------------------------------------------------------------------
@@ -277,8 +321,7 @@ void GetCh()
             s = " " + s;
         s = s + " " + LINE;
 
-        // TODO handle GUI
-        fprintf(FOUT, "%s\n", s.c_str());
+        _writeln(s.c_str());
     }
 
     CH = LINE[CC++];
@@ -555,17 +598,14 @@ void Interpret()
                         S[T] = S[T] <= S[T + 1];
                         break;
                     case 14:                    /* write to stdout */
-                        // TODO handle GUI
-                        fprintf(FOUT, "%d\n", S[T--]);
+                        _writeln("%d", S[T--]);
                         break;
                     case 15:                    /* write '\n' to stdout */
-                        // TODO handle GUI
-                        fprintf(FOUT, "\n");
+                        _writeln("");
                         break;
                     case 16:                    /* read from stdin */
-                        // TODO handle GUI
                         T = T + 1;
-                        scanf("%d", &S[T]);
+                        _scanf("%d", &S[T]);
                         break;
                     case 17:                    /* A && B */
                         T = T - 1;
@@ -1438,16 +1478,16 @@ void Main()
 
     Init();
 
-    log(FOUT, "Start compiling program.");
+    log("Start compiling program.");
     GetSym();
     TX = 0;
     parse_program(0, TX);
     ListCode(0);
-    log(FOUT, "Compile finish.");
+    log("Compile finish.");
 
-    log(FOUT, "Start executing program.");
+    log("Start executing program.");
     Interpret();
-    log(FOUT, "Execute finish.");
+    log("Execute finish.");
 }
 
 #ifdef CPP_BUILDER
@@ -1460,8 +1500,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    FOUT = stdout;
-    FERR = stderr;
+    FOUT = stderr; UIN = stdin;
     if ((FIN = fopen(argv[1], "r")) == NULL)
         panic(0, "cannot open source file: %s", argv[1]);
 
