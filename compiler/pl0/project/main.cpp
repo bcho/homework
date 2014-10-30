@@ -967,7 +967,9 @@ void parse_assignment(int level, int &TX)
     TABLE_ITEM ident;
     SYMBOL assign_op;
     int op_code;
-
+    
+    if (SYM != SYM_IDENT)
+        panic(0, "ASSIGNMENT: expected IDENT, got: %s", SYMOUT[SYM]);
     GET_IDENT(ID, TX, &ident);
     if (ident.KIND != KIND_VARIABLE)
         panic(12, "ASSIGNMENT: cannot assign to non-variable %s", ID);
@@ -1036,6 +1038,8 @@ void parse_if(int level, int &TX)
 {
     int cond_jmp_cx, then_jmp_cx;
 
+    if (SYM != SYM_IF)
+        panic(0, "IF-STMT: expected IF, got: %s", SYMOUT[SYM]);
     GetSym();
 
     // parse condition
@@ -1223,6 +1227,8 @@ void parse_call(int level, int &TX)
 {
     TABLE_ITEM ident;
 
+    if (SYM != SYM_CALL)
+        panic(0, "CALL: expected CALL, got: %s", SYMOUT[SYM]);
     GetSym();
 
     if (SYM != SYM_IDENT)
@@ -1245,6 +1251,8 @@ void parse_read(int level, int &TX)
 {
     TABLE_ITEM ident;
 
+    if (SYM != SYM_READ)
+        panic(0, "READ: expected READ, got: %s", SYMOUT[SYM]);
     GetSym();
 
     if (SYM != SYM_LPAREN)
@@ -1277,7 +1285,10 @@ void parse_read(int level, int &TX)
  */
 void parse_write(int level, int &TX)
 {
+    if (SYM != SYM_WRITE)
+        panic(0, "WRITE: expected WRITE, got: %s", SYMOUT[SYM]);
     GetSym();
+
     if (SYM == SYM_LPAREN) {
         GetSym();
 
