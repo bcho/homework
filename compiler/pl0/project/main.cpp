@@ -640,7 +640,7 @@ void Interpret()
 
             case INI:                           /* increment */
                 T = T + I.A;
-                break; /* cae INI */
+                break; /* case INI */
 
             case JMP:                           /* unconditional jump */
                 P = I.A;
@@ -725,6 +725,7 @@ void parse_statement(int, int &);
 void parse_assignment(int, int &);
 void parse_if(int, int &);
 void parse_while(int, int &);
+void parse_for(int, int &);
 // TODO make it as expression.
 void parse_call(int, int &);
 void parse_read(int, int &);
@@ -906,6 +907,7 @@ void parse_procedure(int level, int &TX, int &DX)
  *              | CALL-STMT
  *              | IF-STMT
  *              | WHILE-STMT
+ *              | FOR-STMT
  *              | CALL-STMT
  *              | READ-STMT
  *              | WRITE-STMT
@@ -921,6 +923,9 @@ void parse_statement(int level, int &TX)
             break;
         case SYM_WHILE:
             parse_while(level, TX);
+            break;
+        case SYM_FOR:
+            parse_for(level, TX);
             break;
         case SYM_CALL:
             parse_call(level, TX);
@@ -1080,6 +1085,8 @@ void parse_while(int level, int &TX)
 {
     int while_cx, cond_jmp_cx;
 
+    if (SYM != SYM_WHILE)
+        panic(0, "WHILE-STMT: expect WHILE, got: %s", SYMOUT[SYM]);
     GetSym();
 
     while_cx = CX;
@@ -1098,6 +1105,113 @@ void parse_while(int level, int &TX)
     
     // back patch
     CODE[cond_jmp_cx].A = CX;
+}
+
+/*
+ * Description:
+ *
+ *  FOR-STMT in PL/0:
+ *  
+ *      FOR I := 0 STEP 1 UNTIL 5 DO WRITE(I)
+ *
+ *  is equal to this C form:
+ *
+ *      for (i = 0; i <= 5; i++)
+ *          write(i);
+ *
+ * Grammar:
+ *
+ *  FOR-STMT ::= FOR IDENT ":=" EXPRESSION
+ *                  STEP EXPRESSION
+ *                  UNTIL EXPRESSION
+ *                  DO STATEMENT
+ *
+ * Instructions Layout:
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                ident := expression                 |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                    JMP UNTIL_CX                    |
+ * +----------------------------------------------------+ <- FOR_CX
+ * |                                                    |
+ * |                    step part                       |
+ * |                                                    |
+ * +----------------------------------------------------+ <- UNTIL_CX
+ * |                                                    |
+ * |                    until part                      |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                    JPC 0 OUT_CX                    |
+ * +----------------------------------------------------+
+ * |                                                    |
+ * |                      do part                       |
+ * |                                                    |
+ * +----------------------------------------------------+
+ * |                    JMP FOR_CX                      |
+ * +----------------------------------------------------+ <- OUT_CX
+ */
+void parse_for(int level, int &TX)
+{
+    int for_cx, until_cx, jmp_until_cx, jmp_out_cx;
+    TABLE_ITEM ident;
+
+    if (SYM != SYM_FOR)
+        panic(0, "FOR-STMT: expect FOR, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // parse assign expression
+    if (SYM != SYM_IDENT)
+        panic(0, "FOR-STMT: expect IDENT, got: %s", SYMOUT[SYM]);
+    GET_IDENT(ID, TX, &ident);
+    if (ident.KIND != KIND_VARIABLE)
+        panic(12, "FOR-STMT: cannot assign to non-variable %s", ID);
+    GetSym();
+
+    if (SYM != SYM_ASSIGN)
+        panic(0, "FOR-STMT: expect ':=', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // store initial value to loop variable
+    parse_expression(level, TX);
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    jmp_until_cx = GEN(JMP, 0, 0);
+
+    // parse step part
+    for_cx = CX;
+    if (SYM != SYM_STEP)
+        panic(0, "FOR-STMT: expect STEP, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // update loop variable
+    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    parse_expression(level, TX);
+    GEN(OPR, 0, 2);
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    
+    // parse until part
+    until_cx = CX;
+    if (SYM != SYM_UNTIL)
+        panic(0, "FOR-STMT: expect UNTIL, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // compare loop variable with upper bound
+    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    parse_expression(level, TX);
+    GEN(OPR, 0, 13);
+    jmp_out_cx = GEN(JPC, 0, 0);
+
+    // parse do part
+    if (SYM != SYM_DO)
+        panic(0, "FOR-STMT: expect DO, got: %s", SYMOUT[SYM]);
+    GetSym();
+    parse_statement(level, TX);
+    GEN(JMP, 0, for_cx);
+
+
+    // back patch address
+    CODE[jmp_until_cx].A = until_cx;
+    CODE[jmp_out_cx].A = CX;
 }
 
 /*
