@@ -1,0 +1,4 @@
+type system:
+
+- symbol table
+- lexer & parser
