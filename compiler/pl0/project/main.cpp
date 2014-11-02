@@ -389,10 +389,9 @@ void GetSym()
             INTEGER = 10 * INTEGER + (CH - '0');
             i++;
             GetCh();
+            if (i > NMAX)
+                panic(30, "integer too large: %d", INTEGER);
         } while (isdigit(CH));
-
-        if (i > NMAX)
-            panic(30, "integer to large");
     } /* decimal integer */
 
     else if (CH == ':') {   /* assignment */
@@ -1688,8 +1687,10 @@ void parse_unary(int level, int &TX)
  * Grammar:
  *
  *  FACTOR ::= IDENT
- *           | NUMBER
+ *           | INTEGER
  *           | "(" EXPRESSION ")"
+ *
+ *  INTEGER ::= [0-9]+  range: [-2147483648, 2147483647]
  */
 void parse_factor(int level, int &TX)
 {

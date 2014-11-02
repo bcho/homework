@@ -1,0 +1,3 @@
+program main;
+const a = 2147483647, b = 1000000000000;
+write(a).
