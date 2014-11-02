@@ -40,15 +40,17 @@ string IntToStr(int n) {
 //------------------------------------------------------------------------
 // Global Constants
 //------------------------------------------------------------------------
-#define NORW        19      /* Counts of reserviced keywords. */
-#define IDMAX       10      /* Maximum length of identitys. */
-#define TXMAX       100     /* Size of symbol table. */
-#define LINEMAX     81      /* Maximum length of program line. */
-#define NMAX        14      /* Max number of number digits. */
-#define AMAX        2047    /* Maximum address. */
-#define LEVMAX      3       /* Maximum nesting procedure level. */
-#define CXMAX       200     /* Size of code storage. */
-#define STACK_MAX   500     /* Size of interpreter stack */
+#define NORW        19          /* Counts of reserviced keywords. */
+#define IDMAX       10          /* Maximum length of identitys. */
+#define TXMAX       100         /* Size of symbol table. */
+#define LINEMAX     81          /* Maximum length of program line. */
+#define AMAX        2047        /* Maximum address. */
+#define LEVMAX      3           /* Maximum nesting procedure level. */
+#define CXMAX       200         /* Size of code storage. */
+#define STACK_MAX   500         /* Size of interpreter stack. */
+
+#define NMAX        10          /* Maximum number of integer digits. */
+#define INTEGER_MAX 2147483647  /* Maximum integer. */
 //------------------------------------------------------------------------
 
 
@@ -57,7 +59,7 @@ string IntToStr(int n) {
 //------------------------------------------------------------------------
 typedef enum {
     // basic symbols
-    SYM_NUL, SYM_IDENT, SYM_NUMBER,
+    SYM_NUL, SYM_IDENT, SYM_INTEGER,
 
     // operators
     SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_OVER,
@@ -170,7 +172,7 @@ typedef struct {
 char CH;                        /* last read character */
 SYMBOL SYM;                     /* last read symbol */
 ALFA ID;                        /* last read identity */
-int NUM;                        /* last read number */
+int INTEGER;                    /* last read number */
 
 // input buffer state
 int CC;                         /* line buffer index */
@@ -380,18 +382,18 @@ void GetSym()
             }
     } /* ident/keyword */
 
-    else if (isdigit(CH)) {   /* decimal number */
-        SYM = SYM_NUMBER;
-        i = 0; NUM = 0;
+    else if (isdigit(CH)) {   /* decimal integer */
+        SYM = SYM_INTEGER;
+        i = 0; INTEGER = 0;
         do {
-            NUM = 10 * NUM + (CH - '0');
+            INTEGER = 10 * INTEGER + (CH - '0');
             i++;
             GetCh();
         } while (isdigit(CH));
 
         if (i > NMAX)
             panic(30, "integer to large");
-    } /* decimal number */
+    } /* decimal integer */
 
     else if (CH == ':') {   /* assignment */
         SYM = SYM_NUL;
@@ -883,7 +885,7 @@ void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
 
     switch (kind) {
         case KIND_CONSTANT:
-            TABLE[TX].VAL = NUM;
+            TABLE[TX].VAL = INTEGER;
             break;
         case KIND_VARIABLE:
             TABLE[TX].vp.LEVEL = level;
@@ -1043,8 +1045,8 @@ void parse_const(int level, int &TX, int &DX)
             panic(4, "CONST-BLOCK: expect '=', got: %s", SYMOUT[SYM]);
         GetSym();
 
-        if (SYM != SYM_NUMBER)
-            panic(3, "CONST-BLOCK: expect NUMBER, got: %s", SYMOUT[SYM]);
+        if (SYM != SYM_INTEGER)
+            panic(3, "CONST-BLOCK: expect INTEGER , got: %s", SYMOUT[SYM]);
         ENTER(KIND_CONSTANT, level, TX, DX);
         GetSym();
 
@@ -1709,16 +1711,15 @@ void parse_factor(int level, int &TX)
         GetSym();
     } /* SYM == SYM_IDENT */
 
-    else if (SYM == SYM_NUMBER) {
-        // FIXME why this check?
-        if (NUM > AMAX) {
-            panic(31, "FACTOR: number too large: %d", NUM);
-            NUM = 0;
+    else if (SYM == SYM_INTEGER) {
+        if (INTEGER > INTEGER_MAX) {
+            panic(31, "FACTOR: integer too large: %d", INTEGER);
+            INTEGER = 0;
         }
 
-        GEN(LIT, 0, NUM);
+        GEN(LIT, 0, INTEGER);
         GetSym();
-    } /* SYM == SYM_NUMBER */
+    } /* SYM == SYM_INTEGER */
 
     else if (SYM == SYM_LPAREN) {
         GetSym();
