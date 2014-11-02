@@ -1,3 +1,4 @@
 main
 *.PL0
 *.pl0
+!tests/*/*.pl0

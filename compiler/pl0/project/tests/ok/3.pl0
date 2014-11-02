@@ -1,0 +1,23 @@
+PROGRAM MAIN;
+CONST A = 2;
+VAR B;
+BEGIN
+    B := 5;
+    write(B);
+
+    if ODD B - 1 then
+        write(1)
+    else
+        write(2);
+
+    while B >= 0 && A <= B && 1 do
+    begin
+        write(B);
+        B := B - 1
+    end;
+
+    for B := 0 step 2 until 2000 do
+    begin
+        write(B)
+    end
+END.

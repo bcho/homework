@@ -1,0 +1,18 @@
+PROGRAM MAIN;
+CONST A=10;
+VAR B,C;
+PROCEDURE P;
+BEGIN WRITE(11) END;
+PROCEDURE S;
+BEGIN WRITE(10) END;
+BEGIN
+  B:=8;
+  C := 5;
+  WHILE C>0 DO
+    BEGIN
+      WRITE(B);
+      CALL S;
+      C -= 1
+    END;
+  CALL P
+END.
