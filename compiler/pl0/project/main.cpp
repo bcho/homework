@@ -99,7 +99,10 @@ typedef enum {
     KIND_PROCEDURE
 } OBJECT_KIND;
 
-
+typedef enum {
+    STATE_RUNNING,
+    STATE_STOP
+} MACHINE_STATE;
 
 typedef char ALFA[IDMAX+1];         /* identity container */
 
@@ -128,10 +131,12 @@ typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
     CAL,            /* CAL L A -- CALL PROCEDURE A AT LEVEL L */
     INI,            /* INI 0 A -- INCREMENT T-REGISTER BY A */
     JMP,            /* JMP 0 A -- JUMP TO A */
-    JPC             /* JPC 0 A -- (CONDITIONAL) JUMP TO A */
+    JPC,            /* JPC 0 A -- (CONDITIONAL) JUMP TO A */
+    HLT,            /* HLT 0 0 -- HALT MACHINE */
+    NO_OP           /* MARKER */
 } FUNCTION_TYPE;
 
-#define INST_COUNT (JPC + 1)
+#define INST_COUNT (NO_OP)
 
 typedef struct {
     FUNCTION_TYPE F;
@@ -529,9 +534,10 @@ void Interpret()
     int P, B, T;                                /* program registers */
     INSTRUCTION I;
     int S[STACKSIZE];                           /* data storage */
+    MACHINE_STATE state;
 
-    T = 0; B = 1; P = 0;
-    S[1] = 0; S[2] = 0; S[3] = 0;
+    state = STATE_RUNNING;
+    T = 0; B = 1; P = 1;
 
     do {
         I = CODE[P++];
@@ -651,8 +657,15 @@ void Interpret()
                     P = I.A;
                 T = T - 1;
                 break; /* case JPC */
+
+            case HLT:                           /* halt machine */
+                state = STATE_STOP;
+                break; /* case HLT */
+
+            default:
+                panic(0, "Interpret: unknown instruction type: %d", I.F);
         }
-    } while (P != 0);
+    } while (state == STATE_RUNNING);
 }
 //------------------------------------------------------------------------
 
@@ -749,6 +762,8 @@ void parse_factor(int, int &);
  */
 void parse_program(int level, int &TX)
 {
+    GEN(HLT, 0, 0);
+
     if (SYM != SYM_PROG)
         panic(0, "PROGRAM-BLOCK: expect PROGRAM, got: %s", SYMOUT[SYM]);
     GetSym();
@@ -1588,6 +1603,7 @@ void SetupLanguage()
     strcpy(INST_ALFA[LOD], "LOD");   strcpy(INST_ALFA[STO], "STO");
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
+    strcpy(INST_ALFA[HLT], "HLT");
 }
 
 // Initialize program.
