@@ -50,6 +50,7 @@ string IntToStr(int n) {
 #define STACK_MAX   500         /* Size of interpreter stack. */
 
 #define NMAX        10          /* Maximum number of integer digits. */
+#define CONSTANT_TABLE_SIZE 100 /* Maximum size of constant taable. */
 #define INTEGER_MAX 2147483647  /* Maximum integer. */
 //------------------------------------------------------------------------
 
@@ -59,7 +60,7 @@ string IntToStr(int n) {
 //------------------------------------------------------------------------
 typedef enum {
     // basic symbols
-    SYM_NUL, SYM_IDENT, SYM_INTEGER,
+    SYM_NUL, SYM_IDENT, SYM_INTEGER, SYM_CHAR, SYM_FLOAT,
 
     // operators
     SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_OVER,
@@ -78,7 +79,7 @@ typedef enum {
 
 // symbols in string form.
 const char *SYMOUT[] = {
-    "NUL", "IDENT", "NUMBER",
+    "NUL", "IDENT", "INTEGER", "CHAR", "FLOAT",
 
     "PLUS", "MINUS", "TIMES", "OVER",
     "ODD", "EQ", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
@@ -121,12 +122,9 @@ typedef char ALFA[IDMAX+1];         /* identity container */
 typedef struct {
     ALFA NAME;
     OBJECT_KIND KIND;
-    union {
-        int VAL;                    /* contant */
-        struct {
-            int LEVEL, ADDRESS, SIZE;
-        } vp;                       /* variable/procedure reference */
-    };
+    struct {
+        int LEVEL, ADDRESS, SIZE;
+    } vp;
 } TABLE_ITEM;                       /* symbol table item */
 
 typedef struct {
@@ -145,7 +143,7 @@ typedef struct {
 //------------------------------------------------------------------------
 // instruction function type
 typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
-    LIT,            /* LIT 0 A -- LOAD CONTANT A */
+    LIT,            /* LIT 0 A -- LOAD CONTANT FROM ADDRESS A */
     OPR,            /* OPR 0 A -- EXECUTE OPR A */
     LOD,            /* LOD L A -- LOAD VARIABLE L FROM A */
     STO,            /* STO L A -- STORE VARIABLE L TO A */
@@ -172,7 +170,9 @@ typedef struct {
 char CH;                        /* last read character */
 SYMBOL SYM;                     /* last read symbol */
 ALFA ID;                        /* last read identity */
-int INTEGER;                    /* last read number */
+int INTEGER;                    /* last read integer */
+char CHAR;                      /* last read char */
+float FLOAT;                    /* last read float */
 
 // input buffer state
 int CC;                         /* line buffer index */
@@ -189,8 +189,10 @@ SYMBOL ASCII_SYMBOL[128];       /* ascii character symbol table */
 ALFA INST_ALFA[INST_COUNT];     /* machine instruction table */
 
 TABLE_ITEM TABLE[TXMAX];        /* symbols table */
-
 DATUM INTER_STACK[STACK_MAX];   /* interpreter stack */
+
+DATUM CONSTANT_TABLE[TXMAX];    /* constant values table */
+int CONSTANT_TABLE_INDEX;       /* constant table index */
 
 
 FILE *FIN, *FOUT, *UIN;         /* STDIN/STDOUT/USER STDIN file object */
@@ -357,6 +359,7 @@ void GetCh()
 void GetSym()
 {
     int i;
+    float base;
     ALFA ident;
 
     // skip whitespaces
@@ -382,7 +385,7 @@ void GetSym()
             }
     } /* ident/keyword */
 
-    else if (isdigit(CH)) {   /* decimal integer */
+    else if (isdigit(CH)) {   /* decimal integer / float */
         SYM = SYM_INTEGER;
         i = 0; INTEGER = 0;
         do {
@@ -390,9 +393,36 @@ void GetSym()
             i++;
             GetCh();
             if (i > NMAX)
-                panic(30, "integer too large: %d", INTEGER);
+                panic(30, "GetSym: integer too large: %d", INTEGER);
         } while (isdigit(CH));
+
+        if (CH == '.') {
+            GetCh();
+            if (!isdigit(CH)) {
+                panic(0, "GetSym: malform fixed-point float representation");
+            }
+            FLOAT = INTEGER;
+            INTEGER = 0;
+            SYM = SYM_FLOAT;
+            base = 0.1;
+            do {
+                FLOAT = FLOAT + base * (CH - '0');
+                base = base / 10;
+                GetCh();
+            } while (isdigit(CH));
+        }
     } /* decimal integer */
+
+    else if (CH == '\'') {  /* char */
+        GetCh();
+        SYM = SYM_CHAR;
+        CHAR = CH;
+        GetCh();
+        printf("%c\n", CHAR);
+        if (CH != '\'')
+            panic(0, "GetSym: expected ', got: %c", CH);
+        GetCh();
+    } /* char */
 
     else if (CH == ':') {   /* assignment */
         SYM = SYM_NUL;
@@ -551,6 +581,30 @@ int BASE(int L, int B, DATUM S[])
     return B1;
 }
 
+#define DUMP_DATUM(d) do { \
+                            switch (d.type) { \
+                                case TYPE_INT: \
+                                    printf("data type: int, value: %d\n", d.ival); \
+                                    break; \
+                                case TYPE_FLOAT: \
+                                    printf("data type: float, value: %d\n", d.fval); \
+                                    break; \
+                                case TYPE_CHAR: \
+                                    printf("data type: char, value: %d\n", d.cval); \
+                                    break; \
+                                case TYPE_ADDRESS: \
+                                    printf("data type: addr, value: %d\n", d.ival); \
+                                    break; \
+                            } \
+                      } while (0)
+
+#define DUMP_STATE do { \
+                        printf("Dumping machine state:\n"); \
+                        printf("P: %d T: %d\n", P, T); \
+                        for (int i = 0; i < T; i++) \
+                            DUMP_DATUM(INTER_STACK[i]); \
+                   } while (0)
+
 // TODO refactor registers usage
 void Interpret()
 {
@@ -565,10 +619,9 @@ void Interpret()
         I = CODE[P++];
         switch (I.F) {
             case LIT:                           /* load constant */
-                // TODO expand opreand to  support other types
                 T = T + 1;
-                INTER_STACK[T].type = TYPE_INT;
-                INTER_STACK[T].ival = I.A;
+                // TODO copy over assign?
+                INTER_STACK[T] = CONSTANT_TABLE[I.A];
                 break; /* case LIT */
             
             case OPR:                           /* execute operation */
@@ -870,6 +923,42 @@ void Interpret()
 
 
 //------------------------------------------------------------------------
+// Constant Table
+//------------------------------------------------------------------------
+// Record a integer value into constant table.
+int constant_enter(int val)
+{
+    if (CONSTANT_TABLE_INDEX >= CONSTANT_TABLE_SIZE)
+        panic(0, "CONSTANT_ENTER: table overflow");
+    CONSTANT_TABLE[++CONSTANT_TABLE_INDEX].type = TYPE_INT;
+    CONSTANT_TABLE[CONSTANT_TABLE_INDEX].ival = val;
+
+    return CONSTANT_TABLE_INDEX;
+}
+
+int constant_enter(float val)
+{
+    if (CONSTANT_TABLE_INDEX >= CONSTANT_TABLE_SIZE)
+        panic(0, "CONSTANT_ENTER: table overflow");
+    CONSTANT_TABLE[++CONSTANT_TABLE_INDEX].type = TYPE_FLOAT;
+    CONSTANT_TABLE[CONSTANT_TABLE_INDEX].fval = val;
+
+    return CONSTANT_TABLE_INDEX;
+}
+
+int constant_enter(char val)
+{
+    if (CONSTANT_TABLE_INDEX >= CONSTANT_TABLE_SIZE)
+        panic(0, "CONSTANT_ENTER: table overflow");
+    CONSTANT_TABLE[++CONSTANT_TABLE_INDEX].type = TYPE_CHAR;
+    CONSTANT_TABLE[CONSTANT_TABLE_INDEX].cval = val;
+
+    return CONSTANT_TABLE_INDEX;
+}
+//------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------
 // Symbol Table
 //------------------------------------------------------------------------
 // Record an entity into symbol table.
@@ -884,7 +973,7 @@ void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
 
     switch (kind) {
         case KIND_CONSTANT:
-            TABLE[TX].VAL = INTEGER;
+            TABLE[TX].vp.ADDRESS = CONSTANT_TABLE_INDEX;
             break;
         case KIND_VARIABLE:
             TABLE[TX].vp.LEVEL = level;
@@ -1027,7 +1116,7 @@ void parse_block(int level, int &TX)
 /*
  * Grammar:
  *
- *  CONST-BLOCK ::= CONST IDENT "=" NUMBER ["," IDENT "=" NUMBER] ";"
+ *  CONST-BLOCK ::= CONST IDENT "=" INTEGER ["," IDENT "=" INTEGER] ";"
  */
 void parse_const(int level, int &TX, int &DX)
 {
@@ -1046,6 +1135,7 @@ void parse_const(int level, int &TX, int &DX)
 
         if (SYM != SYM_INTEGER)
             panic(3, "CONST-BLOCK: expect INTEGER , got: %s", SYMOUT[SYM]);
+        constant_enter(INTEGER);
         ENTER(KIND_CONSTANT, level, TX, DX);
         GetSym();
 
@@ -1689,12 +1779,12 @@ void parse_unary(int level, int &TX)
  *  FACTOR ::= IDENT
  *           | INTEGER
  *           | FLOAT
- *           | "'" CHAR "'"
+ *           | CHAR
  *           | "(" EXPRESSION ")"
  *
  *  INTEGER ::= [0-9]+  range: [-2147483648, 2147483647]
  *  FLOAT ::= [0-9]+"."[0-9]+
- *  CHAR ::= [a-zA-Z]
+ *  CHAR ::= "'" [a-zA-Z] "'"
  */
 void parse_factor(int level, int &TX)
 {
@@ -1704,7 +1794,7 @@ void parse_factor(int level, int &TX)
         GET_IDENT(ID, TX, &ident);
         switch (ident.KIND) {
             case KIND_CONSTANT:
-                GEN(LIT, 0, ident.VAL);
+                GEN(LIT, 0, ident.vp.ADDRESS);
                 break;
             case KIND_VARIABLE:
                 // TODO address calculating
@@ -1722,9 +1812,19 @@ void parse_factor(int level, int &TX)
             INTEGER = 0;
         }
 
-        GEN(LIT, 0, INTEGER);
+        GEN(LIT, 0, constant_enter(INTEGER));
         GetSym();
     } /* SYM == SYM_INTEGER */
+
+    else if (SYM == SYM_CHAR) {
+        GEN(LIT, 0, constant_enter(CHAR));
+        GetSym();
+    } /* SYM == SYM_CHAR */
+
+    else if (SYM == SYM_FLOAT) {
+        GEN(LIT, 0, constant_enter(FLOAT));
+        GetSym();
+    } /* SYM == SYM_FLOAT */
 
     else if (SYM == SYM_LPAREN) {
         GetSym();
@@ -1808,6 +1908,9 @@ void SetupLanguage()
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
     strcpy(INST_ALFA[HLT], "HLT");
+
+    // Setup constant table.
+    CONSTANT_TABLE_INDEX = -1;           /* current constant address */
 }
 
 // Initialize program.

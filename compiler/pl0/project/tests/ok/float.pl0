@@ -1,0 +1,6 @@
+PROGRAM MAIN;
+VAR B;
+BEGIN
+    B := 5.0123020000001;
+    write(B + 2.0)
+END.

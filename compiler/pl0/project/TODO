@@ -1,4 +1,6 @@
 type system:
 
-- symbol table
-- lexer & parser
+- [x] symbol table
+- [x] lexer & parser
+- types promotion
+- refactor symbols/constants table

@@ -1,0 +1,5 @@
+PROGRAM MAIN;
+CONST C = 'c';
+BEGIN
+    WRITE(C)
+END.

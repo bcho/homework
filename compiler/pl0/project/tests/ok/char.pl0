@@ -1,0 +1,6 @@
+PROGRAM MAIN;
+VAR B;
+BEGIN
+    B := 'c';
+    write(B)
+END.
