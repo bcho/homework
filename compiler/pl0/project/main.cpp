@@ -1939,6 +1939,18 @@ void Main()
 }
 
 #ifdef CPP_BUILDER
+void __fastcall TForm1::ButtonRunClick(TObject *Sender)
+{
+    if ((FIN = fopen((Form1->EditName->Text + ".PL0").c_str(), "r"))) {
+        FOUT = fopen((Form1->EditName->Text + ".COD").c_str(), "w");
+    }
+
+    Main();
+
+    fclose(FIN);
+    fclose(FOUT);
+}
+
 #else
 
 int main(int argc, char *argv[])
