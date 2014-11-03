@@ -1,0 +1,27 @@
+program whiledemo;
+
+const BASE = 2;
+var number;
+
+procedure dec2bin;
+var remains;
+begin
+    while number > 0 do
+    begin
+        if odd number then
+        begin
+            write(1);
+            number := number - 1
+        end
+        else
+            write(0);
+
+        number /= BASE
+    end
+end;
+
+begin
+    /* should print 0\n0\n1\n0\n1\n1\n1\n1\n1 */
+    number := 500;
+    call dec2bin
+end.

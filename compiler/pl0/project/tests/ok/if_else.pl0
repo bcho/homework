@@ -1,0 +1,18 @@
+program ifelsedemo;
+const a = 2, b = 5, c = 4;
+var mid;
+begin
+    mid := a;
+    if b < mid  && c < mid then
+        if b > c then
+            mid := c
+        else
+            mid := b
+    else if b > mid && c > mid then
+        if b > c then
+            mid := c
+        else
+            mid := b;
+
+    write(mid)
+end.
