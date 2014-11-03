@@ -1688,9 +1688,13 @@ void parse_unary(int level, int &TX)
  *
  *  FACTOR ::= IDENT
  *           | INTEGER
+ *           | FLOAT
+ *           | "'" CHAR "'"
  *           | "(" EXPRESSION ")"
  *
  *  INTEGER ::= [0-9]+  range: [-2147483648, 2147483647]
+ *  FLOAT ::= [0-9]+"."[0-9]+
+ *  CHAR ::= [a-zA-Z]
  */
 void parse_factor(int level, int &TX)
 {
