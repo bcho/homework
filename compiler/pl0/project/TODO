@@ -2,5 +2,5 @@ type system:
 
 - [x] symbol table
 - [x] lexer & parser
-- types promotion
+- [x] types promotion
 - refactor symbols/constants table

@@ -546,6 +546,88 @@ void GetSym()
 
 
 //------------------------------------------------------------------------
+// Datum
+//------------------------------------------------------------------------
+inline void datum_set_value(DATUM &d, float fval)
+{
+    d.type = TYPE_FLOAT;
+    d.fval = fval;
+}
+
+inline void datum_set_value(DATUM &d, int ival)
+{
+    d.type = TYPE_INT;
+    d.ival = ival;
+}
+
+inline void datum_set_value(DATUM &d, char cval)
+{
+    d.type = TYPE_CHAR;
+    d.cval = cval;
+}
+
+inline float datum_cast_float(DATUM d)
+{
+    switch (d.type) {
+        case TYPE_FLOAT:
+            return d.fval;
+        case TYPE_ADDRESS:
+        case TYPE_INT:
+            return (float) d.ival;
+        case TYPE_CHAR:
+            return (float) d.cval;
+        default:
+            panic(0, "datum_cast_int: unable to cast type: %d to float", d.type);
+    }
+}
+
+inline int datum_cast_int(DATUM d)
+{
+    switch (d.type) {
+        case TYPE_FLOAT:
+            return (int) d.fval;
+        case TYPE_ADDRESS:
+        case TYPE_INT:
+            return d.ival;
+        case TYPE_CHAR:
+            return (int) d.cval;
+        default:
+            panic(0, "datum_cast_int: unable to cast type: %d to int", d.type);
+    }
+}
+
+inline char datum_cast_char(DATUM d)
+{
+    switch (d.type) {
+        case TYPE_FLOAT:
+            return (char) d.fval;
+        case TYPE_ADDRESS:
+        case TYPE_INT:
+            return (char) d.ival;
+        case TYPE_CHAR:
+            return d.cval;
+        default:
+            panic(0, "datum_cast_int: unable to cast type: %d to char", d.type);
+    }
+}
+
+inline char datum_cast_address(DATUM d)
+{
+    switch (d.type) {
+        case TYPE_FLOAT:
+            return (int) d.fval;
+        case TYPE_ADDRESS:
+        case TYPE_INT:
+            return d.ival;
+        case TYPE_CHAR:
+            return (int) d.cval;
+        default:
+            panic(0, "datum_cast_int: unable to cast type: %d to int", d.type);
+    }
+}
+//------------------------------------------------------------------------
+
+//------------------------------------------------------------------------
 // Machine
 //------------------------------------------------------------------------
 // Generate instruction.
@@ -581,29 +663,206 @@ int BASE(int L, int B, DATUM S[])
     return B1;
 }
 
-#define DUMP_DATUM(d) do { \
-                            switch (d.type) { \
-                                case TYPE_INT: \
-                                    printf("data type: int, value: %d\n", d.ival); \
-                                    break; \
-                                case TYPE_FLOAT: \
-                                    printf("data type: float, value: %d\n", d.fval); \
-                                    break; \
-                                case TYPE_CHAR: \
-                                    printf("data type: char, value: %d\n", d.cval); \
-                                    break; \
-                                case TYPE_ADDRESS: \
-                                    printf("data type: addr, value: %d\n", d.ival); \
-                                    break; \
-                            } \
-                      } while (0)
+//------------------------------------------------------------------------
+// Arithmetic Operations
+//
+// Promotion Rules:
+// 
+// 1. If either operand is float, the other is converted to float,
+//    target operand is converted to float.
+// 2. Otherwise, both operands have type int, target operand
+//    is converted to int.
+//------------------------------------------------------------------------
+// OPR 1 (- A)
+inline void inst_inverse(DATUM src, DATUM &dest)
+{
+    dest.type = src.type;
+    switch (src.type) {
+        case TYPE_FLOAT:
+            dest.type = TYPE_FLOAT;
+            datum_set_value(dest, - src.fval);
+            break;
+        default:
+            dest.type = TYPE_INT;
+            datum_set_value(dest, - src.ival);
+            break;
+    }
+}
 
-#define DUMP_STATE do { \
-                        printf("Dumping machine state:\n"); \
-                        printf("P: %d T: %d\n", P, T); \
-                        for (int i = 0; i < T; i++) \
-                            DUMP_DATUM(INTER_STACK[i]); \
-                   } while (0)
+// OPR 2 (A + B)
+inline void inst_add(DATUM a, DATUM b, DATUM &c)
+{
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT) {
+        c.type = TYPE_FLOAT;
+        datum_set_value(c, datum_cast_float(a) + datum_cast_float(b));
+    } else {
+        c.type = TYPE_INT;
+        datum_set_value(c, datum_cast_int(a) + datum_cast_int(b));
+    }
+}
+
+// OPR 3 (A - B)
+inline void inst_sub(DATUM a, DATUM b, DATUM &c)
+{
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT) {
+        c.type = TYPE_FLOAT;
+        datum_set_value(c, datum_cast_float(a) - datum_cast_float(b));
+    } else {
+        c.type = TYPE_INT;
+        datum_set_value(c, datum_cast_int(a) - datum_cast_int(b));
+    }
+}
+
+// OPR 4 (A * B)
+inline void inst_mul(DATUM a, DATUM b, DATUM &c)
+{
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT) {
+        c.type = TYPE_FLOAT;
+        datum_set_value(c, datum_cast_float(a) * datum_cast_float(b));
+    } else {
+        c.type = TYPE_INT;
+        datum_set_value(c, datum_cast_int(a) * datum_cast_int(b));
+    }
+}
+
+// OPR 5 (A / B)
+inline void inst_div(DATUM a, DATUM b, DATUM &c)
+{
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT) {
+        c.type = TYPE_FLOAT;
+        datum_set_value(c, datum_cast_float(a) / datum_cast_float(b));
+    } else {
+        c.type = TYPE_INT;
+        datum_set_value(c, datum_cast_int(a) / datum_cast_int(b));
+    }
+}
+
+// OPR 6 (ODD A)
+inline void inst_odd(DATUM src, DATUM &dest)
+{
+    if (src.type != TYPE_INT)
+        panic(0, "inst_odd: opreand should have type int, got: %d", src.type);
+    dest.type = TYPE_INT;
+    datum_set_value(dest, datum_cast_int(src) % 2 == 1);
+}
+
+// OPR 7 (!A)
+inline void inst_not(DATUM src, DATUM &dest)
+{
+    int value;
+
+    dest.type = TYPE_INT;
+    switch (src.type) {
+        case TYPE_FLOAT:
+            value = !src.fval;
+            break;
+        default:
+            value = !src.ival;
+    }
+    datum_set_value(dest, value);
+}
+
+// OPR 8 (A == B)
+inline void inst_equ(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) == datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) == datum_cast_int(b));
+}
+
+// OPR 9 (A != B)
+inline void inst_neq(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) != datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) != datum_cast_int(b));
+}
+
+// OPR 10 (A < B)
+inline void inst_lss(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) < datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) < datum_cast_int(b));
+}
+
+// OPR 11 (A >= B)
+inline void inst_geq(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) >= datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) >= datum_cast_int(b));
+}
+
+// OPR 12 (A <= B)
+inline void inst_leq(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) <= datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) <= datum_cast_int(b));
+}
+
+// OPR 13 (A > B)
+inline void inst_gtr(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
+        datum_set_value(c, datum_cast_float(a) > datum_cast_float(b));
+    else
+        datum_set_value(c, datum_cast_int(a) > datum_cast_int(b));
+}
+
+// OPR 14 (write to stdout with line break)
+inline void inst_write_stdout(DATUM a)
+{
+    switch (a.type) {
+        case TYPE_FLOAT:
+            _writeln("%f", datum_cast_float(a));
+            break;
+        case TYPE_INT:
+            _writeln("%d", datum_cast_int(a));
+            break;
+        case TYPE_CHAR:
+            _writeln("%c", datum_cast_char(a));
+            break;
+        default:
+            panic(0, "inst_write_stdout: unknow data type: %d", a.type);
+    }
+}
+
+// OPR 16 (scan input from stdin)
+// TODO support float / char...
+inline void inst_read_stdin(DATUM &a)
+{
+    int input;
+
+    _scanf("%d", &input);
+    datum_set_value(a, input);
+}
+
+// OPR 17 (A && B)
+inline void inst_cond_and(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    datum_set_value(c, datum_cast_int(a) && datum_cast_int(b));
+}
+
+// OPR 18 (A || B)
+inline void inst_cond_or(DATUM a, DATUM b, DATUM &c)
+{
+    c.type = TYPE_INT;
+    datum_set_value(c, datum_cast_int(a) || datum_cast_int(b));
+}
 
 // TODO refactor registers usage
 void Interpret()
@@ -620,7 +879,7 @@ void Interpret()
         switch (I.F) {
             case LIT:                           /* load constant */
                 T = T + 1;
-                // TODO copy over assign?
+                // TODO copy over assign
                 INTER_STACK[T] = CONSTANT_TABLE[I.A];
                 break; /* case LIT */
             
@@ -628,245 +887,74 @@ void Interpret()
                 switch (I.A) {
                     case 0:                     /* return */
                         T = B - 1;
-                        if (INTER_STACK[T + 3].type != TYPE_ADDRESS
-                            || INTER_STACK[T + 2].type != TYPE_ADDRESS)
-                            panic(0, "Interpret: unsupport type for OPR 0");
-                        P = INTER_STACK[T + 3].ival;
-                        B = INTER_STACK[T + 2].ival;
+                        P = datum_cast_address(INTER_STACK[T + 3]);
+                        B = datum_cast_address(INTER_STACK[T + 2]);
                         break;
                     case 1:                     /* -A */
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = - INTER_STACK[T].ival;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].fval = - INTER_STACK[T].fval;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 1");
-                        }
+                        inst_inverse(INTER_STACK[T], INTER_STACK[T]);
                         break;
                     case 2:                     /* A + B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival + INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].fval = INTER_STACK[T].fval + INTER_STACK[T + 1].fval;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 2");
-                        }
+                        inst_add(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 3:                     /* A - B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival - INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].fval = INTER_STACK[T].fval - INTER_STACK[T + 1].fval;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 3");
-                        }
+                        inst_sub(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 4:                     /* A * B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival * INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].fval = INTER_STACK[T].fval * INTER_STACK[T + 1].fval;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 4");
-                        }
+                        inst_mul(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 5:                     /* A / B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival / INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].fval = INTER_STACK[T].fval / INTER_STACK[T + 1].fval;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 5");
-                        }
+                        inst_div(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 6:                     /* ODD A */
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival % 2 != 0;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 6");
-                        }
+                        inst_odd(INTER_STACK[T], INTER_STACK[T]);
                         break;
                     case 7:                     /* !A */
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = ! INTER_STACK[T].ival;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 7");
-                        }
+                        inst_not(INTER_STACK[T], INTER_STACK[T]);
                         break;
                     case 8:                     /* A == B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival == INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval == INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval == INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 8");
-                        }
+                        inst_equ(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 9:                     /* A != B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival != INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval != INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval != INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 9");
-                        }
+                        inst_neq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 10:                    /* A < B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival < INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval < INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval < INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 10");
-                        }
+                        inst_lss(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 11:                    /* >= */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival >= INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval >= INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval >= INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 11");
-                        }
+                        inst_geq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 12:                    /* > */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival > INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval > INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval > INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 12");
-                        }
+                        inst_gtr(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 13:                    /* <= */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival <= INTER_STACK[T + 1].ival;
-                                break;
-                            case TYPE_CHAR:
-                                INTER_STACK[T].ival = INTER_STACK[T].cval <= INTER_STACK[T + 1].cval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            case TYPE_FLOAT:
-                                INTER_STACK[T].ival = INTER_STACK[T].fval <= INTER_STACK[T + 1].fval;
-                                INTER_STACK[T].type = TYPE_INT;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 13");
-                        }
+                        inst_leq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 14:                    /* write to stdout */
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                _writeln("%d", INTER_STACK[T].ival);
-                                break;
-                            case TYPE_CHAR:
-                                _writeln("%c", INTER_STACK[T].cval);
-                                break;
-                            case TYPE_FLOAT:
-                                _writeln("%f", INTER_STACK[T].fval);
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 14");
-                        }
-                        T = T - 1;
+                        inst_write_stdout(INTER_STACK[T--]);
                         break;
                     case 15:                    /* write '\n' to stdout */
                         _writeln("");
                         break;
                     case 16:                    /* read from stdin */
-                        // TODO extend instruction opreand with type.
-                        T = T + 1;
-                        _scanf("%d", &INTER_STACK[T].ival);
+                        inst_read_stdin(INTER_STACK[++T]);
                         break;
                     case 17:                    /* A && B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival && INTER_STACK[T + 1].ival;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 17");
-                        }
+                        inst_cond_and(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     case 18:                    /* A || B */
                         T = T - 1;
-                        switch (INTER_STACK[T].type) {
-                            case TYPE_INT:
-                                INTER_STACK[T].ival = INTER_STACK[T].ival || INTER_STACK[T + 1].ival;
-                                break;
-                            default:
-                                panic(0, "Interpret: unsupport type for OPR 18");
-                        }
+                        inst_cond_or(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
                         break;
                     default:
                         panic(0, "Interpret: unknown op code: %d", I.A);
@@ -875,21 +963,23 @@ void Interpret()
 
             case LOD:                           /* load variable */
                 T = T + 1;
+                // TODO copy over assign
                 INTER_STACK[T] = INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A];
                 break; /* case LOD */
 
             case STO:                           /* store variable */
+                // TODO copy over assign
                 INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A] = INTER_STACK[T];
                 T = T - 1;
                 break; /* case STO */
 
             case CAL:                           /* call procedure */
+                datum_set_value(INTER_STACK[T + 1], BASE(I.L, B, INTER_STACK));
                 INTER_STACK[T + 1].type = TYPE_ADDRESS;
-                INTER_STACK[T + 1].ival = BASE(I.L, B, INTER_STACK);
+                datum_set_value(INTER_STACK[T + 2], B);
                 INTER_STACK[T + 2].type = TYPE_ADDRESS;
-                INTER_STACK[T + 2].ival = B;
+                datum_set_value(INTER_STACK[T + 3], P);
                 INTER_STACK[T + 3].type = TYPE_ADDRESS;
-                INTER_STACK[T + 3].ival = P;
                 B = T + 1;
                 P = I.A;
                 break; /* case CAL */
@@ -903,9 +993,7 @@ void Interpret()
                 break; /* case JMP */
 
             case JPC:                           /* false jump */
-                if (INTER_STACK[T].type != TYPE_INT)
-                    panic(0, "Interpret: unsupport datum type for JPC");
-                if (!INTER_STACK[T].ival)
+                if (! datum_cast_int(INTER_STACK[T]))
                     P = I.A;
                 T = T - 1;
                 break; /* case JPC */

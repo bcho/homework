@@ -1,0 +1,27 @@
+program conddemo;
+var a, b;
+begin
+    a := 0;
+    b := 1;
+    
+    /* should print 0 */
+    if a && b then write(1) else write(0);
+
+    /* should print 1 */
+    if a || b then write(1) else write(0);
+    
+    a := 1;
+    b := 1;
+    
+    /* should print 1 */
+    if a && b then write(1) else write(0);
+
+    /* should print 0 */
+    if ! (a || b) then write(1) else write(0);
+
+    /* should print 1 */
+    if '0' then write(1) else write(0);
+
+    /* should print 1 */
+    if 1.2345 then write(1) else write(0)
+end.
