@@ -4,3 +4,29 @@ type system:
 - [x] lexer & parser
 - [x] types promotion
 - refactor symbols/constants table
+
+
+function:
+
+- new grammar for distinguishing procedure call & function call:
+
+Example:
+
+    a := call return42(p1, p2) + 5;  /* a function call */
+
+    call print_number(a); /* a procedure call */
+
+Grammar:
+
+    STATEMENT ::= ...
+                # Call it `parse_procedure` and ensure it is a procedure or
+                # function (return value is discarded).
+                | CALL IDENT {"(" PARAMETERS ")"}
+
+
+    EXPRESSION ::= ...
+                # Call it `parse_function` and ensure it is a function.
+                | CALL IDENT {"(" PARAMETERS ")"}
+
+    PARAMETERS ::= EXPRESSION ["," EXPRESSION]
+                 | epilsion
