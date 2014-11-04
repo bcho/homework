@@ -577,7 +577,7 @@ inline float datum_cast_float(DATUM d)
         case TYPE_CHAR:
             return (float) d.cval;
         default:
-            panic(0, "datum_cast_int: unable to cast type: %d to float", d.type);
+            panic(0, "datum_cast_float: unable to cast type: %d to float", d.type);
     }
 }
 
@@ -607,7 +607,7 @@ inline char datum_cast_char(DATUM d)
         case TYPE_CHAR:
             return d.cval;
         default:
-            panic(0, "datum_cast_int: unable to cast type: %d to char", d.type);
+            panic(0, "datum_cast_char: unable to cast type: %d to char", d.type);
     }
 }
 
@@ -622,7 +622,7 @@ inline char datum_cast_address(DATUM d)
         case TYPE_CHAR:
             return (int) d.cval;
         default:
-            panic(0, "datum_cast_int: unable to cast type: %d to int", d.type);
+            panic(0, "datum_cast_address: unable to cast type: %d to int", d.type);
     }
 }
 //------------------------------------------------------------------------
