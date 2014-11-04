@@ -1303,6 +1303,7 @@ void parse_procedure(int level, int &TX, int &DX)
  *              | CALL-STMT
  *              | READ-STMT
  *              | WRITE-STMT
+ *              | NULL-STMT
  */
 void parse_statement(int level, int &TX)
 {
@@ -1335,7 +1336,8 @@ void parse_statement(int level, int &TX)
 
             while (SYM == SYM_SEMICOLON) {
                 GetSym();
-                parse_statement(level, TX);
+                if (SYM != SYM_END)     /* null statement */
+                    parse_statement(level, TX);
             }
 
             if (SYM != SYM_END)
