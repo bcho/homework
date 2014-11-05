@@ -625,6 +625,25 @@ inline char datum_cast_address(DATUM d)
             panic(0, "datum_cast_address: unable to cast type: %d to int", d.type);
     }
 }
+
+inline void datum_copy(DATUM from, DATUM &to)
+{
+    to.type = from.type;
+    switch (to.type) {
+        case TYPE_FLOAT:
+            to.fval = from.fval;
+            break;
+        case TYPE_INT:
+        case TYPE_ADDRESS:
+            to.ival = from.ival;
+            break;
+        case TYPE_CHAR:
+            to.cval = from.cval;
+            break;
+        default:
+            panic(0, "datum_copy: unknown datum type: %d", to.type);
+    }
+}
 //------------------------------------------------------------------------
 
 //------------------------------------------------------------------------
@@ -879,8 +898,7 @@ void Interpret()
         switch (I.F) {
             case LIT:                           /* load constant */
                 T = T + 1;
-                // TODO copy over assign
-                INTER_STACK[T] = CONSTANT_TABLE[I.A];
+                datum_copy(CONSTANT_TABLE[I.A], INTER_STACK[T]);
                 break; /* case LIT */
             
             case OPR:                           /* execute operation */
@@ -963,13 +981,13 @@ void Interpret()
 
             case LOD:                           /* load variable */
                 T = T + 1;
-                // TODO copy over assign
-                INTER_STACK[T] = INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A];
+                datum_copy(INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A],
+                           INTER_STACK[T]);
                 break; /* case LOD */
 
             case STO:                           /* store variable */
-                // TODO copy over assign
-                INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A] = INTER_STACK[T];
+                datum_copy(INTER_STACK[T],
+                           INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A]);
                 T = T - 1;
                 break; /* case STO */
 
