@@ -1,0 +1,10 @@
+program funcdemo;
+var a;
+procedure foo;
+begin
+    return;
+end;
+begin
+    /* should not pass */
+    a := call foo;
+end.

@@ -40,7 +40,7 @@ string IntToStr(int n) {
 //------------------------------------------------------------------------
 // Global Constants
 //------------------------------------------------------------------------
-#define NORW        19          /* Counts of reserviced keywords. */
+#define NORW        20          /* Counts of reserviced keywords. */
 #define IDMAX       10          /* Maximum length of identitys. */
 #define TXMAX       100         /* Size of symbol table. */
 #define LINEMAX     81          /* Maximum length of program line. */
@@ -71,7 +71,7 @@ typedef enum {
     SYM_AND, SYM_OR, SYM_NOT,
 
     // keywords
-    SYM_CONST, SYM_VAR, SYM_PROG, SYM_PROC,
+    SYM_CONST, SYM_VAR, SYM_PROG, SYM_PROC, SYM_FUNC,
     SYM_BEGIN, SYM_END, SYM_RETURN,
     SYM_IF, SYM_THEN, SYM_ELSE,
     SYM_WHILE, SYM_DO, SYM_UNTIL, SYM_FOR, SYM_STEP,
@@ -88,7 +88,7 @@ const char *SYMOUT[] = {
     "ASSIGN", "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN",
     "AND", "OR", "NOT",
 
-    "CONST", "VAR", "PROGRAM", "PROCEDURE",
+    "CONST", "VAR", "PROGRAM", "PROCEDURE", "FUNCTION",
     "BEGIN", "END", "RETURN",
     "IF", "THEN", "ELSE",
     "WHILE", "DO", "UNTIL", "FOR", "STEP",
@@ -101,7 +101,8 @@ const char *SYMOUT[] = {
 typedef enum {
     KIND_CONSTANT,
     KIND_VARIABLE,
-    KIND_PROCEDURE
+    KIND_PROCEDURE,
+    KIND_FUNCTION
 } OBJECT_KIND;
 
 typedef enum {
@@ -145,9 +146,10 @@ typedef struct {
 // instruction function type
 typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
     LIT,            /* LIT 0 A -- LOAD CONTANT FROM ADDRESS A */
-    OPR,            /* OPR 0 A -- EXECUTE OPR A */
+    OPR,            /* OPR L A -- EXECUTE OPR A WITH OPTIONS L */
     LOD,            /* LOD L A -- LOAD VARIABLE L FROM A */
     STO,            /* STO L A -- STORE VARIABLE L TO A */
+    STR,            /* STR 0 0 -- STORE RETURN VALUE TODO: review? */
     MST,            /* MST L 0 -- MARK STACK FRAME */
     CAL,            /* CAL L A -- CALL PROCEDURE A WITH ARGSIZE L */
     INI,            /* INI 0 A -- SET SP WITH MP + A */
@@ -881,7 +883,7 @@ inline void inst_write_stdout(DATUM a)
             _writeln("%c", datum_cast_char(a));
             break;
         default:
-            panic(0, "inst_write_stdout: unknow data type: %d", a.type);
+            panic(0, "inst_write_stdout: unknown data type: %d", a.type);
     }
 }
 
@@ -934,8 +936,13 @@ void Interpret(int pc)
                         callee_mp = mp;
                         pc = datum_cast_address(INTER_STACK[callee_mp + 3]);
                         mp = datum_cast_address(INTER_STACK[callee_mp + 2]);
-                        // TODO handle function type & procedure type
-                        sp = callee_mp - 1;
+                        if (I.L == 0) {
+                            // callee is procedure, discard return value
+                            sp = callee_mp - 1;
+                        } else {
+                            // callee is function, store return value
+                            sp = callee_mp;
+                        }
                         break;
                     case 1:                     /* -A */
                         inst_inverse(INTER_STACK[sp], INTER_STACK[sp]);
@@ -1020,8 +1027,13 @@ void Interpret(int pc)
                 sp = sp - 1;
                 break; /* case STO */
 
+            case STR:                           /* store return value */
+                datum_copy(INTER_STACK[sp], INTER_STACK[mp]);
+                break; /* case STR */
+
             case MST:                           /* mark stack frame */
                 // return value, set by callee
+                // default return value is int:0
                 datum_set_value(INTER_STACK[++sp], 0);
                 INTER_STACK[sp].type = TYPE_INT;
 
@@ -1113,7 +1125,7 @@ int constant_enter(char val)
 // Record an entity into symbol table.
 // TODO DX?
 // TODO clean ID.
-void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
+int ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
 {
     TX = TX + 1;
 
@@ -1130,9 +1142,14 @@ void ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
             DX = DX + 1;
             break;
         case KIND_PROCEDURE:
+        case KIND_FUNCTION:
             TABLE[TX].vp.LEVEL = level;
             break;
+        default:
+            panic(0, "ENTER: unknown object kind: %d", kind);
     }
+
+    return TX;
 }
 
 // Find identity's position.
@@ -1156,7 +1173,7 @@ void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
 
     pos = POSITION(id, TX);
     if (pos == 0)
-        panic(0, "unable to find identity: %s", id);
+        panic(0, "GET_IDENT: unable to find identity: %s", id);
 
     *item = TABLE[pos];
 }
@@ -1167,10 +1184,11 @@ void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
 // Parser
 //------------------------------------------------------------------------
 int parse_program(int, int &);
-int parse_block(int, int &);
+int parse_block(int, int &, OBJECT_KIND);
 void parse_const(int, int &, int &);
 void parse_var(int, int &, int &);
 void parse_procedure(int, int &, int &);
+void parse_function(int, int &, int &);
 void parse_statement(int, int &);
 void parse_assignment(int, int &);
 void parse_if(int, int &);
@@ -1190,6 +1208,7 @@ void parse_relational(int, int &);
 void parse_additive(int, int &);
 void parse_multive(int, int &);
 void parse_unary(int, int &);
+void parse_function_call_expression(int, int &);
 void parse_factor(int, int &);
 
 
@@ -1233,7 +1252,7 @@ int parse_program(int level, int &TX)
         panic(5, "PROGRAM-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    program_block_start_cx = parse_block(level, TX);
+    program_block_start_cx = parse_block(level, TX, KIND_PROCEDURE);
 
     if (SYM != SYM_PERIOD)
         panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
@@ -1248,7 +1267,7 @@ int parse_program(int level, int &TX)
 /*
  * Grammar:
  *
- *   BLOCK ::= {CONST-BLOCK} {VAR-BLOCK} [PROCEDURE-BLOCK] STATEMENT
+ *   BLOCK ::= {CONST-BLOCK} {VAR-BLOCK} [PROCEDURE-OR-FUNCTION-BLOCK] STATEMENT
  *
  * Instructions Layout:
  * +----------------------------------------------------+
@@ -1256,7 +1275,7 @@ int parse_program(int level, int &TX)
  * +----------------------------------------------------+
  * |                variable declarations               | (optional)
  * +----------------------------------------------------+
- * |                procedure declarations              | (optional)
+ * |                proc/func declarations              | (optional)
  * +----------------------------------------------------+ <- body_start
  * |                                                    |
  * |                    block body                      |
@@ -1269,7 +1288,7 @@ int parse_program(int level, int &TX)
  * |                    body return                     |
  * +----------------------------------------------------+
  */
-int parse_block(int level, int &TX)
+int parse_block(int level, int &TX, OBJECT_KIND kind)
 {
     int body_start_cx, body_end_cx;
     int vairables_size;
@@ -1285,15 +1304,23 @@ int parse_block(int level, int &TX)
         parse_const(level, TX, DX);
     if (SYM == SYM_VAR)
         parse_var(level, TX, DX);
-    while (SYM == SYM_PROC)
-        parse_procedure(level, TX, DX);
+    while (SYM == SYM_PROC || SYM == SYM_FUNC) {
+        if (SYM == SYM_PROC)
+            parse_procedure(level, TX, DX);
+        if (SYM == SYM_FUNC)
+            parse_function(level, TX, DX);
+    }
 
     // TODO calculate arg size.
     body_start_cx = GEN(INI, 0, DX + STACK_FRAME_SIZE);
 
     parse_statement(level, TX);                 /* block body */
 
-    body_end_cx = GEN(OPR, 0, 0);               /* return */
+    // return
+    if (kind == KIND_PROCEDURE)
+        body_end_cx = GEN(OPR, 0, 0);
+    else
+        body_end_cx = GEN(OPR, 1, 0);
     exit_frame_end(body_end_cx);
 
     return body_start_cx;
@@ -1369,23 +1396,60 @@ void parse_var(int level, int &TX, int &DX)
  */
 void parse_procedure(int level, int &TX, int &DX)
 {
+    int body_start_cx, table_pos;
+
     if (SYM != SYM_PROC)
         panic(0, "PROCEDURE-BLOCK: expect PROCEDURE, got: %s", SYMOUT[SYM]);
     GetSym();
 
     if (SYM != SYM_IDENT)
         panic(4, "PROCEDURE-BLOCK: expect identity, got: %s", SYMOUT[SYM]);
-    ENTER(KIND_PROCEDURE, level, TX, DX);
+    // TODO naming conflict?
+    table_pos = ENTER(KIND_PROCEDURE, level, TX, DX);
     GetSym();
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    parse_block(level + 1, TX);
+    body_start_cx = parse_block(level + 1, TX, KIND_PROCEDURE);
+    // backpatch start address
+    TABLE[table_pos].vp.ADDRESS = body_start_cx;
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+}
+
+/*
+ * Grammar:
+ *
+ *  FUNCTION-BLOCK ::= FUNCTION IDENT ";" BLOCK ";"
+ */
+void parse_function(int level, int &TX, int &DX)
+{
+    int body_start_cx, table_pos;
+
+    if (SYM != SYM_FUNC)
+        panic(0, "FUNCTION-BLOCK: expect FUNCTION, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    if (SYM != SYM_IDENT)
+        panic(4, "FUNCTION-BLOCK: expect identity, got: %s", SYMOUT[SYM]);
+    // TODO naming conflict?
+    table_pos = ENTER(KIND_FUNCTION, level, TX, DX);
+    GetSym();
+
+    if (SYM != SYM_SEMICOLON)
+        panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    body_start_cx = parse_block(level + 1, TX, KIND_FUNCTION);
+    // backpatch start address
+    TABLE[table_pos].vp.ADDRESS = body_start_cx;
+
+    if (SYM != SYM_SEMICOLON)
+        panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 }
 
@@ -1731,13 +1795,13 @@ void parse_call(int level, int &TX)
         panic(14, "CALL-STMT: expected procedure name, got: %s", SYMOUT[SYM]);
     
     GET_IDENT(ID, TX, &ident);
-    if (ident.KIND != KIND_PROCEDURE)
-        panic(15, "CALL-STMT: %s should be a procedure", ID);
+    if (ident.KIND != KIND_PROCEDURE && ident.KIND != KIND_FUNCTION)
+        panic(15, "CALL-STMT: %s should be a procedure or function", ID);
+    GetSym();
 
     GEN(MST, level - ident.vp.LEVEL, 0);
     // TODO parse parameters.
     GEN(CAL, 0, ident.vp.ADDRESS);
-    GetSym();
 }
 
 /*
@@ -1812,8 +1876,10 @@ void parse_write(int level, int &TX)
 /*
  * Grammar:
  *
- *  TODO support function
  *  RETURN-STMT ::= RETURN
+ *                | RETURN EXPRESSION(*)
+ *
+ * (*) By now, procedure can also return value.
  */
 void parse_return(int level, int &TX)
 {
@@ -1822,6 +1888,13 @@ void parse_return(int level, int &TX)
     if (SYM != SYM_RETURN)
         panic(0, "RETURN-STMT: expected RETURN, got: %s", SYMOUT[SYM]);
     GetSym();
+
+    // must be expression
+    // TODO need to check body type?
+    if (SYM != SYM_SEMICOLON && SYM != SYM_END) {
+        parse_expression(level, TX);
+        GEN(STR, 0, 0);
+    }
 
     jmp_out_cx = GEN(JMP, 0, 0);
     exit_frame_add(jmp_out_cx);
@@ -1988,10 +2061,37 @@ void parse_unary(int level, int &TX)
 /*
  * Grammar:
  *
+ *  FUNCTION-CALL ::= CALL IDENT
+ */
+void parse_function_call_expression(int level, int &TX)
+{
+    TABLE_ITEM ident;
+
+    if (SYM != SYM_CALL)
+        panic(0, "FUNCTION-CALL: expected CALL, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    if (SYM != SYM_IDENT)
+        panic(0, "FUNCTION-CALL: expected function name, got: %s", SYMOUT[SYM]);
+
+    GET_IDENT(ID, TX, &ident);
+    if (ident.KIND != KIND_FUNCTION)
+        panic(0, "FUNCTION-CALL: %s should be a function", ID);
+    GetSym();
+
+    GEN(MST, level - ident.vp.LEVEL, 0);
+    // TODO parse parameters.
+    GEN(CAL, 0, ident.vp.ADDRESS);
+}
+
+/*
+ * Grammar:
+ *
  *  FACTOR ::= IDENT
  *           | INTEGER
  *           | FLOAT
  *           | CHAR
+ *           | CALL IDENT
  *           | "(" EXPRESSION ")"
  *
  *  INTEGER ::= [0-9]+  range: [-2147483648, 2147483647]
@@ -2037,6 +2137,10 @@ void parse_factor(int level, int &TX)
         GEN(LIT, 0, constant_enter(FLOAT));
         GetSym();
     } /* SYM == SYM_FLOAT */
+
+    else if (SYM == SYM_CALL) {
+        parse_function_call_expression(level, TX);
+    } /* SYM == SYM_CALL */
 
     else if (SYM == SYM_LPAREN) {
         GetSym();
@@ -2127,6 +2231,7 @@ void SetupLanguage()
     strcpy(KW_ALFA[++i], "ELSE");
     strcpy(KW_ALFA[++i], "END");
     strcpy(KW_ALFA[++i], "FOR");
+    strcpy(KW_ALFA[++i], "FUNCTION");
     strcpy(KW_ALFA[++i], "IF");
     strcpy(KW_ALFA[++i], "ODD");
     strcpy(KW_ALFA[++i], "PROCEDURE");
@@ -2148,6 +2253,7 @@ void SetupLanguage()
     KW_SYMBOL[++i] = SYM_ELSE;
     KW_SYMBOL[++i] = SYM_END;
     KW_SYMBOL[++i] = SYM_FOR;
+    KW_SYMBOL[++i] = SYM_FUNC;
     KW_SYMBOL[++i] = SYM_IF;
     KW_SYMBOL[++i] = SYM_ODD;
     KW_SYMBOL[++i] = SYM_PROC;
@@ -2166,6 +2272,7 @@ void SetupLanguage()
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
     strcpy(INST_ALFA[HLT], "HLT");   strcpy(INST_ALFA[MST], "MST");
+    strcpy(INST_ALFA[STR], "STR");
 
     // Setup constant table.
     CONSTANT_TABLE_INDEX = -1;           /* current constant address */

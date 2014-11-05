@@ -1,0 +1,23 @@
+program funcdemo;
+function foo;
+begin
+    return 42;
+end;
+function bar;
+begin
+    /* default return value is int:0 */
+    return;
+end;
+function baz;
+const a = 3;
+begin
+    return a;
+end;
+begin
+    /* should print out 42 */
+    write(call foo);
+    /* should print out 0 */
+    write(call bar);
+    /* should print out 3 */
+    write(call baz);
+end.
