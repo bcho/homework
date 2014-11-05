@@ -1,9 +1,13 @@
 PROGRAM nested;
+const t0 = 0;
 PROCEDURE a1;
+    const t1 = 1;
     PROCEDURE a2;
+        const t2 = 2;
         PROCEDURE a3;
+        const t3 = 3;
         BEGIN
-            WRITE(42)
+            WRITE(t0 + t1 + t2 + t3);
         END;
     BEGIN
         call a3

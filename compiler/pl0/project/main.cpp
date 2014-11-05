@@ -139,7 +139,7 @@ typedef struct {
 
 
 //------------------------------------------------------------------------
-// Machine Instructions
+// Machine
 //------------------------------------------------------------------------
 // instruction function type
 typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
@@ -147,8 +147,9 @@ typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
     OPR,            /* OPR 0 A -- EXECUTE OPR A */
     LOD,            /* LOD L A -- LOAD VARIABLE L FROM A */
     STO,            /* STO L A -- STORE VARIABLE L TO A */
-    CAL,            /* CAL L A -- CALL PROCEDURE A AT LEVEL L */
-    INI,            /* INI 0 A -- INCREMENT T-REGISTER BY A */
+    MST,            /* MST L 0 -- MARK STACK FRAME */
+    CAL,            /* CAL L A -- CALL PROCEDURE A WITH ARGSIZE L */
+    INI,            /* INI 0 A -- SET SP WITH MP + A */
     JMP,            /* JMP 0 A -- JUMP TO A */
     JPC,            /* JPC 0 A -- (CONDITIONAL) JUMP TO A */
     HLT,            /* HLT 0 0 -- HALT MACHINE */
@@ -161,6 +162,27 @@ typedef struct {
     FUNCTION_TYPE F;
     int L, A;
 } INSTRUCTION;
+
+
+// Stack Frame
+//                                                          (high address)
+// +----------------------------------------------------+ <- sp
+// |                variables (optional)                |
+// +----------------------------------------------------+
+// |                constants (optional)                |
+// +----------------------------------------------------+
+// |                args (optional)                     |
+// +----------------------------------------------------+
+// |                return address                      |
+// +----------------------------------------------------+
+// |            dynamic link (to caller's frame)        |
+// +----------------------------------------------------+
+// |          static link (to parent block's frame)     |
+// +----------------------------------------------------+
+// |                return value (optional)             |
+// +----------------------------------------------------+ <- mp
+//                                                          (low address)
+#define STACK_FRAME_SIZE 4
 //------------------------------------------------------------------------
 
 
@@ -418,7 +440,6 @@ void GetSym()
         SYM = SYM_CHAR;
         CHAR = CH;
         GetCh();
-        printf("%c\n", CHAR);
         if (CH != '\'')
             panic(0, "GetSym: expected ', got: %c", CH);
         GetCh();
@@ -667,19 +688,19 @@ int GEN(FUNCTION_TYPE F, int L, int A)
     return filled_cx;
 }
 
-// Calculate base address for B with level L.
-int BASE(int L, int B, DATUM S[])
+// Calculate static link with mp in specify level.
+int get_static_link(int level, int mp, DATUM dstore[])
 {
-    int B1 = B;
+    int sl = mp + 1;
 
-    while (L > 0) {
-        if (S[B1].type != TYPE_ADDRESS)
-            panic(0, "BASE: datum should be address type");
-        B1 = S[B1].ival;
-        L = L - 1;
+    while (level > 0) {
+        if (dstore[sl].type != TYPE_ADDRESS)
+            panic(0, "get_static_link: datum should be address type");
+        sl = dstore[sl].ival;
+        level = level - 1;
     }
 
-    return B1;
+    return sl;
 }
 
 //------------------------------------------------------------------------
@@ -883,16 +904,16 @@ inline void inst_cond_or(DATUM a, DATUM b, DATUM &c)
     datum_set_value(c, datum_cast_int(a) || datum_cast_int(b));
 }
 
-void Interpret()
+void Interpret(int pc)
 {
-    int pc, mp, sp;                             /* program registers */
+    int mp, sp;                             /* program registers */
+    int callee_mp, sl;
     INSTRUCTION I;
     MACHINE_STATE state;
 
     state = STATE_RUNNING;
     sp = 0;
     mp = 1;
-    pc = 1;                                     /* pc starts at 1 */
 
     do {
         I = CODE[pc++];
@@ -905,9 +926,11 @@ void Interpret()
             case OPR:                           /* execute operation */
                 switch (I.A) {
                     case 0:                     /* return */
-                        sp = mp - 1;
-                        pc = datum_cast_address(INTER_STACK[sp + 3]);
-                        mp = datum_cast_address(INTER_STACK[sp + 2]);
+                        callee_mp = mp;
+                        pc = datum_cast_address(INTER_STACK[callee_mp + 3]);
+                        mp = datum_cast_address(INTER_STACK[callee_mp + 2]);
+                        // TODO handle function type & procedure type
+                        sp = callee_mp - 1;
                         break;
                     case 1:                     /* -A */
                         inst_inverse(INTER_STACK[sp], INTER_STACK[sp]);
@@ -982,29 +1005,43 @@ void Interpret()
 
             case LOD:                           /* load variable */
                 sp = sp + 1;
-                datum_copy(INTER_STACK[BASE(I.L, mp, INTER_STACK) + I.A],
-                           INTER_STACK[sp]);
+                sl = get_static_link(I.L, mp, INTER_STACK);
+                datum_copy(INTER_STACK[sl + I.A], INTER_STACK[sp]);
                 break; /* case LOD */
 
             case STO:                           /* store variable */
-                datum_copy(INTER_STACK[sp],
-                           INTER_STACK[BASE(I.L, mp, INTER_STACK) + I.A]);
+                sl = get_static_link(I.L, mp, INTER_STACK);
+                datum_copy(INTER_STACK[sp], INTER_STACK[sl + I.A]);
                 sp = sp - 1;
                 break; /* case STO */
 
+            case MST:                           /* mark stack frame */
+                // return value, set by callee
+                datum_set_value(INTER_STACK[++sp], 0);
+                INTER_STACK[sp].type = TYPE_INT;
+
+                // static link
+                sl = get_static_link(I.L, mp, INTER_STACK);
+                datum_set_value(INTER_STACK[++sp], sl);
+                INTER_STACK[sp].type = TYPE_ADDRESS;
+
+                // dynamic link
+                datum_set_value(INTER_STACK[++sp], mp);
+                INTER_STACK[sp].type = TYPE_ADDRESS;
+
+                // return address, set by CAL
+                datum_set_value(INTER_STACK[++sp], 0);
+                INTER_STACK[sp].type = TYPE_ADDRESS;
+                break; /* case MST */
+
             case CAL:                           /* call procedure */
-                datum_set_value(INTER_STACK[sp + 1], BASE(I.L, mp, INTER_STACK));
-                INTER_STACK[sp + 1].type = TYPE_ADDRESS;
-                datum_set_value(INTER_STACK[sp + 2], mp);
-                INTER_STACK[sp + 2].type = TYPE_ADDRESS;
-                datum_set_value(INTER_STACK[sp + 3], pc);
-                INTER_STACK[sp + 3].type = TYPE_ADDRESS;
-                mp = sp + 1;
+                mp = sp - STACK_FRAME_SIZE - I.L + 1;
+                datum_set_value(INTER_STACK[sp - I.L], pc);
                 pc = I.A;
                 break; /* case CAL */
 
             case INI:                           /* increment */
-                sp = sp + I.A;
+                sp = mp + I.A;
                 break; /* case INI */
 
             case JMP:                           /* unconditional jump */
@@ -1124,8 +1161,8 @@ void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
 //------------------------------------------------------------------------
 // Parser
 //------------------------------------------------------------------------
-void parse_program(int, int &);
-void parse_block(int, int &);
+int parse_program(int, int &);
+int parse_block(int, int &);
 void parse_const(int, int &, int &);
 void parse_var(int, int &, int &);
 void parse_procedure(int, int &, int &);
@@ -1154,10 +1191,23 @@ void parse_factor(int, int &);
  * Grammar:
  *
  *  PROGRAM-BLOCK ::= PROGRAM IDENT; BLOCK "."
+ *
+ * Instructions Layout:
+ * +----------------------------------------------------+ <- program_body_start
+ * |                                                    |
+ * |                    program body                    |
+ * |                                                    |
+ * +----------------------------------------------------+ <- program_start (execute starts here)
+ * |                    MST 0 0                         |
+ * +----------------------------------------------------+
+ * |                CALL program_body_start             |
+ * +----------------------------------------------------+
+ * |                        HLT                         |
+ * +----------------------------------------------------+
  */
-void parse_program(int level, int &TX)
+int parse_program(int level, int &TX)
 {
-    GEN(HLT, 0, 0);
+    int program_block_start_cx, program_start_cx;
 
     if (SYM != SYM_PROG)
         panic(0, "PROGRAM-BLOCK: expect PROGRAM, got: %s", SYMOUT[SYM]);
@@ -1171,10 +1221,16 @@ void parse_program(int level, int &TX)
         panic(5, "PROGRAM-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    parse_block(level, TX);
+    program_block_start_cx = parse_block(level, TX);
 
     if (SYM != SYM_PERIOD)
         panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
+
+    program_start_cx = GEN(MST, 0, 0);
+    GEN(CAL, 0, program_block_start_cx);
+    GEN(HLT, 0, 0);
+
+    return program_start_cx;
 }
 
 /*
@@ -1183,27 +1239,34 @@ void parse_program(int level, int &TX)
  *   BLOCK ::= {CONST-BLOCK} {VAR-BLOCK} [PROCEDURE-BLOCK] STATEMENT
  *
  * Instructions Layout:
- *
- * TODO
  * +----------------------------------------------------+
+ * |                constant declarations               | (optional)
+ * +----------------------------------------------------+
+ * |                variable declarations               | (optional)
+ * +----------------------------------------------------+
+ * |                procedure declarations              | (optional)
+ * +----------------------------------------------------+ <- body_start
  * |                                                    |
- * |                block instructions                  |
+ * |                    block body                      |
  * |                                                    |
+ * +----------------------------------------------------+
+ * |        return statement (JMP body_end)             | (optional)
+ * +----------------------------------------------------+
+ * |        return statement (JMP body_end)             | (optional)
+ * +----------------------------------------------------+ <- body_end
+ * |                    body return                     |
  * +----------------------------------------------------+
  */
-void parse_block(int level, int &TX)
+int parse_block(int level, int &TX)
 {
-    int DX, TX0, CX0;
-
-    DX = 3;                                 /* data storage index */
-    TX0 = TX;                               /* initial table index */
-    CX0 = CX;                               /* initial code index */
-    TABLE[TX].vp.ADDRESS = CX;              /* body entry address */
-    GEN(JMP, 0, 0);
+    int body_start_cx, body_end_cx;
+    int vairables_size;
+    int DX;
 
     if (level > LEVMAX)
         panic(32, "BLOCK: level too deep: %d", level);
 
+    DX = 0;
     if (SYM == SYM_CONST)
         parse_const(level, TX, DX);
     if (SYM == SYM_VAR)
@@ -1211,13 +1274,15 @@ void parse_block(int level, int &TX)
     while (SYM == SYM_PROC)
         parse_procedure(level, TX, DX);
 
-    CODE[TABLE[TX0].vp.ADDRESS].A = CX;
-    TABLE[TX0].vp.ADDRESS = CX;                 /* start address of body (?) */
-    TABLE[TX0].vp.SIZE = DX;                    /* size of data segment */
-    GEN(INI, 0, DX);
+    // TODO calculate arg size.
+    body_start_cx = GEN(INI, 0, DX + STACK_FRAME_SIZE);
 
-    parse_statement(level, TX);
-    GEN(OPR, 0, 0);                             /* return */
+    parse_statement(level, TX);                 /* block body */
+
+    // TODO handle return statements
+    body_end_cx = GEN(OPR, 0, 0);               /* return */
+
+    return body_start_cx;
 }
 
 /*
@@ -1651,7 +1716,9 @@ void parse_call(int level, int &TX)
     if (ident.KIND != KIND_PROCEDURE)
         panic(15, "CALL-STMT: %s should be a procedure", ID);
 
-    GEN(CAL, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GEN(MST, level - ident.vp.LEVEL, 0);
+    // TODO parse parameters.
+    GEN(CAL, 0, ident.vp.ADDRESS);
     GetSym();
 }
 
@@ -2016,7 +2083,7 @@ void SetupLanguage()
     strcpy(INST_ALFA[LOD], "LOD");   strcpy(INST_ALFA[STO], "STO");
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
-    strcpy(INST_ALFA[HLT], "HLT");
+    strcpy(INST_ALFA[HLT], "HLT");   strcpy(INST_ALFA[MST], "MST");
 
     // Setup constant table.
     CONSTANT_TABLE_INDEX = -1;           /* current constant address */
@@ -2031,19 +2098,19 @@ void Init()
 
 void Main()
 {
-    int TX;
+    int TX, pc;
 
     Init();
 
     log("Start compiling program.");
     GetSym();
     TX = 0;
-    parse_program(0, TX);
+    pc = parse_program(0, TX);
     ListCode(0);
     log("Compile finish.");
 
     log("Start executing program.");
-    Interpret();
+    Interpret(pc);
     log("Execute finish.");
 }
 
