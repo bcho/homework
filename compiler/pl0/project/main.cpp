@@ -50,6 +50,7 @@ string IntToStr(int n) {
 #define STACK_MAX   500         /* Size of interpreter stack. */
 
 #define NMAX        10          /* Maximum number of integer digits. */
+#define EXIT_FRAMES_SIZE 100    /* Exit frame maxium size. */
 #define CONSTANT_TABLE_SIZE 100 /* Maximum size of constant taable. */
 #define INTEGER_MAX 2147483647  /* Maximum integer. */
 //------------------------------------------------------------------------
@@ -215,6 +216,10 @@ DATUM INTER_STACK[STACK_MAX];   /* interpreter stack */
 
 DATUM CONSTANT_TABLE[TXMAX];    /* constant values table */
 int CONSTANT_TABLE_INDEX;       /* constant table index */
+
+// TODO exit frame structure doc
+int *EXIT_FRAMES[EXIT_FRAMES_SIZE]; /* exit frames list */
+int CURRENT_EXIT_FRAME;             /* current exit frame index */
 
 
 FILE *FIN, *FOUT, *UIN;         /* STDIN/STDOUT/USER STDIN file object */
@@ -1175,6 +1180,7 @@ void parse_for(int, int &);
 void parse_call(int, int &);
 void parse_read(int, int &);
 void parse_write(int, int &);
+void parse_return(int, int &);
 
 // expression groups
 void parse_expression(int, int &);
@@ -1185,6 +1191,12 @@ void parse_additive(int, int &);
 void parse_multive(int, int &);
 void parse_unary(int, int &);
 void parse_factor(int, int &);
+
+
+// exit frame utilites
+void exit_frame_begin();
+void exit_frame_add(int);
+void exit_frame_end(int);
 
 
 /*
@@ -1266,6 +1278,8 @@ int parse_block(int level, int &TX)
     if (level > LEVMAX)
         panic(32, "BLOCK: level too deep: %d", level);
 
+    exit_frame_begin();
+
     DX = 0;
     if (SYM == SYM_CONST)
         parse_const(level, TX, DX);
@@ -1279,8 +1293,8 @@ int parse_block(int level, int &TX)
 
     parse_statement(level, TX);                 /* block body */
 
-    // TODO handle return statements
     body_end_cx = GEN(OPR, 0, 0);               /* return */
+    exit_frame_end(body_end_cx);
 
     return body_start_cx;
 }
@@ -1387,6 +1401,7 @@ void parse_procedure(int level, int &TX, int &DX)
  *              | CALL-STMT
  *              | READ-STMT
  *              | WRITE-STMT
+ *              | RETURN-STMT
  *              | NULL-STMT
  */
 void parse_statement(int level, int &TX)
@@ -1412,6 +1427,9 @@ void parse_statement(int level, int &TX)
             break;
         case SYM_WRITE:
             parse_write(level, TX);
+            break;
+        case SYM_RETURN:
+            parse_return(level, TX);
             break;
         case SYM_BEGIN:
             GetSym();
@@ -1766,7 +1784,7 @@ void parse_read(int level, int &TX)
 void parse_write(int level, int &TX)
 {
     if (SYM != SYM_WRITE)
-        panic(0, "WRITE: expected WRITE, got: %s", SYMOUT[SYM]);
+        panic(0, "WRITE-STMT: expected WRITE, got: %s", SYMOUT[SYM]);
     GetSym();
 
     if (SYM == SYM_LPAREN) {
@@ -1789,6 +1807,24 @@ void parse_write(int level, int &TX)
     else {
         GEN(OPR, 0, 15);
     }
+}
+
+/*
+ * Grammar:
+ *
+ *  TODO support function
+ *  RETURN-STMT ::= RETURN
+ */
+void parse_return(int level, int &TX)
+{
+    int jmp_out_cx;
+
+    if (SYM != SYM_RETURN)
+        panic(0, "RETURN-STMT: expected RETURN, got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    jmp_out_cx = GEN(JMP, 0, 0);
+    exit_frame_add(jmp_out_cx);
 }
 
 void parse_expression(int level, int &TX)
@@ -2016,6 +2052,52 @@ void parse_factor(int level, int &TX)
         panic(0, "FACTOR: unexpected symbol: %s", SYMOUT[SYM]);
     }
 }
+
+// Start a new exit frame.
+void exit_frame_begin()
+{
+    int i;
+
+    CURRENT_EXIT_FRAME = CURRENT_EXIT_FRAME + 1;
+    EXIT_FRAMES[CURRENT_EXIT_FRAME] = (int *) malloc(sizeof(int) * EXIT_FRAMES_SIZE);
+    if (EXIT_FRAMES[CURRENT_EXIT_FRAME] == NULL)
+        panic(0, "exit_frame_begin: unable to alloc memory for exit frame");
+    for (i = 0; i < EXIT_FRAMES_SIZE; i++)
+        EXIT_FRAMES[CURRENT_EXIT_FRAME][i] = 0;
+}
+
+// Add a return jump statement to exit frame.
+void exit_frame_add(int return_stmt_cx)
+{
+    int len;
+
+    if (CURRENT_EXIT_FRAME < 0)
+        panic(0, "exit_frame_add: should start a new exit frame first");
+    len = EXIT_FRAMES[CURRENT_EXIT_FRAME][0];
+    if (len >= EXIT_FRAMES_SIZE)
+        panic(0, "exit_frame_add: exit frame too large");
+    EXIT_FRAMES[CURRENT_EXIT_FRAME][++len] = return_stmt_cx;
+    EXIT_FRAMES[CURRENT_EXIT_FRAME][0] = len;
+}
+
+// End an exit frame & backpatch return address.
+void exit_frame_end(int body_end_cx)
+{
+    int i, len, return_stmt_cx;
+
+    if (CURRENT_EXIT_FRAME < 0)
+        panic(0, "exit_frame_end: no active exit frame");
+
+    // backpath return address
+    len = EXIT_FRAMES[CURRENT_EXIT_FRAME][0];
+    for (i = 1; i <= len; i++) {
+        return_stmt_cx = EXIT_FRAMES[CURRENT_EXIT_FRAME][i];
+        CODE[return_stmt_cx].A = body_end_cx;
+    }
+
+    free(EXIT_FRAMES[CURRENT_EXIT_FRAME]);
+    CURRENT_EXIT_FRAME = CURRENT_EXIT_FRAME - 1;
+}
 //------------------------------------------------------------------------
 
 
@@ -2087,6 +2169,9 @@ void SetupLanguage()
 
     // Setup constant table.
     CONSTANT_TABLE_INDEX = -1;           /* current constant address */
+
+    // Setup exit frames list.
+    CURRENT_EXIT_FRAME = -1;
 }
 
 // Initialize program.

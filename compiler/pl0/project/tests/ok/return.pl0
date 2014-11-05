@@ -1,0 +1,16 @@
+program returndemo;
+procedure foo;
+begin
+    write(1);
+    return;
+    write(2);
+end;
+begin
+    /* should print out 1 only */
+    call foo;
+
+    return;
+
+    /* shouldn't be execute */
+    call foo;
+end.
