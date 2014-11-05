@@ -883,96 +883,97 @@ inline void inst_cond_or(DATUM a, DATUM b, DATUM &c)
     datum_set_value(c, datum_cast_int(a) || datum_cast_int(b));
 }
 
-// TODO refactor registers usage
 void Interpret()
 {
-    int P, B, T;                                /* program registers */
+    int pc, mp, sp;                             /* program registers */
     INSTRUCTION I;
     MACHINE_STATE state;
 
     state = STATE_RUNNING;
-    T = 0; B = 1; P = 1;
+    sp = 0;
+    mp = 1;
+    pc = 1;                                     /* pc starts at 1 */
 
     do {
-        I = CODE[P++];
+        I = CODE[pc++];
         switch (I.F) {
             case LIT:                           /* load constant */
-                T = T + 1;
-                datum_copy(CONSTANT_TABLE[I.A], INTER_STACK[T]);
+                sp = sp + 1;
+                datum_copy(CONSTANT_TABLE[I.A], INTER_STACK[sp]);
                 break; /* case LIT */
             
             case OPR:                           /* execute operation */
                 switch (I.A) {
                     case 0:                     /* return */
-                        T = B - 1;
-                        P = datum_cast_address(INTER_STACK[T + 3]);
-                        B = datum_cast_address(INTER_STACK[T + 2]);
+                        sp = mp - 1;
+                        pc = datum_cast_address(INTER_STACK[sp + 3]);
+                        mp = datum_cast_address(INTER_STACK[sp + 2]);
                         break;
                     case 1:                     /* -A */
-                        inst_inverse(INTER_STACK[T], INTER_STACK[T]);
+                        inst_inverse(INTER_STACK[sp], INTER_STACK[sp]);
                         break;
                     case 2:                     /* A + B */
-                        T = T - 1;
-                        inst_add(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_add(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 3:                     /* A - B */
-                        T = T - 1;
-                        inst_sub(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_sub(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 4:                     /* A * B */
-                        T = T - 1;
-                        inst_mul(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_mul(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 5:                     /* A / B */
-                        T = T - 1;
-                        inst_div(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_div(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 6:                     /* ODD A */
-                        inst_odd(INTER_STACK[T], INTER_STACK[T]);
+                        inst_odd(INTER_STACK[sp], INTER_STACK[sp]);
                         break;
                     case 7:                     /* !A */
-                        inst_not(INTER_STACK[T], INTER_STACK[T]);
+                        inst_not(INTER_STACK[sp], INTER_STACK[sp]);
                         break;
                     case 8:                     /* A == B */
-                        T = T - 1;
-                        inst_equ(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_equ(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 9:                     /* A != B */
-                        T = T - 1;
-                        inst_neq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_neq(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 10:                    /* A < B */
-                        T = T - 1;
-                        inst_lss(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_lss(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 11:                    /* >= */
-                        T = T - 1;
-                        inst_geq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_geq(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 12:                    /* > */
-                        T = T - 1;
-                        inst_gtr(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_gtr(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 13:                    /* <= */
-                        T = T - 1;
-                        inst_leq(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_leq(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 14:                    /* write to stdout */
-                        inst_write_stdout(INTER_STACK[T--]);
+                        inst_write_stdout(INTER_STACK[sp--]);
                         break;
                     case 15:                    /* write '\n' to stdout */
                         _writeln("");
                         break;
                     case 16:                    /* read from stdin */
-                        inst_read_stdin(INTER_STACK[++T]);
+                        inst_read_stdin(INTER_STACK[++sp]);
                         break;
                     case 17:                    /* A && B */
-                        T = T - 1;
-                        inst_cond_and(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_cond_and(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     case 18:                    /* A || B */
-                        T = T - 1;
-                        inst_cond_or(INTER_STACK[T], INTER_STACK[T + 1], INTER_STACK[T]);
+                        sp = sp - 1;
+                        inst_cond_or(INTER_STACK[sp], INTER_STACK[sp + 1], INTER_STACK[sp]);
                         break;
                     default:
                         panic(0, "Interpret: unknown op code: %d", I.A);
@@ -980,40 +981,40 @@ void Interpret()
                 break; /*case OPR */
 
             case LOD:                           /* load variable */
-                T = T + 1;
-                datum_copy(INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A],
-                           INTER_STACK[T]);
+                sp = sp + 1;
+                datum_copy(INTER_STACK[BASE(I.L, mp, INTER_STACK) + I.A],
+                           INTER_STACK[sp]);
                 break; /* case LOD */
 
             case STO:                           /* store variable */
-                datum_copy(INTER_STACK[T],
-                           INTER_STACK[BASE(I.L, B, INTER_STACK) + I.A]);
-                T = T - 1;
+                datum_copy(INTER_STACK[sp],
+                           INTER_STACK[BASE(I.L, mp, INTER_STACK) + I.A]);
+                sp = sp - 1;
                 break; /* case STO */
 
             case CAL:                           /* call procedure */
-                datum_set_value(INTER_STACK[T + 1], BASE(I.L, B, INTER_STACK));
-                INTER_STACK[T + 1].type = TYPE_ADDRESS;
-                datum_set_value(INTER_STACK[T + 2], B);
-                INTER_STACK[T + 2].type = TYPE_ADDRESS;
-                datum_set_value(INTER_STACK[T + 3], P);
-                INTER_STACK[T + 3].type = TYPE_ADDRESS;
-                B = T + 1;
-                P = I.A;
+                datum_set_value(INTER_STACK[sp + 1], BASE(I.L, mp, INTER_STACK));
+                INTER_STACK[sp + 1].type = TYPE_ADDRESS;
+                datum_set_value(INTER_STACK[sp + 2], mp);
+                INTER_STACK[sp + 2].type = TYPE_ADDRESS;
+                datum_set_value(INTER_STACK[sp + 3], pc);
+                INTER_STACK[sp + 3].type = TYPE_ADDRESS;
+                mp = sp + 1;
+                pc = I.A;
                 break; /* case CAL */
 
             case INI:                           /* increment */
-                T = T + I.A;
+                sp = sp + I.A;
                 break; /* case INI */
 
             case JMP:                           /* unconditional jump */
-                P = I.A;
+                pc = I.A;
                 break; /* case JMP */
 
             case JPC:                           /* false jump */
-                if (! datum_cast_int(INTER_STACK[T]))
-                    P = I.A;
-                T = T - 1;
+                if (! datum_cast_int(INTER_STACK[sp]))
+                    pc = I.A;
+                sp = sp - 1;
                 break; /* case JPC */
 
             case HLT:                           /* halt machine */
