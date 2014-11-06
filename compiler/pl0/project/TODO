@@ -8,7 +8,7 @@ type system:
 
 function:
 
-- new grammar for distinguishing procedure call & function call:
+- [x] new grammar for distinguishing procedure call & function call:
 
 Example:
 
@@ -30,3 +30,16 @@ Grammar:
 
     PARAMETERS ::= EXPRESSION ["," EXPRESSION]
                  | epilsion
+
+
+array:
+
+- grammar for array declaration / dereferencing:
+
+Example:
+
+    var arr[5];
+    arr[0] = 0;
+    arr[1] = '1';
+
+- object organizing
