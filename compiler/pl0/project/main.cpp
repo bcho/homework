@@ -54,6 +54,7 @@ string IntToStr(int n) {
 #define CONSTANT_TABLE_SIZE 100 /* Maximum size of constant taable. */
 #define INTEGER_MAX 2147483647  /* Maximum integer. */
 #define STATIC_LINK_OFFSET 3    /* Basic offset from static link. */
+#define PARAMETER_COUNT 10      /* Maximum count of parameter. */
 //------------------------------------------------------------------------
 
 
@@ -1478,7 +1479,8 @@ void parse_function(int level, int &TX, int &DX)
  */
 int parse_parameter(int level, int &TX, int &offset)
 {
-    int start_cx, has_ident, table_pos;
+    int start_cx, has_ident;
+    int para_pos[PARAMETER_COUNT], para_count;
 
     start_cx = CX;
     if (SYM != SYM_LPAREN)
@@ -1487,24 +1489,26 @@ int parse_parameter(int level, int &TX, int &offset)
 
     // TODO review this parsing process
     has_ident = 0;
+    para_count = 0;
     if (SYM == SYM_IDENT) {
         has_ident = 1;
-        table_pos = ENTER(KIND_VARIABLE, level, TX, offset);
-        GEN(STO, 0, TABLE[table_pos].vp.ADDRESS);
+        para_pos[para_count++] = ENTER(KIND_VARIABLE, level, TX, offset);
         GetSym();
     }
     while (has_ident && SYM == SYM_COMMA) {
         GetSym();
         if (SYM != SYM_IDENT)
             panic(0, "parse_parameter: expect identity, got: %s", SYMOUT[SYM]);
-        table_pos = ENTER(KIND_VARIABLE, level, TX, offset);
-        GEN(STO, 0, TABLE[table_pos].vp.ADDRESS);
+        para_pos[para_count++] = ENTER(KIND_VARIABLE, level, TX, offset);
         GetSym();
     }
 
     if (SYM != SYM_RPAREN)
         panic(0, "parse_parameter: expect ')', got: %s", SYMOUT[SYM]);
     GetSym();
+
+    for (para_count--; para_count >= 0; para_count--)
+        GEN(STO, 0, TABLE[para_pos[para_count]].vp.ADDRESS);
 
     return start_cx;
 }

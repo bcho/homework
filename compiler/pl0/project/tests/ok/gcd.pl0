@@ -1,0 +1,20 @@
+program gcddemo;
+function gcd(a, b);
+begin
+    if a < b then return call gcd(b, a);
+    if b = 0 then return a;
+    return call gcd(b, a - b * (a / b));
+end;
+begin
+    /* should print out 1 */
+    write(call gcd(1, 1));
+
+    /* should print out 1 */
+    write(call gcd(3, 5));
+    
+    /* should print out 5 */
+    write(call gcd(19980, 205));
+
+    /* should print out 12 */
+    write(call gcd(12, 60));
+end.
