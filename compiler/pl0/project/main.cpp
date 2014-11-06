@@ -49,12 +49,12 @@ string IntToStr(int n) {
 #define CXMAX       200         /* Size of code storage. */
 #define STACK_MAX   500         /* Size of interpreter stack. */
 
-#define NMAX        10          /* Maximum number of integer digits. */
-#define EXIT_FRAMES_SIZE 100    /* Exit frame maxium size. */
-#define CONSTANT_TABLE_SIZE 100 /* Maximum size of constant taable. */
-#define INTEGER_MAX 2147483647  /* Maximum integer. */
-#define STATIC_LINK_OFFSET 3    /* Basic offset from static link. */
-#define PARAMETER_COUNT 10      /* Maximum count of parameter. */
+#define NMAX                10          /* Maximum number of integer digits. */
+#define EXIT_FRAMES_SIZE    100         /* Exit frame maxium size. */
+#define CONSTANT_TABLE_SIZE 100         /* Maximum size of constant taable. */
+#define INTEGER_MAX         2147483647  /* Maximum integer. */
+#define STATIC_LINK_OFFSET  3           /* Basic offset from static link. */
+#define PARAMETER_COUNT     10          /* Maximum count of parameter. */
 //------------------------------------------------------------------------
 
 
@@ -2187,7 +2187,7 @@ void parse_unary(int level, int &TX)
 /*
  * Grammar:
  *
- *  FUNCTION-CALL ::= CALL IDENT {"(" ARGUMENTSS ")"}
+ *  FUNCTION-CALL ::= CALL IDENT {"(" ARGUMENTS ")"}
  */
 void parse_function_call_expression(int level, int &TX)
 {
