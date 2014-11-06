@@ -936,8 +936,7 @@ void Interpret(int pc)
     MACHINE_STATE state;
 
     state = STATE_RUNNING;
-    sp = 0;
-    mp = 1;
+    sp = -1; mp = 0;
 
     do {
         I = CODE[pc++];
@@ -1030,7 +1029,7 @@ void Interpret(int pc)
                     default:
                         panic(0, "Interpret: unknown op code: %d", I.A);
                 } /* switch I.A */
-                break; /*case OPR */
+                break; /* case OPR */
 
             case LOD:                           /* load variable */
                 sp = sp + 1;
@@ -1052,7 +1051,6 @@ void Interpret(int pc)
                 // return value, set by callee
                 // default return value is int:0
                 datum_set_value(INTER_STACK[++sp], 0);
-                INTER_STACK[sp].type = TYPE_INT;
 
                 // static link
                 sl = get_static_link(I.L, mp, INTER_STACK);
@@ -1070,12 +1068,13 @@ void Interpret(int pc)
 
             case CAL:                           /* call procedure */
                 mp = sp - STACK_FRAME_SIZE - I.L + 1;
-                datum_set_value(INTER_STACK[sp - I.L], pc);
+                datum_set_value(INTER_STACK[mp + 3], pc);
+                INTER_STACK[mp + 3].type = TYPE_ADDRESS;
                 pc = I.A;
                 break; /* case CAL */
 
             case INI:                           /* increment */
-                sp = mp + I.A;
+                sp = mp + I.A - 1;
                 break; /* case INI */
 
             case JMP:                           /* unconditional jump */
