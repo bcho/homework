@@ -166,6 +166,7 @@ typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
 typedef struct {
     FUNCTION_TYPE F;
     int L, A;
+    char comment[100];
 } INSTRUCTION;
 
 
@@ -332,6 +333,7 @@ void ListCode(int CX0)
         while (GET_STRING_LENGTH(s) < 3)
             s = " " + s;
         s = s + " " + INST_ALFA[inst.F] + " " + IntToStr(inst.L) + " " + IntToStr(inst.A);
+        s = s + "\t" + inst.comment;
         _writeln(s.c_str());
     }
 }
@@ -691,6 +693,21 @@ int GEN(FUNCTION_TYPE F, int L, int A)
     CODE[CX].L = L;
     CODE[CX].A = A;
     CX = CX + 1;
+
+    return filled_cx;
+}
+
+// ... also add comment to the generated instruction.
+int GEN(FUNCTION_TYPE F, int L, int A, const char *fmt, ...)
+{
+    int filled_cx;
+    va_list args;
+
+    filled_cx = GEN(F, L, A);
+
+    va_start(args, fmt);
+    vsprintf(CODE[filled_cx].comment, fmt, args);
+    va_end(args);
 
     return filled_cx;
 }
@@ -1259,9 +1276,9 @@ int parse_program(int &TX)
     if (SYM != SYM_PERIOD)
         panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
 
-    program_start_cx = GEN(MST, 0, 0);
-    GEN(CAL, 0, program_block_start_cx);
-    GEN(HLT, 0, 0);
+    program_start_cx = GEN(MST, 0, 0, "-----program starts here-----");
+    GEN(CAL, 0, program_block_start_cx, "call main block");
+    GEN(HLT, 0, 0, "-----program terminate-----");
 
     return program_start_cx;
 }
@@ -1310,15 +1327,17 @@ int parse_block(int level, int &TX, int &offset, OBJECT_KIND kind)
             parse_function(level, TX, offset);
     }
 
-    body_start_cx = GEN(INI, 0, offset + STACK_FRAME_SIZE);
+    body_start_cx = GEN(INI, 0, offset + STACK_FRAME_SIZE,
+                        "-----start of %s-----",
+                        kind == KIND_PROCEDURE ? "procedure" : "function");
 
     parse_statement(level, TX);                 /* block body */
 
     // return
     if (kind == KIND_PROCEDURE)
-        body_end_cx = GEN(OPR, 0, 0);
+        body_end_cx = GEN(OPR, 0, 0, "-----end of procedure------");
     else
-        body_end_cx = GEN(OPR, 1, 0);
+        body_end_cx = GEN(OPR, 1, 0, "-----end of function-----");
     exit_frame_end(body_end_cx);
 
     return body_start_cx;
@@ -1418,7 +1437,7 @@ void parse_procedure(int level, int &TX, int &DX)
     GetSym();
 
     body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_PROCEDURE);
-    // backpatch start address
+    // back patch start address
     if (has_parameter) 
         TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
     else
@@ -1460,7 +1479,7 @@ void parse_function(int level, int &TX, int &DX)
     GetSym();
 
     body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_FUNCTION);
-    // backpatch start address
+    // back patch start address
     if (has_parameter) 
         TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
     else
@@ -1508,7 +1527,8 @@ int parse_parameter(int level, int &TX, int &offset)
     GetSym();
 
     for (para_count--; para_count >= 0; para_count--)
-        GEN(STO, 0, TABLE[para_pos[para_count]].vp.ADDRESS);
+        GEN(STO, 0, TABLE[para_pos[para_count]].vp.ADDRESS,
+            "load parameter %s", TABLE[para_pos[para_count]].NAME);
 
     return start_cx;
 }
@@ -1641,7 +1661,8 @@ void parse_assignment(int level, int &TX)
         parse_expression(level, TX);
     } else {
         // load variable
-        GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+        GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+            "load variable %s", ident.NAME);
 
         // calculate right side value
         parse_expression(level, TX);
@@ -1655,11 +1676,12 @@ void parse_assignment(int level, int &TX)
             default:
                 panic(0, "ASSIGNMENT: unsupported operator: %s", SYMOUT[assign_op]);
         }
-        GEN(OPR, 0, op_code);
+        GEN(OPR, 0, op_code, "binary operation");
     }
 
     // store value
-    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "store to variable %s", ident.NAME);
 }
 
 /*
@@ -1699,7 +1721,7 @@ void parse_if(int level, int &TX)
 
     // parse condition
     parse_expression(level, TX);
-    cond_jmp_cx = GEN(JPC, 0, 0);
+    cond_jmp_cx = GEN(JPC, 0, 0, "false jump to skip then part");
 
     // parse then part
     if (SYM != SYM_THEN)
@@ -1711,7 +1733,7 @@ void parse_if(int level, int &TX)
     if (SYM == SYM_ELSE) {
         GetSym();
 
-        then_jmp_cx = GEN(JMP, 0, 0);
+        then_jmp_cx = GEN(JMP, 0, 0, "skip else part");
         CODE[cond_jmp_cx].A = CX;
         parse_statement(level, TX);
         CODE[then_jmp_cx].A = CX;
@@ -1752,7 +1774,7 @@ void parse_while(int level, int &TX)
 
     // parse expression
     parse_expression(level, TX);
-    cond_jmp_cx = GEN(JPC, 0, 0);
+    cond_jmp_cx = GEN(JPC, 0, 0, "false jump to skip while body");
     
     if (SYM != SYM_DO)
         panic(18, "WHILE-STMT: expect DO, got: %s", SYMOUT[SYM]);
@@ -1760,7 +1782,7 @@ void parse_while(int level, int &TX)
 
     // parse body
     parse_statement(level, TX);
-    GEN(JMP, 0, while_cx);
+    GEN(JMP, 0, while_cx, "jmp to while begin");
     
     // back patch
     CODE[cond_jmp_cx].A = CX;
@@ -1833,8 +1855,9 @@ void parse_for(int level, int &TX)
 
     // store initial value to loop variable
     parse_expression(level, TX);
-    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
-    jmp_until_cx = GEN(JMP, 0, 0);
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "load loop variable %s", ident.NAME);
+    jmp_until_cx = GEN(JMP, 0, 0, "jump to until part");
 
     // parse step part
     for_cx = CX;
@@ -1843,10 +1866,12 @@ void parse_for(int level, int &TX)
     GetSym();
 
     // update loop variable
-    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "load loop variable %s", ident.NAME);
     parse_expression(level, TX);
-    GEN(OPR, 0, 2);
-    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GEN(OPR, 0, 2, "increase step");
+    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "update loop variable %s", ident.NAME);
     
     // parse until part
     until_cx = CX;
@@ -1855,17 +1880,18 @@ void parse_for(int level, int &TX)
     GetSym();
 
     // compare loop variable with upper bound
-    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+    GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "load loop variable %s", ident.NAME);
     parse_expression(level, TX);
-    GEN(OPR, 0, 13);
-    jmp_out_cx = GEN(JPC, 0, 0);
+    GEN(OPR, 0, 13, "compare loop variable with upper bound");
+    jmp_out_cx = GEN(JPC, 0, 0, "false jump to skip for body");
 
     // parse do part
     if (SYM != SYM_DO)
         panic(0, "FOR-STMT: expect DO, got: %s", SYMOUT[SYM]);
     GetSym();
     parse_statement(level, TX);
-    GEN(JMP, 0, for_cx);
+    GEN(JMP, 0, for_cx, "jump to for start");
 
 
     // back patch address
@@ -1895,12 +1921,12 @@ void parse_call(int level, int &TX)
         panic(15, "CALL-STMT: %s should be a procedure or function", ID);
     GetSym();
 
-    GEN(MST, level - ident.vp.LEVEL, 0);
+    GEN(MST, level - ident.vp.LEVEL, 0, "build stack frame for %s", ident.NAME);
     arg_count = 0;
     if (SYM == SYM_LPAREN)
         // TODO validate arguments count
         arg_count = parse_argument(level, TX);
-    GEN(CAL, arg_count, ident.vp.ADDRESS);
+    GEN(CAL, arg_count, ident.vp.ADDRESS, "call %s", ident.NAME);
 }
 
 /*
@@ -1927,8 +1953,9 @@ void parse_read(int level, int &TX)
         GET_IDENT(ID, TX, &ident);
         if (ident.KIND != KIND_VARIABLE)
             panic(35, "READ-STMT: identity %s should be variable", ID);
-        GEN(OPR, 0, 16);
-        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+        GEN(OPR, 0, 16, "read from stdin");
+        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+            "store to variable %s", ident.NAME);
         
         GetSym();
     } while (SYM == SYM_COMMA);
@@ -1954,12 +1981,12 @@ void parse_write(int level, int &TX)
         GetSym();
 
         parse_expression(level, TX);
-        GEN(OPR, 0, 14);
+        GEN(OPR, 0, 14, "write to stdout");
         while (SYM == SYM_COMMA) {
             GetSym();
 
             parse_expression(level, TX);
-            GEN(OPR, 0, 14);
+            GEN(OPR, 0, 14, "write to stdout");
         }
 
         if (SYM != SYM_RPAREN)
@@ -1968,7 +1995,7 @@ void parse_write(int level, int &TX)
     } /* SYM == SYM_LPAREN */
     
     else {
-        GEN(OPR, 0, 15);
+        GEN(OPR, 0, 15, "write line break");
     }
 }
 
@@ -1992,10 +2019,10 @@ void parse_return(int level, int &TX)
     // TODO need to check body type?
     if (SYM != SYM_SEMICOLON && SYM != SYM_END) {
         parse_expression(level, TX);
-        GEN(STR, 0, 0);
+        GEN(STR, 0, 0, "store return value");
     }
 
-    jmp_out_cx = GEN(JMP, 0, 0);
+    jmp_out_cx = GEN(JMP, 0, 0, "exit block");
     exit_frame_add(jmp_out_cx);
 }
 
@@ -2017,7 +2044,7 @@ void parse_or_cond(int level, int &TX)
         GetSym();
 
         parse_and_cond(level, TX);
-        GEN(OPR, 0, 18);
+        GEN(OPR, 0, 18, "calculate ||");
     }
 }
 
@@ -2034,7 +2061,7 @@ void parse_and_cond(int level, int &TX)
         GetSym();
 
         parse_relational(level, TX);
-        GEN(OPR, 0, 17);
+        GEN(OPR, 0, 17, "calculate &&");
     }
 }
 
@@ -2054,7 +2081,7 @@ void parse_relational(int level, int &TX)
         GetSym();
 
         parse_additive(level, TX);
-        GEN(OPR, 0, 6);
+        GEN(OPR, 0, 6, "calculate odd");
     } /* SYM == SYM_ODD */
 
     else {
@@ -2076,7 +2103,7 @@ void parse_relational(int level, int &TX)
                 default:
                     panic(0, "RELATIONAL: unknown operator: %s", SYMOUT[SYM]);
             }
-            GEN(OPR, 0, op_code);
+            GEN(OPR, 0, op_code, "calculate bool");
         }
     }
 }
@@ -2098,9 +2125,9 @@ void parse_additive(int level, int &TX)
         parse_multive(level, TX);
 
         if (op_symbol == SYM_PLUS)
-            GEN(OPR, 0, 2);
+            GEN(OPR, 0, 2, "calculate +");
         else
-            GEN(OPR, 0, 3);
+            GEN(OPR, 0, 3, "calculate -");
     }
 }
 
@@ -2121,9 +2148,9 @@ void parse_multive(int level, int &TX)
         parse_unary(level, TX);
 
         if (op_symbol == SYM_TIMES)
-            GEN(OPR, 0, 4);
+            GEN(OPR, 0, 4, "calculate *");
         else
-            GEN(OPR, 0, 5);
+            GEN(OPR, 0, 5, "calculate /");
     }
 }
 
@@ -2138,7 +2165,7 @@ void parse_unary(int level, int &TX)
     if (SYM == SYM_MINUS) {
         GetSym();
         parse_unary(level, TX);
-        GEN(OPR, 0, 1);
+        GEN(OPR, 0, 1, "calculate -");
     } /* SYM == SYM_MINUS */
     
     else if (SYM == SYM_PLUS) {
@@ -2149,7 +2176,7 @@ void parse_unary(int level, int &TX)
     else if (SYM == SYM_NOT) {
         GetSym();
         parse_unary(level, TX);
-        GEN(OPR, 0, 7);
+        GEN(OPR, 0, 7, "calculate not");
     } /* SYM == SYM_NOT */
 
     else {
@@ -2179,12 +2206,12 @@ void parse_function_call_expression(int level, int &TX)
         panic(0, "FUNCTION-CALL: %s should be a function", ID);
     GetSym();
 
-    GEN(MST, level - ident.vp.LEVEL, 0);
+    GEN(MST, level - ident.vp.LEVEL, 0, "build stack frame for %s", ident.NAME);
     arg_count = 0;
     if (SYM == SYM_LPAREN)
         // TODO validate arguments count
         arg_count = parse_argument(level, TX);
-    GEN(CAL, arg_count, ident.vp.ADDRESS);
+    GEN(CAL, arg_count, ident.vp.ADDRESS, "call function %s", ident.NAME);
 }
 
 /*
@@ -2209,11 +2236,11 @@ void parse_factor(int level, int &TX)
         GET_IDENT(ID, TX, &ident);
         switch (ident.KIND) {
             case KIND_CONSTANT:
-                GEN(LIT, 0, ident.vp.ADDRESS);
+                GEN(LIT, 0, ident.vp.ADDRESS, "load constant %s", ident.NAME);
                 break;
             case KIND_VARIABLE:
-                // TODO address calculating
-                GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS);
+                GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+                    "load variable %s", ident.NAME);
                 break;
             default:
                 panic(21, "FACTOR: identity %s type should be CONST or VARIABLE", ID);
@@ -2227,17 +2254,17 @@ void parse_factor(int level, int &TX)
             INTEGER = 0;
         }
 
-        GEN(LIT, 0, constant_enter(INTEGER));
+        GEN(LIT, 0, constant_enter(INTEGER), "load integer constant %d", INTEGER);
         GetSym();
     } /* SYM == SYM_INTEGER */
 
     else if (SYM == SYM_CHAR) {
-        GEN(LIT, 0, constant_enter(CHAR));
+        GEN(LIT, 0, constant_enter(CHAR), "load char constant %c", CHAR);
         GetSym();
     } /* SYM == SYM_CHAR */
 
     else if (SYM == SYM_FLOAT) {
-        GEN(LIT, 0, constant_enter(FLOAT));
+        GEN(LIT, 0, constant_enter(FLOAT), "load float constant %f", FLOAT);
         GetSym();
     } /* SYM == SYM_FLOAT */
 
@@ -2287,7 +2314,7 @@ void exit_frame_add(int return_stmt_cx)
     EXIT_FRAMES[CURRENT_EXIT_FRAME][0] = len;
 }
 
-// End an exit frame & backpatch return address.
+// End an exit frame & back patch return address.
 void exit_frame_end(int body_end_cx)
 {
     int i, len, return_stmt_cx;
@@ -2295,7 +2322,7 @@ void exit_frame_end(int body_end_cx)
     if (CURRENT_EXIT_FRAME < 0)
         panic(0, "exit_frame_end: no active exit frame");
 
-    // backpath return address
+    // back patch return address
     len = EXIT_FRAMES[CURRENT_EXIT_FRAME][0];
     for (i = 1; i <= len; i++) {
         return_stmt_cx = EXIT_FRAMES[CURRENT_EXIT_FRAME][i];
