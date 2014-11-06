@@ -1,0 +1,25 @@
+program parameterdemo;
+function echo(a);
+begin
+    return a;
+end;
+procedure mywrite(a);
+begin
+    write(a);
+end;
+function fib(n);
+begin
+    if n = 0 then return 1;
+    if n = 1 then return 1;
+    return call fib(n - 1) + call fib(n - 2);
+end;
+begin
+    /* should print out 5 */
+    write(call echo(5));
+
+    /* should print out 5 */
+    mywrite(5);
+
+    /* should print out 5 */
+    write(call fib(4));
+end.

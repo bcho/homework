@@ -53,6 +53,7 @@ string IntToStr(int n) {
 #define EXIT_FRAMES_SIZE 100    /* Exit frame maxium size. */
 #define CONSTANT_TABLE_SIZE 100 /* Maximum size of constant taable. */
 #define INTEGER_MAX 2147483647  /* Maximum integer. */
+#define STATIC_LINK_OFFSET 3    /* Basic offset from static link. */
 //------------------------------------------------------------------------
 
 
@@ -170,11 +171,9 @@ typedef struct {
 // Stack Frame
 //                                                          (high address)
 // +----------------------------------------------------+ <- sp
-// |                variables (optional)                |
+// |                variables (0 or more)               |
 // +----------------------------------------------------+
-// |                constants (optional)                |
-// +----------------------------------------------------+
-// |                args (optional)                     |
+// |                args (0 or more)                    |
 // +----------------------------------------------------+
 // |                return address                      |
 // +----------------------------------------------------+
@@ -1018,12 +1017,12 @@ void Interpret(int pc)
             case LOD:                           /* load variable */
                 sp = sp + 1;
                 sl = get_static_link(I.L, mp, INTER_STACK);
-                datum_copy(INTER_STACK[sl + I.A], INTER_STACK[sp]);
+                datum_copy(INTER_STACK[sl + STATIC_LINK_OFFSET + I.A], INTER_STACK[sp]);
                 break; /* case LOD */
 
             case STO:                           /* store variable */
                 sl = get_static_link(I.L, mp, INTER_STACK);
-                datum_copy(INTER_STACK[sp], INTER_STACK[sl + I.A]);
+                datum_copy(INTER_STACK[sp], INTER_STACK[sl + STATIC_LINK_OFFSET + I.A]);
                 sp = sp - 1;
                 break; /* case STO */
 
@@ -1123,9 +1122,8 @@ int constant_enter(char val)
 // Symbol Table
 //------------------------------------------------------------------------
 // Record an entity into symbol table.
-// TODO DX?
 // TODO clean ID.
-int ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
+int ENTER(OBJECT_KIND kind, int level, int &TX, int &offset)
 {
     TX = TX + 1;
 
@@ -1138,8 +1136,8 @@ int ENTER(OBJECT_KIND kind, int level, int &TX, int &DX)
             break;
         case KIND_VARIABLE:
             TABLE[TX].vp.LEVEL = level;
-            TABLE[TX].vp.ADDRESS = DX;
-            DX = DX + 1;
+            TABLE[TX].vp.ADDRESS = offset;
+            offset = offset + 1;
             break;
         case KIND_PROCEDURE:
         case KIND_FUNCTION:
@@ -1184,7 +1182,7 @@ void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
 // Parser
 //------------------------------------------------------------------------
 int parse_program(int, int &);
-int parse_block(int, int &, OBJECT_KIND);
+int parse_block(int, int &, int &, OBJECT_KIND);
 void parse_const(int, int &, int &);
 void parse_var(int, int &, int &);
 void parse_procedure(int, int &, int &);
@@ -1239,6 +1237,7 @@ void exit_frame_end(int);
 int parse_program(int level, int &TX)
 {
     int program_block_start_cx, program_start_cx;
+    int sl_offset;
 
     if (SYM != SYM_PROG)
         panic(0, "PROGRAM-BLOCK: expect PROGRAM, got: %s", SYMOUT[SYM]);
@@ -1252,7 +1251,8 @@ int parse_program(int level, int &TX)
         panic(5, "PROGRAM-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    program_block_start_cx = parse_block(level, TX, KIND_PROCEDURE);
+    sl_offset = 0;
+    program_block_start_cx = parse_block(level, TX, sl_offset, KIND_PROCEDURE);
 
     if (SYM != SYM_PERIOD)
         panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
@@ -1288,31 +1288,27 @@ int parse_program(int level, int &TX)
  * |                    body return                     |
  * +----------------------------------------------------+
  */
-int parse_block(int level, int &TX, OBJECT_KIND kind)
+int parse_block(int level, int &TX, int &offset, OBJECT_KIND kind)
 {
     int body_start_cx, body_end_cx;
-    int vairables_size;
-    int DX;
 
     if (level > LEVMAX)
         panic(32, "BLOCK: level too deep: %d", level);
 
     exit_frame_begin();
 
-    DX = 0;
     if (SYM == SYM_CONST)
-        parse_const(level, TX, DX);
+        parse_const(level, TX, offset);
     if (SYM == SYM_VAR)
-        parse_var(level, TX, DX);
+        parse_var(level, TX, offset);
     while (SYM == SYM_PROC || SYM == SYM_FUNC) {
         if (SYM == SYM_PROC)
-            parse_procedure(level, TX, DX);
+            parse_procedure(level, TX, offset);
         if (SYM == SYM_FUNC)
-            parse_function(level, TX, DX);
+            parse_function(level, TX, offset);
     }
 
-    // TODO calculate arg size.
-    body_start_cx = GEN(INI, 0, DX + STACK_FRAME_SIZE);
+    body_start_cx = GEN(INI, 0, offset + STACK_FRAME_SIZE);
 
     parse_statement(level, TX);                 /* block body */
 
@@ -1392,11 +1388,11 @@ void parse_var(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  PROCEDURE-BLOCK ::= PROCEDURE IDENT ";" BLOCK ";"
+ *  PROCEDURE-BLOCK ::= PROCEDURE IDENT {"(" PARAMETERS ")"} ";" BLOCK ";"
  */
 void parse_procedure(int level, int &TX, int &DX)
 {
-    int body_start_cx, table_pos;
+    int body_start_cx, table_pos, sl_offset;
 
     if (SYM != SYM_PROC)
         panic(0, "PROCEDURE-BLOCK: expect PROCEDURE, got: %s", SYMOUT[SYM]);
@@ -1407,12 +1403,15 @@ void parse_procedure(int level, int &TX, int &DX)
     // TODO naming conflict?
     table_pos = ENTER(KIND_PROCEDURE, level, TX, DX);
     GetSym();
+    
+    sl_offset = 0;
+    // TODO parse parameters
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    body_start_cx = parse_block(level + 1, TX, KIND_PROCEDURE);
+    body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_PROCEDURE);
     // backpatch start address
     TABLE[table_pos].vp.ADDRESS = body_start_cx;
 
@@ -1424,11 +1423,11 @@ void parse_procedure(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  FUNCTION-BLOCK ::= FUNCTION IDENT ";" BLOCK ";"
+ *  FUNCTION-BLOCK ::= FUNCTION IDENT {"(" PARAMETERS ")"} ";" BLOCK ";"
  */
 void parse_function(int level, int &TX, int &DX)
 {
-    int body_start_cx, table_pos;
+    int body_start_cx, table_pos, sl_offset;
 
     if (SYM != SYM_FUNC)
         panic(0, "FUNCTION-BLOCK: expect FUNCTION, got: %s", SYMOUT[SYM]);
@@ -1440,11 +1439,14 @@ void parse_function(int level, int &TX, int &DX)
     table_pos = ENTER(KIND_FUNCTION, level, TX, DX);
     GetSym();
 
+    // TODO parse parameters
+    sl_offset = 0;
+
     if (SYM != SYM_SEMICOLON)
         panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    body_start_cx = parse_block(level + 1, TX, KIND_FUNCTION);
+    body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_FUNCTION);
     // backpatch start address
     TABLE[table_pos].vp.ADDRESS = body_start_cx;
 
