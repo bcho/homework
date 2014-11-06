@@ -1187,12 +1187,13 @@ void parse_const(int, int &, int &);
 void parse_var(int, int &, int &);
 void parse_procedure(int, int &, int &);
 void parse_function(int, int &, int &);
+int parse_parameter(int, int &, int &);
+int parse_argument(int, int &);
 void parse_statement(int, int &);
 void parse_assignment(int, int &);
 void parse_if(int, int &);
 void parse_while(int, int &);
 void parse_for(int, int &);
-// TODO make it as expression.
 void parse_call(int, int &);
 void parse_read(int, int &);
 void parse_write(int, int &);
@@ -1392,7 +1393,8 @@ void parse_var(int level, int &TX, int &DX)
  */
 void parse_procedure(int level, int &TX, int &DX)
 {
-    int body_start_cx, table_pos, sl_offset;
+    int parameter_start_cx, body_start_cx, table_pos, sl_offset;
+    int has_parameter;
 
     if (SYM != SYM_PROC)
         panic(0, "PROCEDURE-BLOCK: expect PROCEDURE, got: %s", SYMOUT[SYM]);
@@ -1405,7 +1407,10 @@ void parse_procedure(int level, int &TX, int &DX)
     GetSym();
     
     sl_offset = 0;
-    // TODO parse parameters
+    if (SYM == SYM_LPAREN) {
+        has_parameter = 1;
+        parameter_start_cx = parse_parameter(level + 1, TX, sl_offset);
+    }
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
@@ -1413,7 +1418,10 @@ void parse_procedure(int level, int &TX, int &DX)
 
     body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_PROCEDURE);
     // backpatch start address
-    TABLE[table_pos].vp.ADDRESS = body_start_cx;
+    if (has_parameter) 
+        TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
+    else
+        TABLE[table_pos].vp.ADDRESS = body_start_cx;
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
@@ -1427,7 +1435,8 @@ void parse_procedure(int level, int &TX, int &DX)
  */
 void parse_function(int level, int &TX, int &DX)
 {
-    int body_start_cx, table_pos, sl_offset;
+    int parameter_start_cx, body_start_cx, table_pos, sl_offset;
+    int has_parameter;
 
     if (SYM != SYM_FUNC)
         panic(0, "FUNCTION-BLOCK: expect FUNCTION, got: %s", SYMOUT[SYM]);
@@ -1439,8 +1448,11 @@ void parse_function(int level, int &TX, int &DX)
     table_pos = ENTER(KIND_FUNCTION, level, TX, DX);
     GetSym();
 
-    // TODO parse parameters
     sl_offset = 0;
+    if (SYM == SYM_LPAREN) {
+        has_parameter = 1;
+        parameter_start_cx = parse_parameter(level + 1, TX, sl_offset);
+    }
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
@@ -1448,11 +1460,88 @@ void parse_function(int level, int &TX, int &DX)
 
     body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_FUNCTION);
     // backpatch start address
-    TABLE[table_pos].vp.ADDRESS = body_start_cx;
+    if (has_parameter) 
+        TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
+    else
+        TABLE[table_pos].vp.ADDRESS = body_start_cx;
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
+}
+
+/*
+ * Grammar:
+ *
+ *  PARAMETERS ::= "(" IDENT ["," IDENT] ")"
+ *               | "(" ")"
+ */
+int parse_parameter(int level, int &TX, int &offset)
+{
+    int start_cx, has_ident, table_pos;
+
+    start_cx = CX;
+    if (SYM != SYM_LPAREN)
+        panic(0, "parse_parameter: expect '(', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // TODO review this parsing process
+    has_ident = 0;
+    if (SYM == SYM_IDENT) {
+        has_ident = 1;
+        table_pos = ENTER(KIND_VARIABLE, level, TX, offset);
+        GEN(STO, 0, TABLE[table_pos].vp.ADDRESS);
+        GetSym();
+    }
+    while (has_ident && SYM == SYM_COMMA) {
+        GetSym();
+        if (SYM != SYM_IDENT)
+            panic(0, "parse_parameter: expect identity, got: %s", SYMOUT[SYM]);
+        table_pos = ENTER(KIND_VARIABLE, level, TX, offset);
+        GEN(STO, 0, TABLE[table_pos].vp.ADDRESS);
+        GetSym();
+    }
+
+    if (SYM != SYM_RPAREN)
+        panic(0, "parse_parameter: expect ')', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    return start_cx;
+}
+
+/*
+ * Grammar:
+ *
+ *  ARGUMENT ::= "(" EXPRESSION ["," EXPRESSION] ")"
+ *             | "(" ")"
+ */
+int parse_argument(int level, int &TX)
+{
+    int arg_count, has_exp;
+
+    if (SYM != SYM_LPAREN)
+        panic(0, "parse_argument: expect '(', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // TODO review this parsing process
+    arg_count = 0;
+    has_exp = 0;
+    if (SYM != SYM_RPAREN) {
+        has_exp = 1;
+        arg_count = arg_count + 1;
+        parse_expression(level, TX);
+    }
+    while (has_exp && SYM == SYM_COMMA) {
+        GetSym();
+        arg_count = arg_count + 1;
+        parse_expression(level, TX);
+    }
+
+    if (SYM != SYM_RPAREN)
+        panic(0, "parse_argument: expect ')', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    return arg_count;
 }
 
 /*
@@ -1787,6 +1876,7 @@ void parse_for(int level, int &TX)
  */
 void parse_call(int level, int &TX)
 {
+    int arg_count;
     TABLE_ITEM ident;
 
     if (SYM != SYM_CALL)
@@ -1802,8 +1892,11 @@ void parse_call(int level, int &TX)
     GetSym();
 
     GEN(MST, level - ident.vp.LEVEL, 0);
-    // TODO parse parameters.
-    GEN(CAL, 0, ident.vp.ADDRESS);
+    arg_count = 0;
+    if (SYM == SYM_LPAREN)
+        // TODO validate arguments count
+        arg_count = parse_argument(level, TX);
+    GEN(CAL, arg_count, ident.vp.ADDRESS);
 }
 
 /*
@@ -1910,7 +2003,7 @@ void parse_expression(int level, int &TX)
 /*
  * Grammar:
  *
- *  OR_COND ::= AND_COND ["||" OR_COND]
+ *  OR_COND ::= AND_COND ["||" AND_COND]
  */
 void parse_or_cond(int level, int &TX)
 {
@@ -2063,10 +2156,11 @@ void parse_unary(int level, int &TX)
 /*
  * Grammar:
  *
- *  FUNCTION-CALL ::= CALL IDENT
+ *  FUNCTION-CALL ::= CALL IDENT {"(" ARGUMENTSS ")"}
  */
 void parse_function_call_expression(int level, int &TX)
 {
+    int arg_count;
     TABLE_ITEM ident;
 
     if (SYM != SYM_CALL)
@@ -2082,8 +2176,11 @@ void parse_function_call_expression(int level, int &TX)
     GetSym();
 
     GEN(MST, level - ident.vp.LEVEL, 0);
-    // TODO parse parameters.
-    GEN(CAL, 0, ident.vp.ADDRESS);
+    arg_count = 0;
+    if (SYM == SYM_LPAREN)
+        // TODO validate arguments count
+        arg_count = parse_argument(level, TX);
+    GEN(CAL, arg_count, ident.vp.ADDRESS);
 }
 
 /*

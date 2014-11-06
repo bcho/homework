@@ -18,7 +18,7 @@ begin
     write(call echo(5));
 
     /* should print out 5 */
-    mywrite(5);
+    call mywrite(5);
 
     /* should print out 5 */
     write(call fib(4));
