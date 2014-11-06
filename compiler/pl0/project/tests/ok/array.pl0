@@ -1,0 +1,6 @@
+program arrdemo;
+var a[10], i;
+begin
+    for i := 0 step 1 until 9 do a[i] := i;
+    for i := 0 step 1 until 9 do write(a[i]);
+end.

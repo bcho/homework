@@ -31,10 +31,12 @@ Grammar:
     PARAMETERS ::= EXPRESSION ["," EXPRESSION]
                  | epilsion
 
+- fix parameter loading & sub program parsing.
+
 
 array:
 
-- grammar for array declaration / dereferencing:
+- [x] grammar for array declaration / dereferencing:
 
 Example:
 
@@ -42,4 +44,4 @@ Example:
     arr[0] = 0;
     arr[1] = '1';
 
-- object organizing
+- [x] object organizing

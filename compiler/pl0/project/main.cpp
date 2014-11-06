@@ -55,6 +55,7 @@ string IntToStr(int n) {
 #define INTEGER_MAX         2147483647  /* Maximum integer. */
 #define STATIC_LINK_OFFSET  3           /* Basic offset from static link. */
 #define PARAMETER_COUNT     10          /* Maximum count of parameter. */
+#define ARRAY_SIZE_MAX      200         /* Maximum size of array type */
 //------------------------------------------------------------------------
 
 
@@ -68,7 +69,8 @@ typedef enum {
     // operators
     SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_OVER,
     SYM_ODD, SYM_EQL, SYM_NEQ, SYM_LSS, SYM_LEQ, SYM_GTR, SYM_GEQ,
-    SYM_LPAREN, SYM_RPAREN, SYM_COMMA, SYM_SEMICOLON, SYM_PERIOD,
+    SYM_LPAREN, SYM_RPAREN, SYM_LBRACKET, SYM_RBRACKET,
+    SYM_COMMA, SYM_SEMICOLON, SYM_PERIOD,
     SYM_ASSIGN, SYM_ADD_ASSIGN, SYM_SUB_ASSIGN, SYM_MUL_ASSIGN, SYM_DIV_ASSIGN,
     SYM_AND, SYM_OR, SYM_NOT,
 
@@ -86,7 +88,8 @@ const char *SYMOUT[] = {
 
     "PLUS", "MINUS", "TIMES", "OVER",
     "ODD", "EQ", "NEQ", "LSS", "LEQ", "GTR", "GEQ",
-    "LPAREN", "RPAREN", "COMMA", "SEMICOLON", "PERIOD",
+    "LPAREN", "RPAREN", "LBRACKET", "RBRACKET",
+    "COMMA", "SEMICOLON", "PERIOD",
     "ASSIGN", "ADD_ASSIGN", "SUB_ASSIGN", "MUL_ASSIGN", "DIV_ASSIGN",
     "AND", "OR", "NOT",
 
@@ -103,6 +106,7 @@ const char *SYMOUT[] = {
 typedef enum {
     KIND_CONSTANT,
     KIND_VARIABLE,
+    KIND_ARRAY,
     KIND_PROCEDURE,
     KIND_FUNCTION
 } OBJECT_KIND;
@@ -149,12 +153,16 @@ typedef struct {
 typedef enum {      /* TYP L A -- INSTRUCTION FORMAT */
     LIT,            /* LIT 0 A -- LOAD CONTANT FROM ADDRESS A */
     OPR,            /* OPR L A -- EXECUTE OPR A WITH OPTIONS L */
-    LOD,            /* LOD L A -- LOAD VARIABLE L FROM A */
+    LOD,            /* LOD L A -- LOAD DATA FROM LEVEL L WITH OFFSET A */
+    LDA,            /* LDA L A -- LOAD DATA ADDRESS FROM LEVEL L WITH OFFSET A */
+    LID,            /* LID 0 0 -- LOAD FROM ADDRESS */
+    IXA,            /* IXA 0 0 -- CALCULATE INDEXED ADDRESS */
     STO,            /* STO L A -- STORE VARIABLE L TO A */
+    STI,            /* STI 0 0 -- STORE TO ADDRESS */
     STR,            /* STR 0 0 -- STORE RETURN VALUE TODO: review? */
     MST,            /* MST L 0 -- MARK STACK FRAME */
     CAL,            /* CAL L A -- CALL PROCEDURE A WITH ARGSIZE L */
-    INI,            /* INI 0 A -- SET SP WITH MP + A */
+    INI,            /* INI L A -- SET SP WITH MP + A WITH LOCAL OBJECT COUNT L */
     JMP,            /* JMP 0 A -- JUMP TO A */
     JPC,            /* JPC 0 A -- (CONDITIONAL) JUMP TO A */
     HLT,            /* HLT 0 0 -- HALT MACHINE */
@@ -641,7 +649,7 @@ inline char datum_cast_char(DATUM d)
     }
 }
 
-inline char datum_cast_address(DATUM d)
+inline int datum_cast_address(DATUM d)
 {
     switch (d.type) {
         case TYPE_FLOAT:
@@ -931,7 +939,7 @@ inline void inst_cond_or(DATUM a, DATUM b, DATUM &c)
 void Interpret(int pc)
 {
     int mp, sp;                             /* program registers */
-    int callee_mp, sl;
+    int callee_mp, sl, i;
     INSTRUCTION I;
     MACHINE_STATE state;
 
@@ -951,6 +959,7 @@ void Interpret(int pc)
                     case 0:                     /* return */
                         callee_mp = mp;
                         pc = datum_cast_address(INTER_STACK[callee_mp + 3]);
+                        printf("restored pc: %d from %d\n", pc, callee_mp + 3);
                         mp = datum_cast_address(INTER_STACK[callee_mp + 2]);
                         if (I.L == 0) {
                             // callee is procedure, discard return value
@@ -1031,17 +1040,42 @@ void Interpret(int pc)
                 } /* switch I.A */
                 break; /* case OPR */
 
-            case LOD:                           /* load variable */
+            case LOD:                           /* load object */
                 sp = sp + 1;
                 sl = get_static_link(I.L, mp, INTER_STACK);
                 datum_copy(INTER_STACK[sl + STATIC_LINK_OFFSET + I.A], INTER_STACK[sp]);
                 break; /* case LOD */
+
+            case LDA:                           /* load object's address */
+                sl = get_static_link(I.L, mp, INTER_STACK);
+                sp = sp + 1;
+                datum_set_value(INTER_STACK[sp], sl + STATIC_LINK_OFFSET + I.A);
+                INTER_STACK[sp].type = TYPE_ADDRESS;
+                break; /* case LDA */
+
+            case LID:                           /* load from address */
+                datum_copy(INTER_STACK[datum_cast_address(INTER_STACK[sp])],
+                           INTER_STACK[sp]);
+                break; /* case LID */
+
+            case IXA:                           /* calculate indexed address */
+                sp = sp - 1;
+                datum_set_value(INTER_STACK[sp],
+                                datum_cast_address(INTER_STACK[sp]) + datum_cast_int(INTER_STACK[sp + 1]));
+                INTER_STACK[sp].type = TYPE_ADDRESS;
+                break; /* case IXA */
 
             case STO:                           /* store variable */
                 sl = get_static_link(I.L, mp, INTER_STACK);
                 datum_copy(INTER_STACK[sp], INTER_STACK[sl + STATIC_LINK_OFFSET + I.A]);
                 sp = sp - 1;
                 break; /* case STO */
+
+            case STI:                           /* store to address */
+                sp = sp - 1;
+                datum_copy(INTER_STACK[sp + 1],
+                           INTER_STACK[datum_cast_address(INTER_STACK[sp])]);
+                break; /* case STI */
 
             case STR:                           /* store return value */
                 datum_copy(INTER_STACK[sp], INTER_STACK[mp]);
@@ -1069,12 +1103,16 @@ void Interpret(int pc)
             case CAL:                           /* call procedure */
                 mp = sp - STACK_FRAME_SIZE - I.L + 1;
                 datum_set_value(INTER_STACK[mp + 3], pc);
+                printf("stored pc: %d to %d\n", pc, mp + 3);
                 INTER_STACK[mp + 3].type = TYPE_ADDRESS;
                 pc = I.A;
                 break; /* case CAL */
 
             case INI:                           /* increment */
                 sp = mp + I.A - 1;
+                // initialize local variabls with int:0
+                for (i = 0; i < I.L; i++)
+                    datum_set_value(INTER_STACK[sp - i], 0);
                 break; /* case INI */
 
             case JMP:                           /* unconditional jump */
@@ -1139,12 +1177,12 @@ int constant_enter(char val)
 // Symbol Table
 //------------------------------------------------------------------------
 // Record an entity into symbol table.
-// TODO clean ID.
-int ENTER(OBJECT_KIND kind, int level, int &TX, int &offset)
+int ENTER(const char *name, OBJECT_KIND kind, int level, int &TX, int &offset,
+          int size)
 {
     TX = TX + 1;
 
-    strcpy(TABLE[TX].NAME, ID);
+    strcpy(TABLE[TX].NAME, name);
     TABLE[TX].KIND = kind;
 
     switch (kind) {
@@ -1156,6 +1194,12 @@ int ENTER(OBJECT_KIND kind, int level, int &TX, int &offset)
             TABLE[TX].vp.ADDRESS = offset;
             offset = offset + 1;
             break;
+        case KIND_ARRAY:
+            TABLE[TX].vp.LEVEL = level;
+            TABLE[TX].vp.ADDRESS = offset;
+            TABLE[TX].vp.SIZE = size;
+            offset = offset + size;
+            break;
         case KIND_PROCEDURE:
         case KIND_FUNCTION:
             TABLE[TX].vp.LEVEL = level;
@@ -1165,6 +1209,21 @@ int ENTER(OBJECT_KIND kind, int level, int &TX, int &offset)
     }
 
     return TX;
+}
+
+int ENTER(OBJECT_KIND kind, int level, int &TX, int &offset)
+{
+    return ENTER(ID, kind, level, TX, offset, 0);
+}
+
+int ENTER_VARIABLE(const char *name, int level, int &TX, int &offset)
+{
+    return ENTER(name, KIND_VARIABLE, level, TX, offset, 1);
+}
+
+int ENTER_ARRAY(const char *name, int level, int &TX, int &offset, int size)
+{
+    return ENTER(name, KIND_ARRAY, level, TX, offset, size);
 }
 
 // Find identity's position.
@@ -1226,6 +1285,7 @@ void parse_multive(int, int &);
 void parse_unary(int, int &);
 void parse_function_call_expression(int, int &);
 void parse_factor(int, int &);
+void parse_array_dereference(int, int &);
 
 
 // exit frame utilites
@@ -1309,12 +1369,14 @@ int parse_program(int &TX)
 int parse_block(int level, int &TX, int &offset, OBJECT_KIND kind)
 {
     int body_start_cx, body_end_cx;
+    int init_offset;
 
     if (level > LEVMAX)
         panic(32, "BLOCK: level too deep: %d", level);
 
     exit_frame_begin();
 
+    init_offset = offset;
     if (SYM == SYM_CONST)
         parse_const(level, TX, offset);
     if (SYM == SYM_VAR)
@@ -1326,7 +1388,7 @@ int parse_block(int level, int &TX, int &offset, OBJECT_KIND kind)
             parse_function(level, TX, offset);
     }
 
-    body_start_cx = GEN(INI, 0, offset + STACK_FRAME_SIZE,
+    body_start_cx = GEN(INI, offset - init_offset, offset + STACK_FRAME_SIZE,
                         "-----start of %s-----",
                         kind == KIND_PROCEDURE ? "procedure" : "function");
 
@@ -1381,10 +1443,13 @@ void parse_const(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  VAR-BLOCK ::= VAR IDENT ["," IDENT] ";"
+ *  VAR-BLOCK ::= VAR IDENT-DECLAR ["," IDENT-DECLAR] ";"
+ *  IDENT-DECLAR ::= IDENT {"[" POSITIVE-INTEGER "]"}
  */
 void parse_var(int level, int &TX, int &DX)
 {
+    ALFA ident;
+
     if (SYM != SYM_VAR)
         panic(0, "VAR-BLOCK: expect VAR, got: %s", SYMOUT[SYM]);
     GetSym();
@@ -1392,8 +1457,27 @@ void parse_var(int level, int &TX, int &DX)
     do {
         if (SYM != SYM_IDENT)
             panic(4, "VAR-BLOCK: expect IDENT, got: %s", SYMOUT[SYM]);
-        ENTER(KIND_VARIABLE, level, TX, DX);
+        strcpy(ident, ID);
         GetSym();
+
+        if (SYM == SYM_LBRACKET) {                  /* it's an array */
+            GetSym();
+
+            if (SYM != SYM_INTEGER)
+                panic(0, "VAR-BLOCK: expect integer, got: %s", SYMOUT[SYM]);
+            if (INTEGER <= 0)
+                panic(0, "VAR-BLOCK: expect positive size, got: %d", INTEGER);
+            if (INTEGER > ARRAY_SIZE_MAX)
+                panic(0, "VAR-BLOCK: array size too large, got: %d", INTEGER);
+            ENTER_ARRAY(ident, level, TX, DX, INTEGER);
+            GetSym();
+
+            if (SYM != SYM_RBRACKET)
+                panic(0, "VAR-BLOCK: expect ']', got: %s", SYMOUT[SYM]);
+            GetSym();
+        } else {                                    /* it's a variable */
+            ENTER_VARIABLE(ident, level, TX, DX);
+        }
 
         if (SYM != SYM_COMMA)
             break;
@@ -1633,21 +1717,28 @@ void parse_statement(int level, int &TX)
 /*
  * Grammar:
  *
- *  ASSIGNMENT ::= IDENT ASSIGNOP EXPRESSION
+ *  ASSIGNMENT ::= ASSIGNABLE ASSIGNOP EXPRESSION
+ *  ASSIGNABLE ::= IDENT
+ *               | ARRAY-ITEM
+ *  ARRAY-ITEM ::= IDENT "[" EXPRESSION "]"
  *  ASSIGNOP ::= ":=" | "+=" | "-=" | "*=" | "/="
  */
 void parse_assignment(int level, int &TX)
 {
     TABLE_ITEM ident;
     SYMBOL assign_op;
-    int op_code;
+    int array_index, op_code;
     
     if (SYM != SYM_IDENT)
         panic(0, "ASSIGNMENT: expected IDENT, got: %s", SYMOUT[SYM]);
     GET_IDENT(ID, TX, &ident);
-    if (ident.KIND != KIND_VARIABLE)
+    if (ident.KIND == KIND_VARIABLE) {
+        GetSym();
+    } else if (ident.KIND == KIND_ARRAY) {
+        parse_array_dereference(level, TX);
+    } else {
         panic(12, "ASSIGNMENT: cannot assign to non-variable %s", ID);
-    GetSym();
+    }
 
     if (SYM != SYM_ASSIGN && SYM != SYM_ADD_ASSIGN && SYM != SYM_SUB_ASSIGN
         && SYM != SYM_MUL_ASSIGN && SYM != SYM_DIV_ASSIGN)
@@ -1659,6 +1750,10 @@ void parse_assignment(int level, int &TX)
         // calculate right side value
         parse_expression(level, TX);
     } else {
+        // FIXME
+        if (ident.KIND == KIND_ARRAY)
+            panic(0, "ASSIGNMENT: not support self assignment for array type,"
+                  "try use a[i] := a[i] + 1");
         // load variable
         GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
             "load variable %s", ident.NAME);
@@ -1679,8 +1774,11 @@ void parse_assignment(int level, int &TX)
     }
 
     // store value
-    GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
-        "store to variable %s", ident.NAME);
+    if (ident.KIND == KIND_VARIABLE)
+        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+            "store to variable %s", ident.NAME);
+    else
+        GEN(STI, 0, 0, "store to array item");
 }
 
 /*
@@ -1931,7 +2029,9 @@ void parse_call(int level, int &TX)
 /*
  * Grammar:
  *
- *  READ-STMT ::= READ "(" IDENT, ["," IDENT] ")"
+ *  READ-STMT ::= READ "(" ASSIGNABLE , ["," ASSIGNABLE] ")"
+ *  ASSIGNABLE ::= IDENT
+ *               | ARRAY-ITEM
  */
 void parse_read(int level, int &TX)
 {
@@ -1950,13 +2050,18 @@ void parse_read(int level, int &TX)
             panic(35, "READ-STMT: expect identity, got: %s", SYMOUT[SYM]);
 
         GET_IDENT(ID, TX, &ident);
-        if (ident.KIND != KIND_VARIABLE)
-            panic(35, "READ-STMT: identity %s should be variable", ID);
+        if (ident.KIND == KIND_VARIABLE)
+            GetSym();
+        else if (ident.KIND == KIND_ARRAY)
+            parse_array_dereference(level, TX);
+        else
+            panic(35, "READ-STMT: identity %s should be variable or array item", ID);
         GEN(OPR, 0, 16, "read from stdin");
-        GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
-            "store to variable %s", ident.NAME);
-        
-        GetSym();
+        if (ident.KIND == KIND_VARIABLE)
+            GEN(STO, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+                "store to variable %s", ident.NAME);
+        else if (ident.KIND == KIND_ARRAY)
+            GEN(STI, 0, 0, "store to array item");
     } while (SYM == SYM_COMMA);
 
     if (SYM != SYM_RPAREN)
@@ -2217,6 +2322,7 @@ void parse_function_call_expression(int level, int &TX)
  * Grammar:
  *
  *  FACTOR ::= IDENT
+ *           | ARRAY-DEREFRENCE
  *           | INTEGER
  *           | FLOAT
  *           | CHAR
@@ -2233,18 +2339,24 @@ void parse_factor(int level, int &TX)
 
     if (SYM == SYM_IDENT) {
         GET_IDENT(ID, TX, &ident);
+
         switch (ident.KIND) {
             case KIND_CONSTANT:
                 GEN(LIT, 0, ident.vp.ADDRESS, "load constant %s", ident.NAME);
+                GetSym();
                 break;
             case KIND_VARIABLE:
                 GEN(LOD, level - ident.vp.LEVEL, ident.vp.ADDRESS,
                     "load variable %s", ident.NAME);
+                GetSym();
+                break;
+            case KIND_ARRAY:
+                parse_array_dereference(level, TX);
+                GEN(LID, 0, 0, "load array item");
                 break;
             default:
-                panic(21, "FACTOR: identity %s type should be CONST or VARIABLE", ID);
+                panic(21, "FACTOR: identity %s type should be CONST, VARIABLE or ARRAY", ID);
         }
-        GetSym();
     } /* SYM == SYM_IDENT */
 
     else if (SYM == SYM_INTEGER) {
@@ -2284,6 +2396,35 @@ void parse_factor(int level, int &TX)
     else {
         panic(0, "FACTOR: unexpected symbol: %s", SYMOUT[SYM]);
     }
+}
+
+/*
+ * Grammar:
+ *
+ *  ARRAY-DEREFRENCE ::= IDENT "[" EXPRESSION "]"
+ */
+void parse_array_dereference(int level, int &TX)
+{
+    TABLE_ITEM ident;
+
+    if (SYM != SYM_IDENT)
+        panic(0, "ARRAY-DEREFRENCE: expect identity, got: %s", SYMOUT[SYM]);
+    GET_IDENT(ID, TX, &ident);
+    GetSym();
+    GEN(LDA, level - ident.vp.LEVEL, ident.vp.ADDRESS,
+        "load array %s base address", ident.NAME);
+
+    if (SYM != SYM_LBRACKET)
+        panic(0, "ARRAY-DEREFRENCE: expect '[', got: %s", SYMOUT[SYM]);
+    GetSym();
+
+    // TODO check index range.
+    parse_expression(level, TX);
+    GEN(IXA, 0, 0, "calculate item address from index");
+
+    if (SYM != SYM_RBRACKET)
+        panic(0, "ARRAY-DEREFRENCE: expect ']', got: %s", SYMOUT[SYM]);
+    GetSym();
 }
 
 // Start a new exit frame.
@@ -2351,6 +2492,7 @@ void SetupLanguage()
     ASCII_SYMBOL['='] = SYM_EQL;        ASCII_SYMBOL[','] = SYM_COMMA;
     ASCII_SYMBOL['.'] = SYM_PERIOD;     ASCII_SYMBOL[';'] = SYM_SEMICOLON;
     ASCII_SYMBOL['!'] = SYM_NOT;
+    ASCII_SYMBOL['['] = SYM_LBRACKET;   ASCII_SYMBOL[']'] = SYM_RBRACKET;
 
     i = -1;
     strcpy(KW_ALFA[++i], "BEGIN");
@@ -2401,7 +2543,9 @@ void SetupLanguage()
     strcpy(INST_ALFA[CAL], "CAL");   strcpy(INST_ALFA[INI], "INI");
     strcpy(INST_ALFA[JMP], "JMP");   strcpy(INST_ALFA[JPC], "JPC");
     strcpy(INST_ALFA[HLT], "HLT");   strcpy(INST_ALFA[MST], "MST");
-    strcpy(INST_ALFA[STR], "STR");
+    strcpy(INST_ALFA[STR], "STR");   strcpy(INST_ALFA[LDA], "LDA");
+    strcpy(INST_ALFA[IXA], "IXA");   strcpy(INST_ALFA[LID], "LID");
+    strcpy(INST_ALFA[STI], "STI");
 
     // Setup constant table.
     CONSTANT_TABLE_INDEX = -1;           /* current constant address */
