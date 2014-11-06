@@ -1181,7 +1181,7 @@ void GET_IDENT(ALFA id, int TX, TABLE_ITEM *item)
 //------------------------------------------------------------------------
 // Parser
 //------------------------------------------------------------------------
-int parse_program(int, int &);
+int parse_program(int &);
 int parse_block(int, int &, int &, OBJECT_KIND);
 void parse_const(int, int &, int &);
 void parse_var(int, int &, int &);
@@ -1234,7 +1234,7 @@ void exit_frame_end(int);
  * |                        HLT                         |
  * +----------------------------------------------------+
  */
-int parse_program(int level, int &TX)
+int parse_program(int &TX)
 {
     int program_block_start_cx, program_start_cx;
     int sl_offset;
@@ -1252,7 +1252,7 @@ int parse_program(int level, int &TX)
     GetSym();
 
     sl_offset = 0;
-    program_block_start_cx = parse_block(level, TX, sl_offset, KIND_PROCEDURE);
+    program_block_start_cx = parse_block(0, TX, sl_offset, KIND_PROCEDURE);
 
     if (SYM != SYM_PERIOD)
         panic(9, "PROGRAM-BLOCK: expect '.', got: %s", SYMOUT[SYM]);
@@ -2299,7 +2299,7 @@ void Main()
     log("Start compiling program.");
     GetSym();
     TX = 0;
-    pc = parse_program(0, TX);
+    pc = parse_program(TX);
     ListCode(0);
     log("Compile finish.");
 
