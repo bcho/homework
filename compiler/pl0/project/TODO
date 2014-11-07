@@ -31,7 +31,7 @@ Grammar:
     PARAMETERS ::= EXPRESSION ["," EXPRESSION]
                  | epilsion
 
-- fix parameter loading & sub program parsing.
+- [x] fix parameter loading & sub program parsing.
 
 
 array:
