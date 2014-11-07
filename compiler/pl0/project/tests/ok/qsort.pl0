@@ -1,0 +1,66 @@
+program quicksortdemo;
+var
+    a[10];
+
+procedure readarr(size);
+var
+    i;
+begin
+    for i := 0 step 1 until size - 1 do a[i] := size - i - 1;
+end;
+
+procedure writearr(size);
+var
+    i;
+begin
+    for i := 0 step 1 until size - 1 do write(a[i]);
+end;
+
+procedure swap(i, j);
+var
+    t;
+begin
+    t := a[i]; a[i] := a[j]; a[j] := t;
+end;
+
+function part(l, r);
+var
+    p;
+begin
+    p := (l + r) / 2;
+    call swap(l, p);
+    p := l;
+    l := l + 1;
+
+    while l <= r do
+    begin
+        if a[p] < a[l] then
+        begin
+            call swap(l, r);
+            r := r - 1;
+        end
+        else l := l + 1;
+    end;
+    call swap(r, p);
+
+    return r;
+end;
+
+procedure qsort(l, r);
+var
+    pivot;
+begin
+    if l >= r then return;
+
+    pivot := call part(l, r);
+
+    if pivot - 1 > l then call qsort(l, pivot - 1);
+    if r > pivot + 1 then call qsort(pivot + 1, r);
+end;
+
+begin
+    call readarr(10);
+    call writearr(10);
+    call qsort(0, 9);
+    call writearr(10);
+end.

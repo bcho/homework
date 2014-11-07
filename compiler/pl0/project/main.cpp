@@ -959,7 +959,6 @@ void Interpret(int pc)
                     case 0:                     /* return */
                         callee_mp = mp;
                         pc = datum_cast_address(INTER_STACK[callee_mp + 3]);
-                        printf("restored pc: %d from %d\n", pc, callee_mp + 3);
                         mp = datum_cast_address(INTER_STACK[callee_mp + 2]);
                         if (I.L == 0) {
                             // callee is procedure, discard return value
@@ -1103,7 +1102,6 @@ void Interpret(int pc)
             case CAL:                           /* call procedure */
                 mp = sp - STACK_FRAME_SIZE - I.L + 1;
                 datum_set_value(INTER_STACK[mp + 3], pc);
-                printf("stored pc: %d to %d\n", pc, mp + 3);
                 INTER_STACK[mp + 3].type = TYPE_ADDRESS;
                 pc = I.A;
                 break; /* case CAL */
@@ -1496,8 +1494,7 @@ void parse_var(int level, int &TX, int &DX)
  */
 void parse_procedure(int level, int &TX, int &DX)
 {
-    int parameter_start_cx, body_start_cx, table_pos, sl_offset;
-    int has_parameter;
+    int table_pos, sl_offset;
 
     if (SYM != SYM_PROC)
         panic(0, "PROCEDURE-BLOCK: expect PROCEDURE, got: %s", SYMOUT[SYM]);
@@ -1507,24 +1504,18 @@ void parse_procedure(int level, int &TX, int &DX)
         panic(4, "PROCEDURE-BLOCK: expect identity, got: %s", SYMOUT[SYM]);
     // TODO naming conflict?
     table_pos = ENTER(KIND_PROCEDURE, level, TX, DX);
+    TABLE[table_pos].vp.ADDRESS = CX;
     GetSym();
     
     sl_offset = 0;
-    if (SYM == SYM_LPAREN) {
-        has_parameter = 1;
-        parameter_start_cx = parse_parameter(level + 1, TX, sl_offset);
-    }
+    if (SYM == SYM_LPAREN)
+        parse_parameter(level + 1, TX, sl_offset);
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_PROCEDURE);
-    // back patch start address
-    if (has_parameter) 
-        TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
-    else
-        TABLE[table_pos].vp.ADDRESS = body_start_cx;
+    parse_block(level + 1, TX, sl_offset, KIND_PROCEDURE);
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "PROCEDURE-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
@@ -1538,8 +1529,7 @@ void parse_procedure(int level, int &TX, int &DX)
  */
 void parse_function(int level, int &TX, int &DX)
 {
-    int parameter_start_cx, body_start_cx, table_pos, sl_offset;
-    int has_parameter;
+    int table_pos, sl_offset;
 
     if (SYM != SYM_FUNC)
         panic(0, "FUNCTION-BLOCK: expect FUNCTION, got: %s", SYMOUT[SYM]);
@@ -1549,24 +1539,18 @@ void parse_function(int level, int &TX, int &DX)
         panic(4, "FUNCTION-BLOCK: expect identity, got: %s", SYMOUT[SYM]);
     // TODO naming conflict?
     table_pos = ENTER(KIND_FUNCTION, level, TX, DX);
+    TABLE[table_pos].vp.ADDRESS = CX;
     GetSym();
 
     sl_offset = 0;
-    if (SYM == SYM_LPAREN) {
-        has_parameter = 1;
-        parameter_start_cx = parse_parameter(level + 1, TX, sl_offset);
-    }
+    if (SYM == SYM_LPAREN)
+        parse_parameter(level + 1, TX, sl_offset);
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
     GetSym();
 
-    body_start_cx = parse_block(level + 1, TX, sl_offset, KIND_FUNCTION);
-    // back patch start address
-    if (has_parameter) 
-        TABLE[table_pos].vp.ADDRESS = parameter_start_cx;
-    else
-        TABLE[table_pos].vp.ADDRESS = body_start_cx;
+    parse_block(level + 1, TX, sl_offset, KIND_FUNCTION);
 
     if (SYM != SYM_SEMICOLON)
         panic(5, "FUNCTION-BLOCK: expect ';', got: %s", SYMOUT[SYM]);
