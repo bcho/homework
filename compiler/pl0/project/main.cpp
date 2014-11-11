@@ -1295,7 +1295,7 @@ void exit_frame_end(int);
 /*
  * Grammar:
  *
- *  PROGRAM-BLOCK ::= PROGRAM IDENT; BLOCK "."
+ *  PROGRAM-BLOCK ::= PROGRAM IDENT ";" BLOCK "."
  *
  * Instructions Layout:
  * +----------------------------------------------------+ <- program_body_start
@@ -1343,7 +1343,7 @@ int parse_program(int &TX)
 /*
  * Grammar:
  *
- *   BLOCK ::= {CONST-BLOCK} {VAR-BLOCK} [PROCEDURE-OR-FUNCTION-BLOCK] STATEMENT
+ *   BLOCK ::= [CONST-BLOCK] [VAR-BLOCK] {PROCEDURE-OR-FUNCTION-BLOCK} STATEMENT
  *
  * Instructions Layout:
  * +----------------------------------------------------+
@@ -1405,7 +1405,7 @@ int parse_block(int level, int &TX, int &offset, OBJECT_KIND kind)
 /*
  * Grammar:
  *
- *  CONST-BLOCK ::= CONST IDENT "=" INTEGER ["," IDENT "=" INTEGER] ";"
+ *  CONST-BLOCK ::= CONST IDENT "=" INTEGER {"," IDENT "=" INTEGER} ";"
  */
 void parse_const(int level, int &TX, int &DX)
 {
@@ -1441,8 +1441,8 @@ void parse_const(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  VAR-BLOCK ::= VAR IDENT-DECLAR ["," IDENT-DECLAR] ";"
- *  IDENT-DECLAR ::= IDENT {"[" POSITIVE-INTEGER "]"}
+ *  VAR-BLOCK ::= VAR IDENT-DECLAR {"," IDENT-DECLAR} ";"
+ *  IDENT-DECLAR ::= IDENT ["[" POSITIVE-INTEGER "]"]
  */
 void parse_var(int level, int &TX, int &DX)
 {
@@ -1490,7 +1490,7 @@ void parse_var(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  PROCEDURE-BLOCK ::= PROCEDURE IDENT {"(" PARAMETERS ")"} ";" BLOCK ";"
+ *  PROCEDURE-BLOCK ::= PROCEDURE IDENT ["(" PARAMETERS ")"] ";" BLOCK ";"
  */
 void parse_procedure(int level, int &TX, int &DX)
 {
@@ -1525,7 +1525,7 @@ void parse_procedure(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  FUNCTION-BLOCK ::= FUNCTION IDENT {"(" PARAMETERS ")"} ";" BLOCK ";"
+ *  FUNCTION-BLOCK ::= FUNCTION IDENT ["(" PARAMETERS ")"] ";" BLOCK ";"
  */
 void parse_function(int level, int &TX, int &DX)
 {
@@ -1560,7 +1560,7 @@ void parse_function(int level, int &TX, int &DX)
 /*
  * Grammar:
  *
- *  PARAMETERS ::= "(" IDENT ["," IDENT] ")"
+ *  PARAMETERS ::= "(" IDENT {"," IDENT} ")"
  *               | "(" ")"
  */
 int parse_parameter(int level, int &TX, int &offset)
@@ -1603,7 +1603,7 @@ int parse_parameter(int level, int &TX, int &offset)
 /*
  * Grammar:
  *
- *  ARGUMENT ::= "(" EXPRESSION ["," EXPRESSION] ")"
+ *  ARGUMENT ::= "(" EXPRESSION {"," EXPRESSION} ")"
  *             | "(" ")"
  */
 int parse_argument(int level, int &TX)
@@ -1638,7 +1638,7 @@ int parse_argument(int level, int &TX)
 /*
  * Grammar:
  *
- *  STATEMENT ::= BEGIN STATEMENT [";" STATEMENT] END
+ *  STATEMENT ::= BEGIN STATEMENT {";" STATEMENT} END
  *              | ASSIGN-STMT
  *              | CALL-STMT
  *              | IF-STMT
@@ -1790,7 +1790,7 @@ void parse_assignment(int level, int &TX)
  * |                                                    |
  * +----------------------------------------------------+ <- ELSE_PC (*)
  *
- * * If ELSE is not presented, THEN_PC should be exactly ELSE_PC.
+ * * If ELSE is not presented, THEN_PC should be same as ELSE_PC.
  */
 void parse_if(int level, int &TX)
 {
@@ -1876,7 +1876,7 @@ void parse_while(int level, int &TX)
  *  
  *      FOR I := 0 STEP 1 UNTIL 5 DO WRITE(I)
  *
- *  is equal to this C form:
+ *  is equivalent to this C form:
  *
  *      for (i = 0; i <= 5; i++)
  *          write(i);
@@ -2013,7 +2013,7 @@ void parse_call(int level, int &TX)
 /*
  * Grammar:
  *
- *  READ-STMT ::= READ "(" ASSIGNABLE , ["," ASSIGNABLE] ")"
+ *  READ-STMT ::= READ "(" ASSIGNABLE , {"," ASSIGNABLE} ")"
  *  ASSIGNABLE ::= IDENT
  *               | ARRAY-ITEM
  */
@@ -2056,7 +2056,7 @@ void parse_read(int level, int &TX)
 /*
  * Grammar:
  *
- *  WRITE-STMT ::= WRITE "(" EXPRESSION,  ["," EXPRESSION] ")"
+ *  WRITE-STMT ::= WRITE "(" EXPRESSION,  {"," EXPRESSION} ")"
  *               | WRITE
  */
 void parse_write(int level, int &TX)
@@ -2091,9 +2091,9 @@ void parse_write(int level, int &TX)
  * Grammar:
  *
  *  RETURN-STMT ::= RETURN
- *                | RETURN EXPRESSION(*)
+ *                | RETURN EXPRESSION (*)
  *
- * (*) By now, procedure can also return value.
+ * (*) FIXME By now, procedure can also return value.
  */
 void parse_return(int level, int &TX)
 {
@@ -2122,7 +2122,7 @@ void parse_expression(int level, int &TX)
 /*
  * Grammar:
  *
- *  OR_COND ::= AND_COND ["||" AND_COND]
+ *  OR_COND ::= AND_COND {"||" AND_COND}
  */
 void parse_or_cond(int level, int &TX)
 {
@@ -2139,7 +2139,7 @@ void parse_or_cond(int level, int &TX)
 /*
  * Grammar:
  *
- *  AND_COND ::= RELATIONAL ["&&" RELATIONAL]
+ *  AND_COND ::= RELATIONAL {"&&" RELATIONAL}
  */
 void parse_and_cond(int level, int &TX)
 {
@@ -2156,9 +2156,9 @@ void parse_and_cond(int level, int &TX)
 /*
  * Grammar:
  *
- *  RELATIONAL ::= ADDITIVE [RELOP ADDITIVE]
+ *  RELATIONAL ::= ADDITIVE {RELOP ADDITIVE}
  *               | ODD ADDITIVE
- *  RELOP ::= "=" / "<" / "<=" / ">" / ">=" / "<>"
+ *  RELOP ::= "=" | "<" | "<=" | ">" | ">=" | "<>"
  */
 void parse_relational(int level, int &TX)
 {
@@ -2199,7 +2199,7 @@ void parse_relational(int level, int &TX)
 /*
  * Grammar:
  *
- *  ADDITIVE ::= MULTIVE ["+" / "-" MULTIVE]
+ *  ADDITIVE ::= MULTIVE {("+" | "-") MULTIVE}
  */
 void parse_additive(int level, int &TX)
 {
@@ -2222,7 +2222,7 @@ void parse_additive(int level, int &TX)
 /*
  * Grammar:
  *
- *  MULTIVE ::= UNARY ["*" / "/" UNARY]
+ *  MULTIVE ::= UNARY {("*" | "/") UNARY}
  */
 void parse_multive(int level, int &TX)
 {
@@ -2245,7 +2245,7 @@ void parse_multive(int level, int &TX)
 /*
  * Grammar:
  *
- *  UNARY ::= ["-" / "+" / "!"] UNARY
+ *  UNARY ::= {"-" | "+" | "!"} UNARY
  *          | FACTOR
  */
 void parse_unary(int level, int &TX)
@@ -2275,7 +2275,7 @@ void parse_unary(int level, int &TX)
 /*
  * Grammar:
  *
- *  FUNCTION-CALL ::= CALL IDENT {"(" ARGUMENTS ")"}
+ *  FUNCTION-CALL ::= CALL IDENT ["(" ARGUMENTS ")"]
  */
 void parse_function_call_expression(int level, int &TX)
 {
@@ -2313,7 +2313,7 @@ void parse_function_call_expression(int level, int &TX)
  *           | CALL IDENT
  *           | "(" EXPRESSION ")"
  *
- *  INTEGER ::= [0-9]+  range: [-2147483648, 2147483647]
+ *  INTEGER ::= [0-9]+  (* range: [-2147483648, 2147483647] *)
  *  FLOAT ::= [0-9]+"."[0-9]+
  *  CHAR ::= "'" [a-zA-Z] "'"
  */
