@@ -1,8 +1,16 @@
 program quicksortdemo;
+const mode = 1;  /* prepare arr */
 var
     a[10];
 
 procedure readarr(size);
+var
+    i;
+begin
+    for i := 0 step 1 until size - 1 do read(a[i]);
+end;
+
+procedure preparearr(size);
 var
     i;
 begin
@@ -59,7 +67,10 @@ begin
 end;
 
 begin
-    call readarr(10);
+    if mode = 0 then
+        call readarr(10)
+    else
+        call preparearr(10);
     call writearr(10);
     call qsort(0, 9);
     call writearr(10);
