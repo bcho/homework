@@ -46,7 +46,7 @@ string IntToStr(int n) {
 #define LINEMAX     81          /* Maximum length of program line. */
 #define AMAX        2047        /* Maximum address. */
 #define LEVMAX      3           /* Maximum nesting procedure level. */
-#define CXMAX       200         /* Size of code storage. */
+#define CXMAX       500         /* Size of code storage. */
 #define STACK_MAX   500         /* Size of interpreter stack. */
 
 #define NMAX                10          /* Maximum number of integer digits. */
