@@ -839,9 +839,9 @@ inline void inst_equ(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) == datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) == datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) == datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) == datum_cast_int(b)));
 }
 
 // OPR 9 (A != B)
@@ -849,9 +849,9 @@ inline void inst_neq(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) != datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) != datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) != datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) != datum_cast_int(b)));
 }
 
 // OPR 10 (A < B)
@@ -859,9 +859,9 @@ inline void inst_lss(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) < datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) < datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) < datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) < datum_cast_int(b)));
 }
 
 // OPR 11 (A >= B)
@@ -869,9 +869,9 @@ inline void inst_geq(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) >= datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) >= datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) >= datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) >= datum_cast_int(b)));
 }
 
 // OPR 12 (A <= B)
@@ -879,9 +879,9 @@ inline void inst_leq(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) <= datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) <= datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) <= datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) <= datum_cast_int(b)));
 }
 
 // OPR 13 (A > B)
@@ -889,9 +889,9 @@ inline void inst_gtr(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
     if (a.type == TYPE_FLOAT || b.type == TYPE_FLOAT)
-        datum_set_value(c, datum_cast_float(a) > datum_cast_float(b));
+        datum_set_value(c, (int) (datum_cast_float(a) > datum_cast_float(b)));
     else
-        datum_set_value(c, datum_cast_int(a) > datum_cast_int(b));
+        datum_set_value(c, (int) (datum_cast_int(a) > datum_cast_int(b)));
 }
 
 // OPR 14 (write to stdout with line break)
@@ -926,14 +926,14 @@ inline void inst_read_stdin(DATUM &a)
 inline void inst_cond_and(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
-    datum_set_value(c, datum_cast_int(a) && datum_cast_int(b));
+    datum_set_value(c, (int) (datum_cast_int(a) && datum_cast_int(b)));
 }
 
 // OPR 18 (A || B)
 inline void inst_cond_or(DATUM a, DATUM b, DATUM &c)
 {
     c.type = TYPE_INT;
-    datum_set_value(c, datum_cast_int(a) || datum_cast_int(b));
+    datum_set_value(c, (int) (datum_cast_int(a) || datum_cast_int(b)));
 }
 
 void Interpret(int pc)

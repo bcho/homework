@@ -8,6 +8,7 @@
 #include <Forms.hpp>
 #include <ComCtrls.hpp>
 #include <stdio.h>
+#include <stdarg.h>
 #include <ExtCtrls.hpp>
 //---------------------------------------------------------------------------
 class TForm1 : public TForm
@@ -27,6 +28,7 @@ public:		// User declarations
     void __fastcall printls(char *s0, long v);
     void __fastcall printrs(char *s0, float v);
     void __fastcall prinths(char* s0, short v);
+    void __fastcall vprintfs(const char* fmt, va_list args);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TForm1 *Form1;
@@ -40,9 +42,9 @@ void __fastcall TForm1::printfs(char* s) {
     Memo1->Lines->Add(s);
 }
 //---------------------------------------------------------------------------
-void __fastcall TForm1::vprintfs(char* fmt, va_list args) {
+void __fastcall TForm1::vprintfs(const char* fmt, va_list args) {
     char s[1024];
-    vsprintf(msg, fmt, args);
+    vsprintf(s, fmt, args);
 
     printfs(s);
 }
