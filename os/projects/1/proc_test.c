@@ -29,9 +29,39 @@ test_proc_create_and_destory()
 }
 
 char *
+test_proc_run()
+{
+    struct proc *p;
+
+    // process that can 2 time slices.
+    p = proc_create(1, 1, 2);
+
+    p->state = WAITING;
+    mu_assert("proc_run: unrunable", proc_run(p) == - E_UNRUNABLE);
+    mu_assert("proc_run: unrunable", p->rtime == 0);
+
+    p->state = FINISHED;
+    mu_assert("proc_run: unrunable", proc_run(p) == - E_UNRUNABLE);
+    mu_assert("proc_run: unrunable", p->rtime == 0);
+
+    p->state = RUNNING;
+    mu_assert("proc_run: runable", proc_run(p) == 1);
+    mu_assert("proc_run: update ran time", p->rtime == 1);
+
+    mu_assert("proc_run: runable", proc_run(p) == 1);
+    mu_assert("proc_run: update ran time", p->rtime == 2);
+    mu_assert("proc_run: update finished state", p->state == FINISHED);
+
+    proc_destory(p);
+
+    return 0;
+}
+
+char *
 run()
 {
     mu_run_test(test_proc_create_and_destory);
+    mu_run_test(test_proc_run);
 
     return 0;
 }
