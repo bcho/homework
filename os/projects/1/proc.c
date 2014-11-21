@@ -219,11 +219,10 @@ static struct proc *
 __merge(struct proc *left, struct proc *right,
         int cmp(struct proc, struct proc))
 {
-    struct proc head;
-    struct proc *last, *p;
+    struct proc *head, *prev, *p;
 
-    head.next = NULL;
-    last = NULL;
+    head = NULL;
+    p = head;
     while (left != NULL && right != NULL) {
         if (cmp(*left, *right) <= 0) {
             p = left;
@@ -233,41 +232,40 @@ __merge(struct proc *left, struct proc *right,
             right = right->next;
         }
 
-        proc_insert(&head, p);
-        if (last == NULL)
-            last = p;
+        if (head == NULL)
+            head = p;
+        else
+            prev->next = p;
+        prev = p;
     }
 
     if (left == NULL)
-        last->next = right;
+        prev->next = right;
     else
-        last->next = left;
+        prev->next = left;
 
-    return head.next;
+    return head;
 }
 
 // 排序
-static void
-__sort(struct proc **list, int cmp(struct proc, struct proc))
+static struct proc *
+__sort(struct proc *head, int cmp(struct proc, struct proc))
 {
-    struct proc *mid, *left, *right, *head;
+    struct proc *mid, *left, *right;
 
-    head = *list;
     if (head == NULL || head->next == NULL)
-        return;
+        return head;
 
     left = head;
     mid = __find_mid(head);
     right = mid->next;
     mid->next = NULL;
 
-    __sort(&left, cmp);
-    __sort(&right, cmp);
-    *list = __merge(left, right, cmp);
+    return __merge(__sort(left, cmp), __sort(right, cmp), cmp);
 }
 
 void
 proc_sort(struct proc **pproc, int cmp(struct proc, struct proc))
 {
-    __sort(pproc, cmp);
+    *pproc = __sort(*pproc, cmp);
 }

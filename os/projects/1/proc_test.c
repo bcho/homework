@@ -109,7 +109,7 @@ test_proc_sort()
     int i, n;
     struct proc *p, *procs;
 
-    n = 10000;
+    n = 10;
     procs = proc_create_list(n);
     proc_sort(&procs, pid_cmp);
 
