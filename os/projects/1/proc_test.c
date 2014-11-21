@@ -28,6 +28,25 @@ test_proc_create_and_destory()
 }
 
 char *
+test_proc_create_and_destory_list()
+{
+    int i;
+    struct proc *procs, *p;
+
+    procs = proc_create_list(100);
+    mu_assert("proc_create_list", procs != NULL);
+    i = 0;
+    proc_for_each(p, procs) {
+        i = i + 1;
+    }
+    mu_assert("proc_create_list", i == 100);
+
+    proc_destory_list(procs);
+
+    return 0;
+}
+
+char *
 test_proc_run()
 {
     struct proc *p;
@@ -62,10 +81,29 @@ test_proc_run()
 }
 
 char *
+test_proc_fill_ntime_with_norm()
+{
+    int count = 100;
+    struct proc *procs, *p;
+
+    procs = proc_create_list(count);
+    proc_fill_ntime(NORM, count, procs);
+    mu_assert("proc_fill_ntime_with_norm", procs != NULL);
+
+    proc_for_each(p, procs) {
+        mu_assert("proc_fill_ntime_with_norm", p->ntime >= 0);
+    }
+    
+    return 0;
+}
+
+char *
 run()
 {
     mu_run_test(test_proc_create_and_destory);
+    mu_run_test(test_proc_create_and_destory_list);
     mu_run_test(test_proc_run);
+    mu_run_test(test_proc_fill_ntime_with_norm);
 
     return 0;
 }

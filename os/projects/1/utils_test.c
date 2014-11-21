@@ -7,6 +7,20 @@
 int tests_run;
 
 char *
+test_make_mean_seq()
+{
+    int i;
+    int n = 100;
+    double seq[n];
+
+    make_mean_seq(n, seq);
+    for (i = 0; i < n; i++)
+        mu_assert("make_mean_seq", seq[i] == n);
+
+    return 0;
+}
+
+char *
 test_make_increment_seq()
 {
     int n = 100;
@@ -39,6 +53,7 @@ test_make_normal_distribution_seq()
 char *
 run()
 {
+    mu_run_test(test_make_mean_seq);
     mu_run_test(test_make_increment_seq);
     mu_run_test(test_make_normal_distribution_seq);
 

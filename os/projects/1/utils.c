@@ -3,8 +3,15 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define ND_MEAN 0                           // 使用标准正态分布
-#define ND_STD_DEV 1
+
+void
+make_mean_seq(int n, double *seq)
+{
+    double p;
+
+    for (p = n; n > 0; n--)
+        seq[n - 1] = p;
+}
 
 void
 make_increment_seq(int n, double *seq)

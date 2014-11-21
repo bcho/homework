@@ -1,4 +1,5 @@
 #include "proc.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,6 +44,36 @@ proc_destory(struct proc *p)
     free(p);
 }
 
+struct proc *
+proc_create_list(int count)
+{
+    struct proc head;
+    struct proc *p;
+
+    for (; count > 0; count--) {
+        p = proc_create(count, 0, 0);
+        if (p == NULL)
+            goto fail;
+        proc_insert(&head, p);
+    }
+    return head.next;
+
+fail:
+    return NULL;
+}
+
+void
+proc_destory_list(struct proc *head)
+{
+    struct proc *proc;
+
+    for (proc = head; proc != NULL;) {
+        head = proc->next;
+        proc_destory(proc);
+        proc = head;
+    }
+}
+
 void
 proc_info(struct proc p)
 {
@@ -82,4 +113,84 @@ proc_run(struct proc *p)
         p->state = FINISHED;
 
     return ran_slices;
+}
+
+// 使用特定分布算法生成一个序列
+//
+// @param 分布算法
+// @param 序列长度
+static double *
+fill_seq_with(enum dist_algo algo, int count)
+{
+    double *seq;
+    void (*seq_maker)(int, double *);
+
+    if (count <= 0)
+        goto fail;
+
+    seq = malloc(sizeof(double) * count);
+    if (seq == NULL)
+        goto fail;
+
+    switch (algo) {
+        case MEAN: seq_maker = make_mean_seq; break;
+        case INCR: seq_maker = make_increment_seq; break;
+        case NORM: seq_maker = make_normal_distribution_seq; break;
+        default: goto fail;
+    }
+
+    seq_maker(count, seq);
+    return seq;
+
+fail:
+    return NULL;
+}
+
+void
+proc_fill_priority(enum dist_algo algo, int count, struct proc *procs)
+{
+    int i;
+    double *seq = NULL;
+    struct proc *p;
+
+    seq = fill_seq_with(algo, count);
+    if (seq == NULL)
+        goto finish;
+
+    i = 0;
+    proc_for_each(p, procs) {
+        p->priority = seq[i];
+    }
+
+finish:
+    if (seq != NULL)
+        free(seq);
+    return;
+}
+
+void
+proc_fill_ntime(enum dist_algo algo, int count, struct proc *procs)
+{
+    int i;
+    double *seq = NULL;
+    struct proc *p;
+
+    seq = fill_seq_with(algo, count);
+    if (seq == NULL)
+        goto finish;
+
+    i = 0; proc_for_each(p, procs)
+    {
+        // XXX review this
+        if (algo == NORM) {                 // 标准正态分布的时间片需要平移
+            p->ntime = (int) ABS(3 * ND_MEAN + seq[i]);
+        } else {
+            p->ntime = (int) seq[i];
+        }
+    }
+
+finish:
+    if (seq != NULL)
+        free(seq);
+    return;
 }

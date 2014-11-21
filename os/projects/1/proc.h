@@ -9,6 +9,13 @@ enum procstate { WAITING, RUNNING, FINISHED };
 // 进程运行错误代码
 #define E_UNRUNABLE 0x001
 
+// 分布算法
+enum dist_algo {
+    MEAN,                               // 等值分布
+    INCR,                               // 递增分布
+    NORM                                // 正态分布
+};
+
 struct proc {
     int pid;                            // 进程状态
     enum procstate state;               // 进程状态
@@ -37,11 +44,23 @@ struct proc *proc_create(int, double, int);
 // @param 进程
 void proc_destory(struct proc *);
 
+// 创建若干个进程
+//
+// 进程初始状态为 ``WAITING``
+// 各进程 pid 为在链表中位置
+//
+// @param 进程数
+struct proc *proc_create_list(int);
+
+// 销毁一个进程链
+//
+// @param 进程链
+void proc_destory_list(struct proc *);
+
 // 打印一个进程信息
 //
 // @param 进程
 void proc_info(struct proc);
-
 
 // 运行一个可运行的进程
 //
@@ -55,6 +74,39 @@ void proc_info(struct proc);
 //
 // @param 进程
 int proc_run(struct proc *);
+
+// 对一系列进程进行优先度填充
+//
+// @param 填充分布算法
+// @param 进程总数
+// @param 进程链表头结点
+void proc_fill_priority(enum dist_algo, int, struct proc *);
+
+// 对一系列进程进行时间片长度填充
+//
+// @param 填充分布算法
+// @param 进程总数
+// @param 进程链表头结点
+void proc_fill_ntime(enum dist_algo, int, struct proc *);
+
+
+// 遍历一个进程链表
+//
+// @param 循环变量
+// @param 链表头
+#define proc_for_each(pos, head) \
+    for (pos = (head); pos != NULL; pos = pos->next)
+
+
+// 插入到链表中
+//
+// @param 前继
+// @param 新结点
+#define proc_insert(prev, node) \
+        do { \
+            node->next = (prev)->next; \
+            (prev)->next = node; \
+        } while (0)
 
 
 #endif /* #ifndef PROCESS_H */
