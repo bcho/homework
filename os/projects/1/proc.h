@@ -84,6 +84,12 @@ void proc_fill_priority(enum dist_algo, int, struct proc *);
 // @param 进程链表头结点
 void proc_fill_ntime(enum dist_algo, int, struct proc *);
 
+// 对进程链表进行排序
+//
+// @param 进程链表头结点指针
+// @param 比较函数
+void proc_sort(struct proc **, int (struct proc, struct proc));
+
 
 // 遍历一个进程链表
 //

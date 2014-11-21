@@ -195,3 +195,79 @@ finish:
         free(seq);
     return;
 }
+
+// 查找链表的中点
+static struct proc *
+__find_mid(struct proc *list)
+{
+    struct proc *slow, *fast;
+
+    if (list == NULL)
+        return NULL;
+
+    slow = list; fast = list;
+    while (fast->next != NULL && fast->next->next != NULL) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    return slow;
+}
+
+// 归并
+static struct proc *
+__merge(struct proc *left, struct proc *right,
+        int cmp(struct proc, struct proc))
+{
+    struct proc head;
+    struct proc *last, *p;
+
+    head.next = NULL;
+    last = NULL;
+    while (left != NULL && right != NULL) {
+        if (cmp(*left, *right) <= 0) {
+            p = left;
+            left = left->next;
+        } else {
+            p = right;
+            right = right->next;
+        }
+
+        proc_insert(&head, p);
+        if (last == NULL)
+            last = p;
+    }
+
+    if (left == NULL)
+        last->next = right;
+    else
+        last->next = left;
+
+    return head.next;
+}
+
+// 排序
+static void
+__sort(struct proc **list, int cmp(struct proc, struct proc))
+{
+    struct proc *mid, *left, *right, *head;
+
+    head = *list;
+    if (head == NULL || head->next == NULL)
+        return;
+
+    left = head;
+    mid = __find_mid(head);
+    right = mid->next;
+    mid->next = NULL;
+
+    __sort(&left, cmp);
+    __sort(&right, cmp);
+    *list = __merge(left, right, cmp);
+}
+
+void
+proc_sort(struct proc **pproc, int cmp(struct proc, struct proc))
+{
+    __sort(pproc, cmp);
+}

@@ -97,6 +97,30 @@ test_proc_fill_ntime_with_norm()
     return 0;
 }
 
+static int
+pid_cmp(struct proc a, struct proc b)
+{
+    return b.pid - a.pid;
+}
+
+char *
+test_proc_sort()
+{
+    int i, n;
+    struct proc *p, *procs;
+
+    n = 10000;
+    procs = proc_create_list(n);
+    proc_sort(&procs, pid_cmp);
+
+    for (i = 0, p = procs; i < n - 1; i++, p = p->next)
+        mu_assert("proc_sort", p->pid > p->next->pid);
+
+    proc_destory_list(procs);
+
+    return 0;
+}
+
 char *
 run()
 {
@@ -104,6 +128,7 @@ run()
     mu_run_test(test_proc_create_and_destory_list);
     mu_run_test(test_proc_run);
     mu_run_test(test_proc_fill_ntime_with_norm);
+    mu_run_test(test_proc_sort);
 
     return 0;
 }
