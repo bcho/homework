@@ -52,6 +52,11 @@ test_proc_run()
     mu_assert("proc_run: update ran time", p->rtime == 2);
     mu_assert("proc_run: update finished state", p->state == FINISHED);
 
+    p->state = RUNNING;
+    p->rtime = p->ntime + 1;
+    mu_assert("proc_run: run on outage process", proc_run(p) == 0);
+    mu_assert("proc_run: update finished state", p->state == FINISHED);
+
     proc_destory(p);
 
     return 0;
