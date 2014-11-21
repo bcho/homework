@@ -1,13 +1,25 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+// 分布算法
+enum dist_algo {
+    MEAN,                               // 等值分布
+    INCR,                               // 递增分布
+    NORM                                // 正态分布
+};
 
-// 标准正态分布常量
-#define ND_MEAN 0
-#define ND_STD_DEV 1
 
-#define ABS(x) ((x) < 0) ? (- (x)) : (x)
+// 正态分布参数
+#define ND_MEAN 3
+#define ND_STD_DEV 2
 
+#define ABS(x) (((x) < 0) ? (- (x)) : (x))
+
+
+// 从字符串输入获取一个分布算法类型
+//
+// @param 字符串输入
+enum dist_algo dist_algo_parse(const char *);
 
 // 生成一个值均为数列长度的数列
 //

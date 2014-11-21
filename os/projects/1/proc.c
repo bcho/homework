@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h>
 
 
 // 每个时间片长度为 100 毫秒
@@ -50,6 +51,7 @@ proc_create_list(int count)
     struct proc head;
     struct proc *p;
 
+    head.next = NULL;
     for (; count > 0; count--) {
         p = proc_create(count, 0, 0);
         if (p == NULL)
@@ -87,7 +89,7 @@ proc_info(struct proc p)
     }
 
     printf("进程: %s\n", p.name);
-    printf("\t进程状态：%s\t进程优先度：%d\n", state, p.priority);
+    printf("\t进程状态：%s\t进程优先度：%.3f\n", state, p.priority);
     printf("\t进程需要运行时间片：%d\t已运行时间片：%d\n", p.ntime, p.rtime);
     printf("\n");
 }
@@ -139,6 +141,7 @@ fill_seq_with(enum dist_algo algo, int count)
         default: goto fail;
     }
 
+    srand(time(NULL));
     seq_maker(count, seq);
     return seq;
 
@@ -160,6 +163,7 @@ proc_fill_priority(enum dist_algo algo, int count, struct proc *procs)
     i = 0;
     proc_for_each(p, procs) {
         p->priority = seq[i];
+        i = i + 1;
     }
 
 finish:
@@ -181,12 +185,9 @@ proc_fill_ntime(enum dist_algo algo, int count, struct proc *procs)
 
     i = 0; proc_for_each(p, procs)
     {
-        // XXX review this
-        if (algo == NORM) {                 // 标准正态分布的时间片需要平移
-            p->ntime = (int) ABS(3 * ND_MEAN + seq[i]);
-        } else {
-            p->ntime = (int) seq[i];
-        }
+        p->ntime = (int) ABS(seq[i]);
+
+        i = i + 1;
     }
 
 finish:

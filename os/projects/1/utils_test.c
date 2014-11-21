@@ -51,11 +51,22 @@ test_make_normal_distribution_seq()
 }
 
 char *
+test_dist_algo_parse()
+{
+    mu_assert("dist_algo_parse", dist_algo_parse("mean") == MEAN);
+    mu_assert("dist_algo_parse", dist_algo_parse("increment") == INCR);
+    mu_assert("dist_algo_parse", dist_algo_parse("normal") == NORM);
+    mu_assert("dist_algo_parse", dist_algo_parse("nonsense") == MEAN);
+    return 0;
+}
+
+char *
 run()
 {
     mu_run_test(test_make_mean_seq);
     mu_run_test(test_make_increment_seq);
     mu_run_test(test_make_normal_distribution_seq);
+    mu_run_test(test_dist_algo_parse);
 
     return 0;
 }

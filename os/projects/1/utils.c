@@ -2,7 +2,22 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
+
+enum dist_algo
+dist_algo_parse(const char *s)
+{
+    if (strncasecmp(s, "MEAN", 4) == 0)
+        return MEAN;
+    if (strncasecmp(s, "INCR", 4) == 0)
+        return INCR;
+    if (strncasecmp(s, "NORM", 4) == 0)
+        return NORM;
+
+    // 默认使用平均分布
+    return MEAN;
+}
 
 void
 make_mean_seq(int n, double *seq)

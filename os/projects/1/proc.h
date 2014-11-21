@@ -1,6 +1,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include "utils.h"
+
 #define PROCESS_NAME_LENGTH 16
 
 // 进程状态
@@ -8,13 +10,6 @@ enum procstate { WAITING, RUNNING, FINISHED };
 
 // 进程运行错误代码
 #define E_UNRUNABLE 0x001
-
-// 分布算法
-enum dist_algo {
-    MEAN,                               // 等值分布
-    INCR,                               // 递增分布
-    NORM                                // 正态分布
-};
 
 struct proc {
     int pid;                            // 进程状态
@@ -97,16 +92,26 @@ void proc_fill_ntime(enum dist_algo, int, struct proc *);
 #define proc_for_each(pos, head) \
     for (pos = (head); pos != NULL; pos = pos->next)
 
-
 // 插入到链表中
 //
 // @param 前继
 // @param 新结点
 #define proc_insert(prev, node) \
-        do { \
-            node->next = (prev)->next; \
-            (prev)->next = node; \
-        } while (0)
+    do { \
+        node->next = (prev)->next; \
+        (prev)->next = node; \
+    } while (0)
+
+// 弹出一个结点
+//
+// @param 结点前继
+// @param 弹出结点
+#define proc_pop(prev, node) \
+    do { \
+        node = (prev)->next; \
+        (prev)->next = node->next; \
+        node->next = NULL; \
+    } while (0)
 
 
 #endif /* #ifndef PROCESS_H */

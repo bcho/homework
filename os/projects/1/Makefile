@@ -1,6 +1,6 @@
 .PHONY: tests
 
-CFLAGS=-lm
+CFLAGS=-lm -g
 
 build: priority_sched round_robin_sched multiple_queue_sched
 
