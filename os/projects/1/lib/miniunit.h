@@ -18,7 +18,7 @@ extern int tests_run;
         printf("%s\n", result); \
     else \
         printf("All passed.\n"); \
-    printf("Total %d test(s) runned.", tests_run); \
+    printf("Total %d test(s) runned.\n", tests_run); \
     return 0; \
 }
 
