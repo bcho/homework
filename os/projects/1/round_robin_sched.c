@@ -30,6 +30,7 @@ schedule(struct proc *procs)
     struct proc *ready_last, *proc;
 
     ready.next = procs;
+    finished.next = NULL;
 
     // 获取就绪进程链中的最后一个进程
     proc_for_each(proc, &ready) {
@@ -64,6 +65,8 @@ schedule(struct proc *procs)
             ready_last = proc;
         }
     }
+
+    proc_destory_list(finished.next);
 
     return total_ran_time;
 }
