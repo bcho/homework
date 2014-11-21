@@ -14,7 +14,7 @@
 
 
 struct proc *
-proc_create(int pid, int priority, int ntime)
+proc_create(int pid, double priority, int ntime)
 {
     struct proc *p;
 

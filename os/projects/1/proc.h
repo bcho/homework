@@ -13,7 +13,7 @@ struct proc {
     int pid;                            // 进程状态
     enum procstate state;               // 进程状态
     char name[PROCESS_NAME_LENGTH];     // 进程名称
-    int priority;                       // 进程优先度
+    double priority;                    // 进程优先度
 
     int ntime;                          // 进程需要运行时间片
     int rtime;                          // 进程已经运行时间片
@@ -31,7 +31,7 @@ struct proc {
 // @param 进程 id
 // @param 进程优先度
 // @param 进程需要时间片
-struct proc *proc_create(int, int, int);
+struct proc *proc_create(int, double, int);
 
 // 销毁一个进程
 //
