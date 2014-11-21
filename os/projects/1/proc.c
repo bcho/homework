@@ -28,7 +28,6 @@ proc_create(int pid, double priority, int ntime)
     p->priority = priority;
     p->ntime = ntime;
     p->rtime = 0;
-    p->pprev = NULL;
     p->next = NULL;
 
 finish:

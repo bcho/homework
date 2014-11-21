@@ -18,7 +18,6 @@ test_proc_create_and_destory()
     mu_assert("proc_create: state", p->state == WAITING);
     mu_assert("proc_create: ntime", p->ntime == 1);
     mu_assert("proc_create: rtime", p->rtime == 0);
-    mu_assert("proc_create: pprev", p->pprev== NULL);
     mu_assert("proc_create: next", p->next == NULL);
 
     // proc_info(*p);

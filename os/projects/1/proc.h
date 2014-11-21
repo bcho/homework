@@ -19,7 +19,6 @@ struct proc {
     int rtime;                          // 进程已经运行时间片
 
     // 方便实现按优先度排序的调度算法
-    struct proc **pprev;                // 进程链表前继
     struct proc *next;                  // 进程链表后继
 };
 
