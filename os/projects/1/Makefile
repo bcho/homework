@@ -1,4 +1,4 @@
-.PHONY: tests
+.PHONY: build tests clean
 
 CFLAGS=-lm -g
 
@@ -18,3 +18,6 @@ multiple_queue_sched: multiple_queue_sched.c proc.c utils.c
 proc_test: proc_test.c proc.c utils.c
 
 utils_test: utils_test.c utils.c utils.c
+
+clean:
+	rm -rf *_sched *_test

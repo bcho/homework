@@ -1,5 +1,3 @@
-proc_test
-priority_sched
-round_robin_sched
-multiple_queue_sched
+*_test
+*_sched
 *.o
