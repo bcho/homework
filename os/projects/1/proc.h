@@ -115,8 +115,10 @@ void proc_sort(struct proc **, int (struct proc, struct proc));
 #define proc_pop(prev, node) \
     do { \
         node = (prev)->next; \
-        (prev)->next = node->next; \
-        node->next = NULL; \
+        if (node != NULL) { \
+            (prev)->next = node->next; \
+            node->next = NULL; \
+        } \
     } while (0)
 
 

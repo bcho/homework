@@ -56,7 +56,7 @@ schedule(struct proc *procs)
         if (proc->state == FINISHED) {               // 进程已经结束
             proc_pop(&ready, proc);
             proc_insert(&finished, proc);
-        } else {                                    // 更新进程优先度
+        } else {                                     // 更新进程优先度
             proc->state = WAITING;
             proc->priority = proc->priority - 1;
         }

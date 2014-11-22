@@ -14,6 +14,7 @@ enum dist_algo {
 #define ND_STD_DEV 2
 
 #define ABS(x) (((x) < 0) ? (- (x)) : (x))
+#define MIN(a, b) ((a) > (b) ? (b) : (a))
 
 
 // 从字符串输入获取一个分布算法类型
