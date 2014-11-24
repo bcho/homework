@@ -88,10 +88,18 @@ proc_info(struct proc p)
         default: state = "未知状态";
     }
 
-    printf("进程: %s\n", p.name);
-    printf("\t进程状态：%s\t进程优先度：%.3f\n", state, p.priority);
-    printf("\t进程需要运行时间片：%d\t已运行时间片：%d\n", p.ntime, p.rtime);
-    printf("\n");
+    printf("\t进程: %s\t", p.name);
+    printf("进程状态：%s\t进程优先度：%.3f\t", state, p.priority);
+    printf("进程需要运行时间片：%d\t已运行时间片：%d\n", p.ntime, p.rtime);
+}
+
+void
+proc_infos(struct proc *procs)
+{
+    struct proc *proc;
+    
+    proc_for_each(proc, procs)
+        proc_info(*proc);
 }
 
 int

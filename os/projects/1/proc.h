@@ -57,6 +57,11 @@ void proc_destory_list(struct proc *);
 // @param 进程
 void proc_info(struct proc);
 
+// 打印一系列进程信息
+//
+// @param 进程链表头
+void proc_infos(struct proc *);
+
 // 运行一个可运行的进程
 //
 // 可运行状态指进程状态为 ``RUNNING``

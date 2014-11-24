@@ -51,7 +51,12 @@ schedule(struct proc *procs)
         ran_time = proc_run(proc);
         total_ran_time = total_ran_time + ran_time;
 
+        printf("当前运行进程:\n");
         proc_info(*proc);
+        printf("\n");
+        printf("就绪进程:\n");
+        proc_infos(proc->next);
+        printf("\n");
 
         if (proc->state == FINISHED) {               // 进程已经结束
             proc_pop(&ready, proc);

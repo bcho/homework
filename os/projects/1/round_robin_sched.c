@@ -44,14 +44,17 @@ schedule(struct proc *procs)
         // 选取就绪进程中的第一个进程
         proc_pop(&ready, proc);
 
-        printf("当前运行进程: %s\n", proc->name);
-
         // 运行进程
         proc->state = RUNNING;
         ran_time = proc_run(proc);
         total_ran_time = total_ran_time + ran_time;
 
+        printf("当前运行进程:\n");
         proc_info(*proc);
+        printf("\n");
+        printf("就绪进程:\n");
+        proc_infos(ready.next);
+        printf("\n");
 
         if (proc->state == FINISHED) {              // 进程已经结束运行
             proc_insert(&finished, proc);

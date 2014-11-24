@@ -166,7 +166,12 @@ schedule(struct proc *procs)
             }
             queue_ran_time = queue_ran_time + ran_time;
 
+            printf("当前运行进程:\n");
             proc_info(*proc);
+            printf("\n");
+            printf("当前队列就绪进程:\n");
+            proc_infos((*q)->head.next);
+            printf("\n");
 
             if (proc->state == FINISHED)
                 proc_insert(&finished, proc);
