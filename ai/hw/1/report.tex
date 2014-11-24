@@ -1,0 +1,30 @@
+\documentclass{article}
+\usepackage{xeCJK}
+\usepackage{minted}
+
+% meta
+\title{人工智能作业}
+\author{hbc}
+
+% fonts
+\setCJKmainfont{AR PL New Sung}
+\setCJKsansfont{AR PL New Sung}
+\setCJKmonofont{WenQuanYi Micro Hei Mono}
+\setCJKfamilyfont{hei}{WenQuanYi Micro Hei}
+
+% 隐藏页码
+\pagenumbering{gobble}
+
+% 代码样式
+\usemintedstyle{vs}
+
+
+\begin{document}
+\section{输出结果}
+\inputminted[]{prolog}{output.log}
+
+\clearpage
+
+\section{程序代码}
+\inputminted[]{python}{simple.py}
+\end{document}
