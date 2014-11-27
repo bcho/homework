@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#define E_SBRK ((void *) -1)
 
 // 请求堆进行分配接口
 //
