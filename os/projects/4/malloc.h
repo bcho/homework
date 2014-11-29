@@ -15,5 +15,16 @@ void *my_malloc(size_t);
 // @see malloc(3)
 void my_free(void *);
 
+// 显示内存使用状态
+void my_display();
+
+
+#define BLOCK_TMPL "" \
+    "+----------------------------------+\n" \
+    "| 起始地址: 0x%llx                  \n" \
+    "| 内存大小: %d bytes                \n" \
+    "| 是否被使用: %d                    \n" \
+    "+----------------------------------+\n"
+
 
 #endif  /* #ifndef MALLOC_H */

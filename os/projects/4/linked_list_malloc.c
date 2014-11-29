@@ -16,6 +16,7 @@
 #include "utils.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 struct mb_header {
     size_t size;                // 内存块体大小
@@ -57,7 +58,7 @@ struct mb_header {
 
 
 // 内存块循环链表头结点
-struct mb_header *mb_head;
+struct mb_header *mb_head = NULL;
 
 
 // 初始化内存块链表
@@ -168,4 +169,26 @@ my_free(void *mem)
         other->size = other->size + block_header->size + MB_HEADER_SIZE;
         block_header = other;
     }
+}
+
+void
+display_mb(struct mb_header *b)
+{
+    printf(BLOCK_TMPL,
+            (long long) ((char *) b + MB_HEADER_SIZE),
+            (int) b->size,
+            b->in_use);
+}
+
+void
+my_display()
+{
+    struct mb_header *p;
+
+    if (mb_head == NULL)
+        init();
+
+    printf("内存使用情况：\n");
+    mb_header_for_each(p, mb_head)
+        display_mb(p);
 }

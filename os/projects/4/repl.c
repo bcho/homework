@@ -2,11 +2,12 @@
 //
 // 支持命令：
 //
-// - d [start]          显示内存使用情况
+// - d                  显示内存使用情况
 // - a size-bytes       分配 size 字节内存
 // - f addr             回收起始地址为 addr 的内存块
 // - q                  退出程序
 
+#include "config.h"
 #include "malloc.h"
 #include "utils.h"
 
@@ -26,6 +27,9 @@
 #define STATUS_INPUT    0x02        // 输入有误
 #define STATUS_EXIT     0xFF        // 退出程序执行
 
+
+// 系统环境内存块
+char *os_mem;
 
 // 内置命令
 int display(int, char [ARGS_MAX][ARG_MAX + 1]);
@@ -53,6 +57,11 @@ void repl();
 int
 main()
 {
+    // 预先分配系统内存
+    if ((os_mem = my_malloc(OS_MEM_SIZE)) == NULL)
+        PANIC("初始化失败");
+    printf("系统初始化成功\n");
+
     repl();
 
     return 0;
@@ -88,6 +97,7 @@ repl()
     command_func_type *command;
 
     help(0, NULL);
+    inputs = NULL;
     while (1) {
         printf("%c ", PROMPT_CHAR);
         getline(&inputs, (size_t *) &i, stdin);
@@ -117,7 +127,9 @@ repl()
 int
 display(int argc, char argv[ARGS_MAX][ARG_MAX + 1])
 {
-    return 0;
+    my_display();
+
+    return STATUS_OK;
 }
 
 int
@@ -152,10 +164,13 @@ free_memory(int argc, char argv[ARGS_MAX][ARG_MAX + 1])
     if (argc < 2)
         return STATUS_INPUT;
 
-    printf("%s\n", argv[1]);
     addr = strtoll(argv[1], NULL, 16);
     if (addr < 0)
         return STATUS_INPUT;
+    if (addr == (long long) os_mem) {
+        printf("不能回收系统环境内存\n");
+        return STATUS_INPUT;
+    }
 
     printf("回收 0x%llx 地址处的内存\n", addr);
     my_free((char *) addr);
