@@ -2,7 +2,9 @@
 
 CFLAGS=-g
 
-build:
+build: repl
+
+repl: repl.c linked_list_malloc.c utils.c
 
 tests: utils_test linked_list_malloc_test
 	./utils_test
@@ -16,4 +18,4 @@ linked_list_malloc_test: malloc_test.c linked_list_malloc.c utils.c
 
 
 clean:
-	rm -rf *_test
+	rm -rf *_test repl *.o

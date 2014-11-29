@@ -34,5 +34,6 @@ void *u_sbrk(intptr_t);
 
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #endif  /* #ifndef UTILS_H */
