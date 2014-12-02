@@ -1,5 +1,16 @@
 /*** PL0 compiler with code generation */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <time.h>
+#include <string>
+#include <sstream>
+
+// #define CPP_BUILDER 1
+
 #ifdef CPP_BUILDER
 
 #include <vcl.h>
@@ -10,17 +21,21 @@
 
 TForm1 *Form1;
 
+inline int strcasecmp(char *s1, char *s2)
+{
+    char *i, *j;
+
+    for (i = s1, j = s2; *i != 0 && *j != 0; i++, j++)
+        if (tolower(*i) != tolower(*j))
+            return 1;
+    if (*i == 0 && *j == 0)
+        return 0;
+    return 1;
+}
+
 #define GET_STRING_LENGTH(s) (s.Length())
 
 #else
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <time.h>
-#include <string>
-#include <sstream>
 
 // Mock C++ builder's String.
 using std::string;
@@ -56,6 +71,8 @@ string IntToStr(int n) {
 #define STATIC_LINK_OFFSET  3           /* Basic offset from static link. */
 #define PARAMETER_COUNT     10          /* Maximum count of parameter. */
 #define ARRAY_SIZE_MAX      200         /* Maximum size of array type */
+
+bool HAS_ERROR;
 //------------------------------------------------------------------------
 
 
@@ -205,8 +222,8 @@ char CH;                        /* last read character */
 SYMBOL SYM;                     /* last read symbol */
 ALFA ID;                        /* last read identity */
 int INTEGER;                    /* last read integer */
-char CHAR;                      /* last read char */
-float FLOAT;                    /* last read float */
+char CHAR_;                     /* last read char */
+float FLOAT_;                   /* last read float */
 
 // input buffer state
 int CC;                         /* line buffer index */
@@ -299,6 +316,8 @@ void panic(int errorcode, const char *fmt, ...)
     va_start(args, fmt);
     _writeln(fmt, args);
     va_end(args);
+
+    HAS_ERROR = true;
 
 #ifndef CPP_BUILDER
     exit(errorcode);
@@ -440,12 +459,12 @@ void GetSym()
             if (!isdigit(CH)) {
                 panic(0, "GetSym: malform fixed-point float representation");
             }
-            FLOAT = INTEGER;
+            FLOAT_ = INTEGER;
             INTEGER = 0;
             SYM = SYM_FLOAT;
             base = 0.1;
             do {
-                FLOAT = FLOAT + base * (CH - '0');
+                FLOAT_ = FLOAT_ + base * (CH - '0');
                 base = base / 10;
                 GetCh();
             } while (isdigit(CH));
@@ -455,7 +474,7 @@ void GetSym()
     else if (CH == '\'') {  /* char */
         GetCh();
         SYM = SYM_CHAR;
-        CHAR = CH;
+        CHAR_ = CH;
         GetCh();
         if (CH != '\'')
             panic(0, "GetSym: expected ', got: %c", CH);
@@ -815,7 +834,7 @@ inline void inst_odd(DATUM src, DATUM &dest)
     if (src.type != TYPE_INT)
         panic(0, "inst_odd: opreand should have type int, got: %d", src.type);
     dest.type = TYPE_INT;
-    datum_set_value(dest, datum_cast_int(src) % 2 == 1);
+    datum_set_value(dest, (int) (datum_cast_int(src) % 2 == 1));
 }
 
 // OPR 7 (!A)
@@ -831,7 +850,7 @@ inline void inst_not(DATUM src, DATUM &dest)
         default:
             value = !src.ival;
     }
-    datum_set_value(dest, value);
+    datum_set_value(dest, (int) value);
 }
 
 // OPR 8 (A == B)
@@ -2354,12 +2373,12 @@ void parse_factor(int level, int &TX)
     } /* SYM == SYM_INTEGER */
 
     else if (SYM == SYM_CHAR) {
-        GEN(LIT, 0, constant_enter(CHAR), "load char constant %c", CHAR);
+        GEN(LIT, 0, constant_enter(CHAR_), "load char constant %c", CHAR_);
         GetSym();
     } /* SYM == SYM_CHAR */
 
     else if (SYM == SYM_FLOAT) {
-        GEN(LIT, 0, constant_enter(FLOAT), "load float constant %f", FLOAT);
+        GEN(LIT, 0, constant_enter(FLOAT_), "load float constant %f", FLOAT_);
         GetSym();
     } /* SYM == SYM_FLOAT */
 
@@ -2543,6 +2562,8 @@ void Init()
 {
     SetupLanguage();
     ResetLexer();
+
+    HAS_ERROR = false;
 }
 
 void Main()
@@ -2555,12 +2576,15 @@ void Main()
     GetSym();
     TX = 0;
     pc = parse_program(TX);
-    ListCode(0);
-    log("Compile finish.");
 
-    log("Start executing program.");
-    Interpret(pc);
-    log("Execute finish.");
+    if (!HAS_ERROR) {
+        ListCode(0);
+        log("Compile finish.");
+
+        log("Start executing program.");
+        Interpret(pc);
+        log("Execute finish.");
+    }
 }
 
 #ifdef CPP_BUILDER
