@@ -1,4 +1,4 @@
-.PHONY: build tests clean
+.PHONY: build tests clean prepare-win
 
 CFLAGS=-g
 
@@ -18,4 +18,9 @@ linked_list_malloc_test: malloc_test.c linked_list_malloc.c utils.c
 
 
 clean:
-	rm -rf *_test repl *.o
+	rm -rf *_test repl *.o *.zip
+
+prepare-win:
+	./convert.sh
+	zip win.zip converted/**
+	rm -rf converted

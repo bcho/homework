@@ -100,7 +100,7 @@ repl()
     inputs = NULL;
     while (1) {
         printf("%c ", PROMPT_CHAR);
-        getline(&inputs, (size_t *) &i, stdin);
+        u_getline(&inputs, (size_t *) &i, stdin);
 
         command = help;
         for (i = 0; i < COUNT(commands); i++) {
