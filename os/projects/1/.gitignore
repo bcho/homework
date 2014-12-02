@@ -1,3 +1,6 @@
 *_test
 *_sched
 *.o
+*.exe
+*.zip
+converted

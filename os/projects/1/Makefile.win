@@ -1,0 +1,21 @@
+.PHONY: build clean
+
+CC=gcc.exe
+RM=rm.exe -f
+CFLAGS=-lm -g
+TARGET=priority_sched.exe round_robin_sched.exe multiple_queue_sched.exe
+PARTIALS=proc.c utils.c
+
+build: $(TARGET)
+
+priority_sched.exe: priority_sched.c
+	$(CC) priority_sched.c $(PARTIALS) -o $@ $(CFLAGS)
+
+round_robin_sched.exe: round_robin_sched.c
+	$(CC) round_robin_sched.c $(PARTIALS) -o $@ $(CFLAGS)
+
+multiple_queue_sched.exe: multiple_queue_sched.c
+	$(CC) multiple_queue_sched.c $(PARTIALS) -o $@ $(CFLAGS)
+
+clean:
+	$(RM) $(TARGET) *.o
