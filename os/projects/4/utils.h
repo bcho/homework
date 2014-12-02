@@ -13,6 +13,11 @@
 // @see sbrk(2)
 void *u_sbrk(intptr_t);
 
+// windows 下的 getline 实现
+//
+// @see getline(3)
+size_t u_getline(char **, size_t *, FILE *);
+
 
 // 内存对齐基准
 #define ALIGNMENT (8)
