@@ -1,3 +1,5 @@
+use SC;
+
 create table department (
     dno char(6),
     dept_name char(20) not null,
@@ -11,7 +13,7 @@ create table speciality (
     dno char(6) not null,
     spname char(20) not null,
 
-    primary key(spno)
+    primary key(spno),
     foreign key(dno) references department(dno)
 );
 

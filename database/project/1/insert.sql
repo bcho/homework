@@ -1,3 +1,5 @@
+use SC;
+
 /* department */
 insert into department (dno, dept_name, header)
 values ('ce', 'Computer', 'Mr. CS');
@@ -32,19 +34,19 @@ values ('be', 'en', 'Business English');
 
 /* class */
 insert into class (spno, class_no, header)
-values ('cs', '1201', 'Mr. CS 01');
+values ('cs', '1201', 'Mr. CS01');
 
 insert into class (spno, class_no, header)
-values ('cs', '1202', 'Mr. CS 02');
+values ('cs', '1202', 'Mr. CS02');
 
 insert into class (spno, class_no, header)
-values ('se', '1201', 'Mr. SE 01');
+values ('se', '1201', 'Mr. SE01');
 
 insert into class (spno, class_no, header)
-values ('se', '1201', 'Mr. SE 01');
+values ('se', '1201', 'Mr. SE01');
 
 insert into class (spno, class_no, header)
-values ('ne', '1201', 'Mr. NE 01');
+values ('ne', '1201', 'Mr. NE01');
 
 /* student */
 insert into student (s_no, sname, sex, sbirthday, dno, spno, class_no)
