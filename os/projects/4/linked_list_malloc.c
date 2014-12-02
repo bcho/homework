@@ -174,10 +174,11 @@ my_free(void *mem)
 void
 display_mb(struct mb_header *b)
 {
-    printf(BLOCK_TMPL,
-            (long long) ((char *) b + MB_HEADER_SIZE),
-            (int) b->size,
-            b->in_use);
+    printf("+----------------------------------+\n");
+    printf("| 起始地址: 0x%llx\n", (long long) ((char *) b + MB_HEADER_SIZE));
+    printf("| 内存大小: %d bytes\n", (int) b->size);
+    printf("| 是否被使用: %d \n", b->in_use);
+    printf("+----------------------------------+\n");
 }
 
 void
