@@ -8,7 +8,7 @@ compare_by_atime(const struct job a, const struct job b)
 }
 
 int
-fcfs_scheduler(struct job *rhead, struct job **ran)
+fcfs_scheduler(int tick, struct job *rhead, struct job **ran)
 {
     struct job *j;
 

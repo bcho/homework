@@ -8,7 +8,7 @@ compare_by_rtime(const struct job a, const struct job b)
 }
 
 int
-sjf_scheduler(struct job *rhead, struct job **ran)
+sjf_scheduler(int tick, struct job *rhead, struct job **ran)
 {
     struct job *j;
 

@@ -26,8 +26,9 @@ struct job {
 
 // 调度实现接口定义
 //
+// @param 当前系统时间
 // @param 可执行作业链表
 // @param 完成的作业结点
-typedef int scheduler_fn(struct job *, struct job **);
+typedef int scheduler_fn(int, struct job *, struct job **);
 
 #endif  /* #ifndef STRUCTURE_H */

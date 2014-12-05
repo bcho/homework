@@ -90,7 +90,7 @@ tick(const struct resource *res, struct job **jobs, scheduler_fn scheduler)
 
         if (ahead.next) {                                   // 进入调度
             // TODO mark resource as using
-            ran = scheduler(&ahead, &just_ran);
+            ran = scheduler(now, &ahead, &just_ran);
             now = now + ran;
 
             // 更新刚刚运行作业的完成时间
