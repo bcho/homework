@@ -71,7 +71,7 @@ job_info(struct job *j)
     struct resource *r;
 
     if (j->status == FINISHED) {
-        turnover_time = j->ftime - j->atime;
+        turnover_time = j->ftime - j->atime + 1;
         weighted_turnover_time = turnover_time / j->rtime;
     }
 
