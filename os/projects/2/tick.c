@@ -29,7 +29,7 @@ split(const int tick,
 {
     struct job *j, *job;
 
-    for (j = ahead; j != NULL && j->next != NULL; j = j->next) {
+    for (j = ahead; j != NULL && j->next != NULL;) {
         job = j->next;
 
         // 作业已经完成
@@ -40,10 +40,12 @@ split(const int tick,
         } else if (!job_is_runnable(tick, res, job)) {
             llist_pop(j, job);
             llist_insert_after(phead, job);
+        } else {
+            j = j->next;
         }
     }
 
-    for (j = phead; j != NULL && j->next != NULL; j = j->next) {
+    for (j = phead; j != NULL && j->next != NULL;) {
         job = j->next;
 
         // 作业已经完成
@@ -54,10 +56,12 @@ split(const int tick,
         } else if (job_is_runnable(tick, res, job)) {
             llist_pop(j, job);
             llist_insert_after(ahead, job);
+        } else {
+            j = j->next;
         }
     }
 
-    for (j = fhead; j != NULL && j->next != NULL; j = j->next) {
+    for (j = fhead; j != NULL && j->next != NULL;) {
         job = j->next;
 
         if (job->status != FINISHED) {
@@ -69,6 +73,8 @@ split(const int tick,
             // 作业尚未就绪
             else
                 llist_insert_after(phead, job);
+        } else {
+            j = j->next;
         }
     }
 }
@@ -87,6 +93,7 @@ tick(const struct resource *res, struct job **jobs, scheduler_fn scheduler)
     fhead.next = NULL;
     do {
         split(now, res, &ahead, &phead, &fhead);
+        printf("系统时间： %d\t", now);
 
         if (ahead.next) {                                   // 进入调度
             // TODO mark resource as using
