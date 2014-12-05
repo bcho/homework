@@ -100,8 +100,8 @@ job_info(struct job *j)
     
     printf("资源要求：\n");
     llist_for_each(r, j->res)
-        resource_info("\t%s：\t%d\n", r);
-    printf("\n");
+        resource_info("\t%s：%d\t", r);
+    printf("\n\n");
 }
 
 void
