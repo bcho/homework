@@ -101,8 +101,29 @@ job_info(struct job *j)
     printf("资源要求：\n");
     llist_for_each(r, j->res)
         resource_info("\t%s：\t%d\n", r);
+    printf("\n");
 }
 
+void
+job_list_info(struct job *jobs)
+{
+    double total_run_time = 0;
+    double total_turnover_time = 0;
+    int job_count = 0;
+    struct job *j;
+
+    llist_for_each(j, jobs) {
+        if (j->status != FINISHED)
+            continue;
+        job_count = job_count + 1;
+        total_run_time = total_run_time + j->rtime;
+        total_turnover_time = total_turnover_time + j->ftime - j->atime;
+    }
+
+    printf("系统平均周转时间： %.3lf\t", total_turnover_time / job_count);
+    printf("系统带权平均周转时间： %.3lf\n",
+           total_turnover_time / total_run_time / job_count);
+}
 
 int
 job_is_runnable(const int tick, const struct resource *res, struct job *j)

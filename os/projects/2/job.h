@@ -31,6 +31,11 @@ int job_run(struct job *);
 // @param 作业
 void job_info(struct job *);
 
+// 计算作业链表运行情况
+//
+// @param 作业链表
+void job_list_info(struct job *);
+
 // 检查作业是否可以运行
 //
 // @param 系统时间

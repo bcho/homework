@@ -13,16 +13,18 @@ main()
     struct resource *r2 = resource_create("内存", 20);
     struct resource *r3 = resource_create("内存", 20);
     struct job *j = job_create("A", "1", 1, 10, r);
-    struct job *j2 = job_create("A", "2", 3, 5, r2);
-    struct job *j3 = job_create("A", "3", 3, 20, r3);
+    struct job *j2 = job_create("A", "1", 3, 5, r2);
+    struct job *j3 = job_create("A", "3", 2, 20, r3);
 
     llist_insert_after(j, j2);
     llist_insert_after(j2, j3);
 
-    tick(sys_r, &j, hrn_scheduler);
+    tick(sys_r, &j, sjf_scheduler);
 
     llist_for_each(j2, j)
         job_info(j2);
+
+    job_list_info(j);
 
     return 0;
 }
