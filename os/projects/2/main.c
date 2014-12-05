@@ -12,8 +12,8 @@ main()
     struct resource *r = resource_create("内存", 20);
     struct resource *r2 = resource_create("内存", 20);
     struct resource *r3 = resource_create("内存", 20);
-    struct job *j = job_create("A", "1", 5, 20, r);
-    struct job *j2 = job_create("A", "2", 0, 20, r2);
+    struct job *j = job_create("A", "1", 1, 20, r);
+    struct job *j2 = job_create("A", "2", 1, 20, r2);
     struct job *j3 = job_create("A", "3", 100, 20, r3);
 
     llist_insert_after(j, j2);

@@ -99,7 +99,7 @@ tick(const struct resource *res, struct job **jobs, scheduler_fn scheduler)
             // 更新刚刚运行作业的完成时间
             if (just_ran->status == FINISHED)
                 just_ran->ftime = now;
-        } else {                                        // 空闲状态
+        } else {                                            // 空闲状态
             printf("系统空闲中\n");
             usleep(TICK_MS);
             now = now + 1;

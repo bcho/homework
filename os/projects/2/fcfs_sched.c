@@ -1,6 +1,12 @@
 #include "sched.h"
 #include "job.h"
 
+static int
+compare_by_atime(const struct job a, const struct job b)
+{
+    return (a.atime - b.atime);
+}
+
 int
 fcfs_scheduler(struct job **runnable, struct job **ran)
 {
@@ -9,7 +15,8 @@ fcfs_scheduler(struct job **runnable, struct job **ran)
     if (!*runnable)
         return 0;
 
-    // TODO sort by arrival time.
+    // 根据到达时间进行排序
+    job_sort(runnable, compare_by_atime);
     j = *runnable;
 
     j->status = RUNNING;
