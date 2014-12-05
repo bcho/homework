@@ -49,7 +49,7 @@ compare_by_responsive_ratio(const void *a, const void *b)
 
     ra = (struct job_responsive_ratio *) a;
     rb = (struct job_responsive_ratio *) b;
-    return rb->ratio - ra->ratio;
+    return (int) rb->ratio - (int) ra->ratio;
 }
 
 int
@@ -69,9 +69,9 @@ hrn_scheduler(int tick, struct job *rhead, struct job **ran)
     ratios = job_responsive_ratio_create_from_jobs(tick, j, jobs_count);
 
     // 根据响应比进行排序
-    qsort(ratios,
+    qsort(&ratios[0],
           jobs_count,
-          sizeof(struct job_responsive_ratio *),
+          sizeof(struct job_responsive_ratio),
           compare_by_responsive_ratio);
 
     j = ratios[0].j;
