@@ -8,7 +8,6 @@ struct resource {
     int quota;                          // 资源数量
 
     struct resource *next;              // 资源链表域
-    struct resource *prev;
 };
 
 enum job_status { STANDBY, RUNNING, FINISHED };
@@ -23,13 +22,12 @@ struct job {
     struct resource *res;               // 所需资源
 
     struct job *next;                   // 作业链表域
-    struct job *prev;
 };
 
 // 调度实现接口定义
 //
 // @param 可执行作业链表
 // @param 完成的作业结点
-typedef int scheduler_fn(struct job **, struct job **);
+typedef int scheduler_fn(struct job *, struct job **);
 
 #endif  /* #ifndef STRUCTURE_H */

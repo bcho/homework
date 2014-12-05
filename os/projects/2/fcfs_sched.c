@@ -8,16 +8,16 @@ compare_by_atime(const struct job a, const struct job b)
 }
 
 int
-fcfs_scheduler(struct job **runnable, struct job **ran)
+fcfs_scheduler(struct job *rhead, struct job **ran)
 {
     struct job *j;
 
-    if (!*runnable)
+    if (!rhead || !rhead->next)
         return 0;
 
     // 根据到达时间进行排序
-    job_sort(runnable, compare_by_atime);
-    j = *runnable;
+    job_sort(&rhead->next, compare_by_atime);
+    j = rhead->next;
 
     j->status = RUNNING;
     job_run(j);

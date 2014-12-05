@@ -29,7 +29,6 @@ job_create(const char *user,
     r->rtime = rtime;
     r->res = res;
     r->next = NULL;
-    r->prev = NULL;
 
     return r;
 

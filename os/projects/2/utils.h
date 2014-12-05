@@ -24,25 +24,22 @@
 // @param 插入结点
 #define llist_insert_after(before, node) \
     do { \
-        (node)->prev = (before); \
         (node)->next = (before)->next; \
-        if ((node)->next) \
-            (node)->next->prev = node; \
         (before)->next = node; \
     } while (0)
 
 
 // 从链表中弹出一个结点
 //
+// @param 弹出结点前继
 // @param 待弹出结点
-#define llist_pop(node) \
+#define llist_pop(prev, node) \
     do { \
-        if ((node)->prev) \
-            (node)->prev->next = (node)->next; \
-        if ((node)->next) \
-            (node)->next->prev = (node)->prev; \
-        (node)->prev = NULL; \
-        (node)->next = NULL; \
+        node = (prev)->next; \
+        if (node != NULL) { \
+            (prev)->next = node->next; \
+            node->next = NULL; \
+        } \
     } while (0)
 
 #endif  /* #ifndef UTILS_H */

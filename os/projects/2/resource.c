@@ -16,7 +16,6 @@ resource_create(const char *name, int quota)
     r->name[NAME_LENGTH - 1] = 0;
     r->quota = quota;
     r->next = NULL;
-    r->prev = NULL;
 
     return r;
 

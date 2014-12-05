@@ -27,50 +27,48 @@ split(const int tick,
       struct job *phead,
       struct job *fhead)
 {
-    struct job *j, *next;
+    struct job *j, *job;
 
-    next = NULL;
-
-    for (j = ahead->next; j != NULL; j = next) {
-        next = j->next;
+    for (j = ahead; j != NULL && j->next != NULL; j = j->next) {
+        job = j->next;
 
         // 作业已经完成
-        if (j->status == FINISHED) {
-            llist_pop(j);
-            llist_insert_after(fhead, j);
+        if (job->status == FINISHED) {
+            llist_pop(j, job);
+            llist_insert_after(fhead, job);
         // 作业尚未就绪
-        } else if (!job_is_runnable(tick, res, j)) {
-            llist_pop(j);
-            llist_insert_after(phead, j);
+        } else if (!job_is_runnable(tick, res, job)) {
+            llist_pop(j, job);
+            llist_insert_after(phead, job);
         }
     }
 
-    for (j = phead->next; j != NULL; j = next) {
-        next = j->next;
+    for (j = phead; j != NULL && j->next != NULL; j = j->next) {
+        job = j->next;
 
         // 作业已经完成
-        if (j->status == FINISHED) {
-            llist_pop(j);
-            llist_insert_after(fhead, j);
+        if (job->status == FINISHED) {
+            llist_pop(j, job);
+            llist_insert_after(fhead, job);
         // 作业已经就绪
-        } else if (job_is_runnable(tick, res, j)) {
-            llist_pop(j);
-            llist_insert_after(ahead, j);
+        } else if (job_is_runnable(tick, res, job)) {
+            llist_pop(j, job);
+            llist_insert_after(ahead, job);
         }
     }
 
-    for (j = fhead->next; j != NULL; j = next) {
-        next = j->next;
+    for (j = fhead; j != NULL && j->next != NULL; j = j->next) {
+        job = j->next;
 
-        if (j->status != FINISHED) {
-            llist_pop(j);
+        if (job->status != FINISHED) {
+            llist_pop(j, job);
 
             // 作业已经就绪
-            if (job_is_runnable(tick, res, j))
-                llist_insert_after(ahead, j);
+            if (job_is_runnable(tick, res, job))
+                llist_insert_after(ahead, job);
             // 作业尚未就绪
             else
-                llist_insert_after(phead, j);
+                llist_insert_after(phead, job);
         }
     }
 }
@@ -80,20 +78,19 @@ tick(const struct resource *res, struct job **jobs, scheduler_fn scheduler)
 {
     int now;                                        // 系统当前时间
     int ran;                                        // 作业运行时间
-    struct job available, pending, finished;        // 系统作业链
+    struct job ahead, phead, fhead;                 // 系统作业链
     struct job *just_ran;
 
     now = 0;
-    available.next = *jobs; available.prev = NULL;
-    (*jobs)->prev = &available;
-    pending.next = NULL; pending.prev = NULL;
-    finished.next = NULL; finished.prev = NULL;
+    ahead.next = *jobs;
+    phead.next = NULL;
+    fhead.next = NULL;
     do {
-        split(now, res, &available, &pending, &finished);
+        split(now, res, &ahead, &phead, &fhead);
 
-        if (available.next) {                               // 进入调度
+        if (ahead.next) {                                   // 进入调度
             // TODO mark resource as using
-            ran = scheduler(&available.next, &just_ran);
+            ran = scheduler(&ahead, &just_ran);
             now = now + ran;
 
             // 更新刚刚运行作业的完成时间
@@ -104,8 +101,8 @@ tick(const struct resource *res, struct job **jobs, scheduler_fn scheduler)
             usleep(TICK_MS);
             now = now + 1;
         }
-    } while (available.next != NULL || pending.next != NULL);
+    } while (ahead.next != NULL || phead.next != NULL);
 
-    *jobs = finished.next;
+    *jobs = fhead.next;
     return now;
 }
