@@ -1,0 +1,15 @@
+.PHONY: build clean
+
+CC=gcc.exe
+RM=rm.exe -f
+CFLAGS=-g
+TARGET=main.exe
+PARTIALS=job.c resource.c tick.c fcfs_sched.c sjf_sched.c hrn_sched.c tick.c
+
+build: $(TARGET)
+
+main.exe: main.c
+	$(CC) main.c $(PARTIALS) -o $@ $(CFLAGS)
+
+clean:
+	$(RM) $(TARGET) *.o
