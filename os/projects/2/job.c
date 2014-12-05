@@ -123,3 +123,76 @@ job_is_runnable(const int tick, const struct resource *res, struct job *j)
 
     return 1;
 }
+
+static struct job *
+__find_mid(struct job *list)
+{
+    struct job *slow, *fast;
+
+    if (list == NULL)
+        return NULL;
+
+    slow = list; fast = list;
+    while (fast->next != NULL && fast->next->next != NULL) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    return slow;
+}
+
+static struct job *
+__merge(struct job *left, struct job *right,
+        int (*compar)(const struct job a, const struct job b))
+{
+    struct job *head, *prev, *p;
+
+    head = NULL;
+    p = head;
+    while (left != NULL && right != NULL) {
+        if (compar(*left, *right) <= 0) {
+            p = left;
+            left = left->next;
+        } else {
+            p = right;
+            right = right->next;
+        }
+
+        if (head == NULL)
+            head = p;
+        else
+            prev->next = p;
+        prev = p;
+    }
+    
+    if (left == NULL)
+        prev->next = right;
+    else
+        prev->next = left;
+
+    return head;
+}
+
+static struct job *
+__sort(struct job *head,
+       int (*compar)(const struct job a, const struct job b))
+{
+    struct job *mid, *left, *right;
+
+    if (head == NULL || head->next == NULL)
+        return head;
+
+    left = head;
+    mid = __find_mid(head);
+    right = mid->next;
+    mid->next = NULL;
+
+    return __merge(__sort(left, compar), __sort(right, compar), compar);
+}
+
+void
+job_sort(struct job **jobs,
+         int (*compar)(const struct job a, const struct job b))
+{
+    *jobs = __sort(*jobs, compar);
+}

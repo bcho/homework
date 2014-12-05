@@ -38,4 +38,11 @@ void job_info(struct job *);
 // @param 作业
 int job_is_runnable(const int, const struct resource *, struct job *);
 
+// 对作业链表进行排序
+//
+// @param 链表指针
+// @param 比较函数
+void job_sort(struct job **,
+              int (*compar)(const struct job, const struct job));
+
 #endif  /* #ifndef JOB_H */
