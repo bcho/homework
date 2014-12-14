@@ -1,9 +1,17 @@
 {
-  "name": "Library Management System",
+  "name": "Library-Management-System",
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "bcho <bcxxxxxx@gmail.com>"
+  "author": "bcho <bcxxxxxx@gmail.com>",
+  "devDependencies": {
+    "connect": "^3.3.3",
+    "gulp": "^3.8.10",
+    "gulp-livereload": "^2.1.1",
+    "gulp-tsc": "^0.9.2",
+    "gulp-watch": "^3.0.0",
+    "serve-static": "^1.7.1"
+  }
 }
