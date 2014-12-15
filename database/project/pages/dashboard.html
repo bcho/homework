@@ -9,17 +9,20 @@
 </head>
 <body>
     <ul id="header" class="nav nav-tabs">
-        <li role="presentation"><a href="#">系统概括</a></li>
+        <li role="presentation" class="active"><a href="#">系统概括</a></li>
         <li role="presentation"><a href="#">借出图书</a></li>
         <li role="presentation"><a href="#">归还图书</a></li>
         <li role="presentation"><a href="#">新增图书</a></li>
         <li role="presentation"><a href="#">新增读者</a></li>
-        <li role="presentation" class="active"><a href="#">系统帮助</a></li>
+        <li role="presentation"><a href="#">系统帮助</a></li>
     </ul>
     <div id="main" class="container-fluid">
         <div class="row">
             <div class="col-md-6 col-sm-12" id="form">
-                123
+                <div class="jumbotron">
+                    <p>系统中有图书记录 100 本</p>
+                    <p>系统中有读者记录 100 条</p>
+                </div>
             </div>
             <div class="col-md-6 col-sm-12" id="stats">
                 <div id="table" class="row">
@@ -61,6 +64,15 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <footer id="footer"></footer>
+</body>
+<script src="lib/sql.js"></script>
+<script src="js/app.js"></script>
+</html>
+                </article>
             </div>
         </div>
     </div>

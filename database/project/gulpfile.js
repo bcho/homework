@@ -7,6 +7,7 @@ var gulp = require('gulp'),
 var config = {
     dir: {
         server: './',
+        html: './',
         typescript: './ts',
         javascript: './js',
     }
@@ -28,10 +29,16 @@ gulp.task('compile-typescript', function () {
         .pipe(livereload());
 });
 
+gulp.task('html', function () {
+    gulp.src([config.dir.html + '/**/*.html'])
+        .pipe(livereload());
+});
+
 gulp.task('watch', ['server'], function () {
     livereload.listen();
 
     gulp.watch(config.dir.typescript + '/**/*.ts', ['compile-typescript']);
+    gulp.watch(config.dir.html + '/**/*.html', ['html']);
 });
 
 gulp.task('default', ['compile-typescript']);
