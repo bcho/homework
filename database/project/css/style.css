@@ -1,4 +1,5 @@
 #form {
+  border-right: 1px solid #efefef;
 }
 
 #stats {
@@ -6,4 +7,8 @@
 }
 
 #query {
+}
+
+.book-profile {
+  padding: 5px 10px;
 }

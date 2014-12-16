@@ -11,17 +11,43 @@
     <ul id="header" class="nav nav-tabs">
         <li role="presentation"><a href="#">系统概括</a></li>
         <li role="presentation"><a href="#">借出图书</a></li>
-        <li role="presentation"><a href="#">归还图书</a></li>
+        <li role="presentation" class="active"><a href="#">归还图书</a></li>
         <li role="presentation"><a href="#">查询图书</a></li>
         <li role="presentation"><a href="#">新增图书</a></li>
         <li role="presentation"><a href="#">查询读者</a></li>
         <li role="presentation"><a href="#">新增读者</a></li>
-        <li role="presentation" class="active"><a href="#">系统帮助</a></li>
+        <li role="presentation"><a href="#">系统帮助</a></li>
     </ul>
     <div id="main" class="container-fluid">
         <div class="row">
             <div class="col-md-8 col-sm-12" id="form">
-                123
+                <div class="page-header">
+                    <h3>归还图书</h3>
+                </div>
+                <form action="#" role="form" class="book-borrow-return">
+                    <div class="row form-group">
+                        <div class="col-xs-8">
+                            <label for="book-borrow-return-user-name">读者姓名</label>
+                            <input name="book-borrow-return-user-name" type="text" class="form-control" placeholder="读者姓名" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-borrow-return-book-no">书籍编码</label>
+                            <input name="book-borrow-return-book-no" type="text" class="form-control" placeholder="书籍编码" />
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="book-borrow-return-book-title">书籍名称</label>
+                            <input name="book-borrow-return-book-title" type="text" class="form-control" placeholder="书籍名称" />
+                        </div>
+                    </div>
+                    <div class="user-query-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-success" href="#">借出</a>
+                            <a class="btn btn-success" href="#">归还</a>
+                        </div>
+                    </div>
+                </form>
             </div>
             <div class="col-md-4 col-sm-12" id="stats">
                 <div id="table" class="row">

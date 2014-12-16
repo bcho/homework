@@ -1,0 +1,149 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>图书馆管理系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://cdn.staticfile.org/twitter-bootstrap/3.3.0/css/bootstrap.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <ul id="header" class="nav nav-tabs">
+        <li role="presentation"><a href="#">系统概括</a></li>
+        <li role="presentation"><a href="#">借出图书</a></li>
+        <li role="presentation"><a href="#">归还图书</a></li>
+        <li role="presentation"><a href="#">查询图书</a></li>
+        <li role="presentation"><a href="#">新增图书</a></li>
+        <li role="presentation" class="active"><a href="#">查询读者</a></li>
+        <li role="presentation"><a href="#">新增读者</a></li>
+        <li role="presentation"><a href="#">系统帮助</a></li>
+    </ul>
+    <div id="main" class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 col-sm-12" id="form">
+                <div class="page-header">
+                    <h3>读者详情</h3>
+                </div>
+                <form action="#" role="form" class="user-profile">
+                    <div class="row form-group">
+                        <div class="col-xs-4 user-profile-title">
+                            <label for="user-profile-title">姓名</label>
+                            <input name="user-profile-title" type="text" class="form-control" placeholder="张三" />
+                        </div>
+                        <div class="col-xs-4 user-profile-no">
+                            <label for="user-profile-no">学号</label>
+                            <input name="user-profile-no" type="text" class="form-control" placeholder="3112005816" />
+                        </div>
+                        <div class="col-xs-4 user-profile-faculty">
+                            <label for="user-profile-isbn">学院</label>
+                            <input type="text" class="form-control" placeholder="计算机学院" />
+                        </div>
+                    </div>
+                    <div class="user-profile-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-success" href="#">新增</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="user-profile-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>持书情况</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>书籍名称</td>
+                                    <td>书籍编号</td>
+                                    <td>借阅时间</td>
+                                    <td>应归还时间</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>大学数学</td>
+                                    <td>TP 12345</td>
+                                    <td>2014/10/1</td>
+                                    <td>2014/11/5</td>
+                                </tr>
+                                <tr>
+                                    <td>大学英语</td>
+                                    <td>TP 67890</td>
+                                    <td>2014/11/12</td>
+                                    <td>2014/12/15</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>借阅记录</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>书籍名称</td>
+                                    <td>书籍编号</td>
+                                    <td>借阅时间</td>
+                                    <td>归还时间</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>大学数学</td>
+                                    <td>TP 12345</td>
+                                    <td>2014/9/1</td>
+                                    <td>2014/10/1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-12" id="stats">
+                <div id="table" class="row">
+                    <div class="col-md-12">
+                        <h3>查询结果</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>id</td>
+                                    <td>field 1</td>
+                                    <td>field 2</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>a</td>
+                                    <td>b</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>c</td>
+                                    <td>d</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>e</td>
+                                    <td>f</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="query" class="row">
+                    <div class="col-md-12">
+                        <h3>查询语句</h3>
+                        <div class="well">
+                            SELECT * FROM `books`;
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer id="footer"></footer>
+</body>
+<script src="lib/sql.js"></script>
+<script src="js/app.js"></script>
+</html>

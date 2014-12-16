@@ -9,12 +9,12 @@
 </head>
 <body>
     <ul id="header" class="nav nav-tabs">
-        <li role="presentation" class="active"><a href="#">系统概括</a></li>
+        <li role="presentation"><a href="#">系统概括</a></li>
         <li role="presentation"><a href="#">借出图书</a></li>
         <li role="presentation"><a href="#">归还图书</a></li>
         <li role="presentation"><a href="#">查询图书</a></li>
         <li role="presentation"><a href="#">新增图书</a></li>
-        <li role="presentation"><a href="#">查询读者</a></li>
+        <li role="presentation" class="active"><a href="#">查询读者</a></li>
         <li role="presentation"><a href="#">新增读者</a></li>
         <li role="presentation"><a href="#">系统帮助</a></li>
     </ul>
@@ -22,16 +22,58 @@
         <div class="row">
             <div class="col-md-8 col-sm-12" id="form">
                 <div class="page-header">
-                    <h1>藏书情况</h1>
+                    <h3>查询条件</h3>
                 </div>
-                <div>
-                    <p>共有藏书 100 册</p>
-                </div>
-                <div class="page-header">
-                    <h1>读者情况</h1>
-                </div>
-                <div>
-                    <p>共有登记读者 100 名</p>
+                <form action="#" role="form" class="user-query">
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="user-query-name">读者姓名</label>
+                            <input name="user-query-name" type="text" class="form-control" placeholder="读者姓名" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="user-query-no">读者学号</label>
+                            <input name="user-query-no" type="text" class="form-control" placeholder="读者学号" />
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="user-query-faculty">读者学院</label>
+                            <input name="user-query-faculty" type="text" class="form-control" placeholder="读者学院" />
+                        </div>
+                    </div>
+                    <div class="user-query-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-success" href="#">查询</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="user-query-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>查询结果</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>读者姓名</td>
+                                    <td>读者学号</td>
+                                    <td>读者学院</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>张三</td>
+                                    <td>3112005816</td>
+                                    <td>计算机学院</td>
+                                </tr>
+                                <tr>
+                                    <td>李四</td>
+                                    <td>3112005817</td>
+                                    <td>计算机学院</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4 col-sm-12" id="stats">
@@ -74,15 +116,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    <footer id="footer"></footer>
-</body>
-<script src="lib/sql.js"></script>
-<script src="js/app.js"></script>
-</html>
-                </article>
             </div>
         </div>
     </div>

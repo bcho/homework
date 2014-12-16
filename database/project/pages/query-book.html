@@ -9,10 +9,10 @@
 </head>
 <body>
     <ul id="header" class="nav nav-tabs">
-        <li role="presentation" class="active"><a href="#">系统概括</a></li>
+        <li role="presentation"><a href="#">系统概括</a></li>
         <li role="presentation"><a href="#">借出图书</a></li>
         <li role="presentation"><a href="#">归还图书</a></li>
-        <li role="presentation"><a href="#">查询图书</a></li>
+        <li role="presentation" class="active"><a href="#">查询图书</a></li>
         <li role="presentation"><a href="#">新增图书</a></li>
         <li role="presentation"><a href="#">查询读者</a></li>
         <li role="presentation"><a href="#">新增读者</a></li>
@@ -22,16 +22,58 @@
         <div class="row">
             <div class="col-md-8 col-sm-12" id="form">
                 <div class="page-header">
-                    <h1>藏书情况</h1>
+                    <h3>查询条件</h3>
                 </div>
-                <div>
-                    <p>共有藏书 100 册</p>
-                </div>
-                <div class="page-header">
-                    <h1>读者情况</h1>
-                </div>
-                <div>
-                    <p>共有登记读者 100 名</p>
+                <form action="#" role="form" class="book-query">
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-query-title">书籍名称</label>
+                            <input name="book-query-title" type="text" class="form-control" placeholder="书籍名称" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-query-no">书籍编号</label>
+                            <input name="book-query-no" type="text" class="form-control" placeholder="书籍编号" />
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="book-query-isbn">ISBN 编码</label>
+                            <input name="book-query-isbn" type="text" class="form-control" placeholder="ISBN 编码" />
+                        </div>
+                    </div>
+                    <div class="book-query-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-success" href="#">查询</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="book-query-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>查询结果</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>书籍名称</td>
+                                    <td>书籍编号</td>
+                                    <td>借阅情况</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>大学数学</td>
+                                    <td>T 12345</td>
+                                    <td>已借出</td>
+                                </tr>
+                                <tr>
+                                    <td>大学英语</td>
+                                    <td>T 67890</td>
+                                    <td><a href="#">可借阅</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4 col-sm-12" id="stats">
@@ -74,15 +116,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    <footer id="footer"></footer>
-</body>
-<script src="lib/sql.js"></script>
-<script src="js/app.js"></script>
-</html>
-                </article>
             </div>
         </div>
     </div>
