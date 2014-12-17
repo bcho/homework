@@ -2,11 +2,12 @@
 
 CFLAGS=-g
 TARGET=repl
-OBJS=fs.o proc.o
+OBJS=fs.o proc.o sys_call.o
 
-tests: fs_test proc_test
+tests: fs_test proc_test sys_call_test
 	./fs_test
 	./proc_test
+	./sys_call_test
 
 fs_test: fs_test.c fs.o proc.o
 	$(CC) -o $@ $^ $(CFLAGS)
@@ -14,5 +15,8 @@ fs_test: fs_test.c fs.o proc.o
 proc_test: proc_test.c proc.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
+sys_call_test: sys_call_test.c $(OBJS)
+	$(CC) -o $@ $^ $(CFLAGS)
+
 clean:
-	rm -rf *.o $(TARGET) *.zip
+	rm -rf *.o *_test $(TARGET) *.zip
