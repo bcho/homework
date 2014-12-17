@@ -100,6 +100,52 @@ entry_add_to_dir(struct entry *dir, struct entry *e)
     return 0;
 }
 
+struct entry *
+entry_find(struct entry *root, const char *path)
+{
+    int i, comparing_root;
+    const char *c;
+    char name[NAME_LENGTH + 1];
+    struct entry *e;
+
+    if (strlen(path) <= 0)
+        return NULL;
+
+    if (root->type == TYPE_FILE)
+        if (strcmp(root->name, path) == 0)
+            return root;
+        else
+            return NULL;
+
+    // TODO refactor
+    memset(name, 0, sizeof(name));
+    if (path[0] == PATH_SEP) {           // root dir 
+        comparing_root = 1;
+        name[0] = PATH_SEP;
+        i = 1;
+        c = &path[1];
+    } else {
+        comparing_root = 0;
+        for (i = 0, c = path; *c != PATH_SEP && *c != 0; c++, i++)
+            name[i] = *c;
+    }
+
+    if (strncmp(root->name, name, i))
+        return NULL;
+
+    if (*c == 0)
+        return root;
+
+    if (! comparing_root)
+        c = c + 1;
+
+    for (i = 0; i < root->count; i++)
+        if ((e = entry_find(root->files[i], c)))
+            return e;
+
+    return NULL;
+}
+
 int
 entry_remove_from_dir(struct entry *dir, struct entry *e)
 {

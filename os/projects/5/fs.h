@@ -75,6 +75,12 @@ int entry_add_to_dir(struct entry *, struct entry *);
 // @param 记录
 int entry_remove_from_dir(struct entry *, struct entry *);
 
+// 根据路径从文件树中查找一个记录
+//
+// @param 文件树
+// @param 路径
+struct entry *entry_find(struct entry *, const char *);
+
 // 删除一个记录
 //
 // 如果该记录为文件夹，则将其所有文件一并删除

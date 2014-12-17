@@ -146,6 +146,52 @@ test_entry_rw_file_with_invalid_type()
 }
 
 char *
+test_entry_find()
+{
+    struct entry *root, *last_dir, *dir, *file;
+
+    root = dir = entry_create_dir("/", &test_user, PERM_RD, PERM_RD);
+    last_dir = dir;
+
+    dir = entry_create_dir("a", &test_user, PERM_RD, PERM_RD);
+    entry_add_to_dir(last_dir, dir);
+    last_dir = dir;
+
+    dir = entry_create_dir("b", &test_user, PERM_RD, PERM_RD);
+    entry_add_to_dir(last_dir, dir);
+    last_dir = dir;
+
+    dir = entry_create_dir("c", &test_user, PERM_RD, PERM_RD);
+    entry_add_to_dir(last_dir, dir);
+    last_dir = dir;
+
+    file = entry_create_file("d", &test_user, PERM_RD, PERM_RD);
+    entry_add_to_dir(last_dir, file);
+
+    mu_assert("entry_find: root", entry_find(root, "/") == root);
+    dir = entry_find(root, "/a");
+    mu_assert("entry_find: /a", dir != NULL);
+    mu_assert("entry_find: /a", strcmp(dir->name, "a") == 0);
+    dir = entry_find(root, "/a/b");
+    mu_assert("entry_find: /a/b", dir != NULL);
+    mu_assert("entry_find: /a/b", strcmp(dir->name, "b") == 0);
+    dir = entry_find(root, "/a/b/c");
+    mu_assert("entry_find: /a/b/c", dir != NULL);
+    mu_assert("entry_find: /a/b/c", strcmp(dir->name, "c") == 0);
+    file = entry_find(root, "/a/b/c/d");
+    mu_assert("entry_find: /a/b/c/d", file != NULL);
+    mu_assert("entry_find: /a/b/c/d", strcmp(file->name, "d") == 0);
+
+    mu_assert("entry_find: not exist path", entry_find(root, "/foo") == NULL);
+    mu_assert("entry_find: not exist file",
+              entry_find(root, "/a/b/c/e") == NULL);
+    mu_assert("entry_find: not exist path",
+              entry_find(root, "/a/b/c/d/e") == NULL);
+
+    return 0;
+}
+
+char *
 run()
 {
     mu_run_test(test_entry_create_file);
@@ -155,6 +201,7 @@ run()
     mu_run_test(test_entry_add_to_dir_recursivly);
     mu_run_test(test_entry_rw_file);
     mu_run_test(test_entry_rw_file_with_invalid_type);
+    mu_run_test(test_entry_find);
 
     return 0;
 }
