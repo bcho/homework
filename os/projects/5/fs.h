@@ -2,6 +2,7 @@
 #define FS_H
 
 #include "config.h"
+#include "errno.h"
 #include "proc.h"
 
 enum file_type {
@@ -11,10 +12,6 @@ enum file_type {
 
 #define PERM_RD 0x01                    // 可读
 #define PERM_WR 0x02                    // 可写
-
-#define E_TOO_MANY_FILES    1           // 目录下文件过多
-#define E_PERMISSION        2           // 权限不足
-#define E_INVALID_TYPE      3           // 文件记录类型错误
 
 // In memory file structure.
 struct entry {
