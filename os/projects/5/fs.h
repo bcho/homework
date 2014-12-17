@@ -96,6 +96,6 @@ int entry_write_file(struct entry *, const char *);
 //
 // @param 记录
 // @param 读出内容指针
-int entry_read_file(struct entry *, char **);
+int entry_read_file(struct entry *, char *);
 
 #endif /* #ifndef FS_H */

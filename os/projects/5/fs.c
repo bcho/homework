@@ -161,7 +161,7 @@ entry_write_file(struct entry *file, const char *content)
 }
 
 int
-entry_read_file(struct entry *file, char **dest)
+entry_read_file(struct entry *file, char *dest)
 {
     int content_length;
 
@@ -172,7 +172,7 @@ entry_read_file(struct entry *file, char **dest)
         return 0;
 
     content_length = strlen(file->content);
-    strncpy(*dest, file->content, content_length);
+    strncpy(dest, file->content, content_length);
     dest[content_length] = 0;
 
     return content_length;

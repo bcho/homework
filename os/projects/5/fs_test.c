@@ -114,14 +114,14 @@ char *
 test_entry_rw_file()
 {
     char buf[100];
-    char *test_content = "foobar", *b = buf;
+    char *test_content = "foobar";
     struct entry *f;
     
     f = entry_create_file("test file", &test_user, PERM_RD | PERM_WR, PERM_RD);
 
     mu_assert("entry_write_file: rv", entry_write_file(f, test_content) == 6);
-    mu_assert("entry_read_file: rv", entry_read_file(f, &b) == 6);
-    mu_assert("entry content", strcmp(b, test_content) == 0);
+    mu_assert("entry_read_file: rv", entry_read_file(f, buf) == 6);
+    mu_assert("entry content", strcmp(buf, test_content) == 0);
 
     entry_remove(f);
 
@@ -132,14 +132,13 @@ char *
 test_entry_rw_file_with_invalid_type()
 {
     char buf[100];
-    char *b = buf;
     struct entry *d;
 
     d = entry_create_dir("test dir", &test_user, PERM_RD | PERM_WR, PERM_RD);
     mu_assert("entry_write_file: rv",
               entry_write_file(d, "t") == - E_INVALID_TYPE);
     mu_assert("entry_read_file: rv",
-              entry_read_file(d, &b) == - E_INVALID_TYPE);
+              entry_read_file(d, buf) == - E_INVALID_TYPE);
 
     entry_remove(d);
     
