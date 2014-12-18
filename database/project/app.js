@@ -149,8 +149,8 @@ var Route = (function (_super) {
         };
     };
     Route.prototype.help = function () {
-        var formView = new FormView({ el: $('#form') });
-        formView.render(html.help);
+        var formView = new FormView({ $el: $('#form') });
+        formView.render('ok');
     };
     Route.prototype.overview = function () {
         console.log('overview');

@@ -118,6 +118,21 @@ class StatView extends Backbone.View<QueryResultModel> {
     }
 }
 
+class FormView extends Backbone.View<Backbone.Model> {
+
+    $el: JQuery
+
+    render(content): FormView {
+        this.$el.html(content);
+
+        return this;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Route
+// ----------------------------------------------------------------------------
+
 class Route extends Backbone.Router {
     
     routes() {
@@ -134,7 +149,9 @@ class Route extends Backbone.Router {
     }
 
     help(): void {
-        console.log('here');
+        var formView = new FormView({el: $('#form')});
+
+        formView.render(html.help);
     }
 
     overview(): void {
@@ -150,8 +167,6 @@ $(() => {
 
     var q = new QueryResultModel(),
         statView = new StatView({el: $('#stats'), model: q});
-
-    console.log(statView);
 
     window.setTimeout(function () {
         q.set({

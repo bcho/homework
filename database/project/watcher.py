@@ -1,10 +1,15 @@
 # coding: utf-8
 
-from livereload import Server
+from livereload import Server, shell
 
 server = Server()
 
-server.watch('ts/*.ts', 'tsc --out js/app.js ts/app.ts -t ES5')
+
+def compile_ts():
+    shell('python build.py *.html', cwd='./ts/partials')()
+    shell('tsc --out js/app.js ts/app.ts ts/partials/html.ts -t ES5')()
+
+server.watch('ts/*.ts', compile_ts)
 server.watch('./**/*.html')
 server.watch('./**/*.js')
 

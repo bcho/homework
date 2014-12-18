@@ -354,7 +354,7 @@ declare module Backbone {
         setElement(element: any): View<TModel>;
         attributes: any;
         $(selector: any): JQuery;
-        render(): View<TModel>;
+        render(opts?: any): View<TModel>;
         remove(): View<TModel>;
         make(tagName: any, attributes?: any, content?: any): any;
         delegateEvents(events?: any): any;
