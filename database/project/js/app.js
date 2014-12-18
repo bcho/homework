@@ -76,9 +76,10 @@ var StatView = (function (_super) {
         _super.call(this, options);
         this.tdTmpl = _.template('<td><%= d %></td>');
         this.trTmpl = _.template('<tr><%= d %></tr>');
+        this.queryTmpl = _.template('<pre><%= d %></pre>');
         this.$tableHead = $('#table thead', this.$el);
         this.$tableBody = $('#table tbody', this.$el);
-        this.$query = $('#query pre', this.$el);
+        this.$query = $('#query .query', this.$el);
         this.listenTo(this.model, "change", this.render);
     }
     StatView.prototype.render = function () {
@@ -88,7 +89,9 @@ var StatView = (function (_super) {
         return this;
     };
     StatView.prototype.renderQuery = function () {
-        this.$query.text(this.model.query);
+        var q;
+        q = this.queryTmpl({ d: this.model.query });
+        this.$query.html(q);
     };
     // TODO refactor
     StatView.prototype.renderTable = function () {

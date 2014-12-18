@@ -61,13 +61,14 @@ class StatView extends Backbone.View<QueryResultModel> {
 
     private tdTmpl = _.template('<td><%= d %></td>')
     private trTmpl = _.template('<tr><%= d %></tr>')
+    private queryTmpl = _.template('<pre><%= d %></pre>')
 
     constructor(options) {
         super(options);
 
         this.$tableHead = $('#table thead', this.$el);
         this.$tableBody = $('#table tbody', this.$el);
-        this.$query = $('#query pre', this.$el);
+        this.$query = $('#query .query', this.$el);
         this.listenTo(this.model, "change", this.render);
     }
 
@@ -80,7 +81,12 @@ class StatView extends Backbone.View<QueryResultModel> {
         return this;
     }
 
-    private renderQuery(): void { this.$query.text(this.model.query); }
+    private renderQuery(): void {
+        var q: string;
+
+        q = this.queryTmpl({d: this.model.query});
+        this.$query.html(q);
+    }
 
     // TODO refactor
     private renderTable(): void {
