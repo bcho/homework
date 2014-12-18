@@ -84,6 +84,7 @@ var StatView = (function (_super) {
     StatView.prototype.render = function () {
         this.renderQuery();
         this.renderTable();
+        this.$el.height(window.innerHeight - 50);
         return this;
     };
     StatView.prototype.renderQuery = function () {

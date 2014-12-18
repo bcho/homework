@@ -75,6 +75,8 @@ class StatView extends Backbone.View<QueryResultModel> {
         this.renderQuery();
         this.renderTable();
 
+        this.$el.height(window.innerHeight - 50);
+
         return this;
     }
 
