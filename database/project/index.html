@@ -9,14 +9,14 @@
 </head>
 <body>
     <ul id="header" class="nav nav-tabs">
-        <li role="presentation"><a href="#">系统概括</a></li>
-        <li role="presentation"><a href="#">借出图书</a></li>
-        <li role="presentation"><a href="#">归还图书</a></li>
-        <li role="presentation"><a href="#">查询图书</a></li>
-        <li role="presentation"><a href="#">新增图书</a></li>
-        <li role="presentation"><a href="#">查询读者</a></li>
-        <li role="presentation"><a href="#">新增读者</a></li>
-        <li role="presentation" class="active"><a href="#">系统帮助</a></li>
+        <li role="presentation"><a href="#overview">系统概括</a></li>
+        <li role="presentation"><a href="#book/borrow">借出图书</a></li>
+        <li role="presentation"><a href="#book/return">归还图书</a></li>
+        <li role="presentation"><a href="#book/query">查询图书</a></li>
+        <li role="presentation"><a href="#book/add">新增图书</a></li>
+        <li role="presentation"><a href="#reader/query">查询读者</a></li>
+        <li role="presentation"><a href="#reader/add">新增读者</a></li>
+        <li role="presentation" class="active"><a href="#help">系统帮助</a></li>
     </ul>
     <div id="main" class="container-fluid">
         <div class="row">
@@ -28,39 +28,15 @@
                     <div class="col-md-12">
                         <h3>查询结果</h3>
                         <table class="table">
-                            <thead>
-                                <tr>
-                                    <td>id</td>
-                                    <td>field 1</td>
-                                    <td>field 2</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>a</td>
-                                    <td>b</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>c</td>
-                                    <td>d</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>e</td>
-                                    <td>f</td>
-                                </tr>
-                            </tbody>
+                            <thead></thead>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
                 <div id="query" class="row">
                     <div class="col-md-12">
                         <h3>查询语句</h3>
-                        <div class="well">
-                            SELECT * FROM `books`;
-                        </div>
+                        <pre></pre>
                     </div>
                 </div>
             </div>
