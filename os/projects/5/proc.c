@@ -29,7 +29,7 @@ user_destory(struct user *u)
 
 
 int
-user_get_id(struct user *user)
+user_get_id(const struct user *user)
 {
     return user->id;
 }

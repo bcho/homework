@@ -7,10 +7,10 @@
 #include <string.h>
 
 // 创建一个文件记录
-static struct entry *
+struct entry *
 entry_create(const char *name,
              enum file_type type,
-             struct user *owner,
+             const struct user *owner,
              unsigned int owner_perm,
              unsigned int other_perm)
 {
@@ -45,7 +45,7 @@ entry_destroy(struct entry *e)
 
 struct entry *
 entry_create_file(const char *name,
-                  struct user *owner,
+                  const struct user *owner,
                   unsigned int owner_perm,
                   unsigned int other_perm)
 {
@@ -54,7 +54,7 @@ entry_create_file(const char *name,
 
 struct entry *
 entry_create_dir(const char *name,
-                 struct user *owner,
+                 const struct user *owner,
                  unsigned int owner_perm,
                  unsigned int other_perm)
 {
@@ -62,14 +62,14 @@ entry_create_dir(const char *name,
 }
 
 int
-entry_is_dir_contains(const struct entry *a, const struct entry *b)
+entry_is_dir_contains(const struct entry *a, const char *b)
 {
     int i;
 
     if (a->type == TYPE_FILE)
-        return a == b;
+        return strcmp(a->name, b) == 0;
 
-    if (a == b)
+    if (strcmp(a->name, b) == 0)
         return 1;
 
     for (i = 0; i < a->count; a++)
@@ -89,7 +89,7 @@ entry_add_to_dir(struct entry *dir, struct entry *e)
         return - E_TOO_MANY_FILES;
 
     // 不能使用子文件夹包含父文件夹
-    if (entry_is_dir_contains(e, dir))
+    if (entry_is_dir_contains(e, dir->name))
         return - E_INVALID_TYPE;
 
     entry_remove_from_dir(e->parent, e);
@@ -97,7 +97,7 @@ entry_add_to_dir(struct entry *dir, struct entry *e)
     dir->count = dir->count + 1;
     e->parent = dir;
 
-    return 0;
+    return E_OK;
 }
 
 struct entry *
@@ -152,7 +152,7 @@ entry_remove_from_dir(struct entry *dir, struct entry *e)
     int i;
 
     if (! dir || dir->type != TYPE_DIR)
-        return 0;
+        return E_OK;
 
     for (i = 0; i < dir->count - 1; i++)
         if (dir->files[i] == e)
@@ -161,7 +161,7 @@ entry_remove_from_dir(struct entry *dir, struct entry *e)
     dir->count = dir->count - 1;
     e->parent = NULL;
 
-    return 0;
+    return E_OK;
 }
 
 int
@@ -170,7 +170,7 @@ entry_remove(struct entry *e)
     int i, rv;
 
     if (! e)
-        return 0;
+        return E_OK;
 
     // 先删除子文件
     if (e->type == TYPE_DIR)
@@ -182,7 +182,7 @@ entry_remove(struct entry *e)
     entry_remove_from_dir(e->parent, e);
     entry_destroy(e);
 
-    return 0;
+    return E_OK;
 }
 
 int

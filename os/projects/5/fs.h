@@ -34,13 +34,23 @@ struct entry {
 // @param 文件记录
 void entry_destroy(struct entry *);
 
+// 创建一个记录
+//
+// @param 名称
+// @param 记录类型
+// @param 所有者
+// @param 所有者权限
+// @param 访问者权限
+struct entry *
+entry_create(const char *, enum file_type, const struct user *, unsigned int, unsigned int);
+
 // 创建一个文件
 //
 // @param 文件名称
 // @param 所有者
 // @param 所有者权限
 // @param 访问者权限
-struct entry *entry_create_file(const char *, struct user *, unsigned int, unsigned int);
+struct entry *entry_create_file(const char *, const struct user *, unsigned int, unsigned int);
 
 // 创建一个文件夹
 //
@@ -48,13 +58,13 @@ struct entry *entry_create_file(const char *, struct user *, unsigned int, unsig
 // @param 所有者
 // @param 所有者权限
 // @param 访问者权限
-struct entry *entry_create_dir(const char *, struct user *, unsigned int, unsigned int);
+struct entry *entry_create_dir(const char *, const struct user *, unsigned int, unsigned int);
 
 // 文件记录里面是否包含另外一个文件记录？
 //
 // @param 文件记录
-// @param 子文件记录
-int entry_is_dir_contains(const struct entry *, const struct entry *b);
+// @param 子文件记录名称
+int entry_is_dir_contains(const struct entry *, const char *);
 
 // 添加一个记录到文件夹中
 //

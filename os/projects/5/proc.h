@@ -22,6 +22,6 @@ void user_destory(struct user *);
 // 获取用户 id
 //
 // @param 用户
-int user_get_id(struct user *);
+int user_get_id(const struct user *);
 
 #endif

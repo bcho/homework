@@ -2,6 +2,7 @@
 #define SYS_CALL_H
 
 #include "proc.h"
+#include "fs.h"
 
 // 初始化系统
 int init();
@@ -28,7 +29,8 @@ int user_get_by_id(int, struct user *);
 //
 // @param 当前用户
 // @param 文件路径
-int open(const struct user *, const char *);
+// @param 打开权限（读/写）
+int open(const struct user *, const char *, unsigned int);
 
 // 关闭一个文件
 //
@@ -56,10 +58,11 @@ int delete(const struct user *, const char *);
 // 创建一个文件/文件夹
 //
 // @param 当前用户
+// @param 记录类型
 // @param 文件/文件夹路径
 // @param 文件/文件夹所有者权限
 // @param 其他访问者权限
-int create(const struct user *, const char *, unsigned int, unsigned int);
+int create(const struct user *, enum file_type, const char *, unsigned int, unsigned int);
 
 // 将一个文件/文件夹移动到指定文件夹下
 //
