@@ -172,6 +172,22 @@ test_delete()
 }
 
 char *
+test_stat()
+{
+    struct user u;
+
+    init();
+
+    user_get_by_id(1, &u);
+    
+    create(&u, TYPE_FILE, "/bar", PERM_RD, PERM_RD);
+    mu_assert("stat", stat(&u, "/bar") == E_OK);
+    mu_assert("stat", stat(&u, "/") == E_OK);
+
+    return 0;
+}
+
+char *
 run()
 {
     mu_run_test(test_init);
@@ -184,6 +200,7 @@ run()
     mu_run_test(test_read_write);
     mu_run_test(test_mv);
     mu_run_test(test_delete);
+    mu_run_test(test_stat);
 
     return 0;
 }

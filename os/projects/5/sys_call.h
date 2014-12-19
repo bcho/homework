@@ -71,4 +71,10 @@ int create(const struct user *, enum file_type, const char *, unsigned int, unsi
 // @param 目标文件夹路径
 int mv(const struct user *, const char *, const char *);
 
+// 查看一个文件/文件夹的属性
+//
+// @param 当前用户
+// @param 文件/文件夹路径
+int stat(const struct user *, const char *);
+
 #endif /* #ifndef SYS_CALL_H */

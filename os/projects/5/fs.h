@@ -12,6 +12,7 @@ enum file_type {
 
 #define PERM_RD 0x01                    // 可读
 #define PERM_WR 0x02                    // 可写
+#define PERM_EX 0x04                    // 可执行
 
 // In memory file structure.
 struct entry {

@@ -5,6 +5,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <stdio.h>
 
 // 文件描述符
 int fd_opened;
@@ -260,4 +261,63 @@ mv(const struct user *user, const char *src_path, const char *dest_path)
         return - E_PERMISSION;
 
     return entry_add_to_dir(dest, src);
+}
+
+static void
+perm_stat(unsigned int perm_mask)
+{
+    if (perm_mask & PERM_RD)
+        printf("r");
+    else
+        printf("-");
+    if (perm_mask & PERM_WR)
+        printf("w");
+    else
+        printf("-");
+    if (perm_mask & PERM_EX)
+        printf("x");
+    else
+        printf("-");
+}
+
+int
+stat(const struct user *user, const char *path)
+{
+    struct entry *e;
+    struct user owner;
+
+    // 只支持绝对路径
+    if (! IS_ABSOLUTE_PATH(path))
+        return - E_FAIL;
+
+    e = entry_find(root, path);
+    // 指定路径不存在
+    if (e == NULL)
+        return - E_FAIL;
+    
+    // 没有权限查看
+    if (e->owner_id != user_get_id(user) && (e->other_perm & PERM_RD == 0))
+        return - E_PERMISSION;
+
+    // 权限组
+    switch (e->type) {
+        case TYPE_DIR:
+            printf("d");
+            break;
+        default:
+            printf("-");
+    }
+    perm_stat(e->owner_perm);
+    perm_stat(e->other_perm);
+
+    // 所有者
+    if (user_get_by_id(e->owner_id, &owner) != E_OK)
+        printf(" unknown");
+    else
+        printf(" %s", owner.name);
+
+    // 文件名
+    printf(" %s\n", e->name);
+
+    return E_OK;
 }
