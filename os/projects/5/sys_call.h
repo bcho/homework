@@ -77,4 +77,9 @@ int mv(const struct user *, const char *, const char *);
 // @param 文件/文件夹路径
 int stat(const struct user *, const char *);
 
+// 查看整个文件系统属性
+//
+// @param 当前用户
+int stat_fs(const struct user *);
+
 #endif /* #ifndef SYS_CALL_H */

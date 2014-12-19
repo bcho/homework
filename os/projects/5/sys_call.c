@@ -64,21 +64,20 @@ useradd(const char *name)
 int
 user_get_by_id(int id, struct user *dest)
 {
-    int i, found;
+    int i;
     struct user *src;
 
-    for (i = 0, found = 0; i < MAX_USER; i++) {
+    for (i = 0; i < MAX_USER; i++) {
         if (users[i] == NULL)
             continue;
         src = users[i];
         if (user_get_id(src) == id) {
             memcpy(dest, src, sizeof(struct user));
-            found = 1;
-            break;
+            return E_OK;
         }
     }
 
-    return found ? E_OK : - E_FAIL;
+    return - E_FAIL;
 }
 
 #define IS_ABSOLUTE_PATH(x) (strlen((x)) > 0 && (x)[0] == '/')
@@ -105,7 +104,7 @@ open(const struct user *user, const char *path, unsigned int needed_perm)
     else
         perm_mask = file->other_perm;
     // 权限不足
-    if (perm_mask & needed_perm == 0)
+    if ((perm_mask & needed_perm) == 0)
         return - E_PERMISSION;
 
     // 打开文件太多
@@ -205,6 +204,7 @@ create(const struct user *user,
     else
         fname = fname + 1;
 
+    memset(parent_path, 0, path_length);
     for (c = path, d = parent_path; *c != 0 && c != fname;)
         *d++ = *c++;
     if (strlen(parent_path) > 1)
@@ -220,7 +220,7 @@ create(const struct user *user,
     else
         perm_mask = parent->other_perm;
     // 权限不足
-    if (perm_mask & PERM_WR == 0)
+    if ((perm_mask & PERM_WR) == 0)
         return - E_PERMISSION;
     // 已经包含该文件
     if (entry_is_dir_contains(parent, fname))
@@ -257,7 +257,7 @@ mv(const struct user *user, const char *src_path, const char *dest_path)
     else
         perm_mask = dest->other_perm;
     // 不能写入到目标文件夹
-    if (perm_mask & PERM_WR == 0)
+    if ((perm_mask & PERM_WR) == 0)
         return - E_PERMISSION;
 
     return entry_add_to_dir(dest, src);
@@ -317,7 +317,55 @@ stat(const struct user *user, const char *path)
         printf(" %s", owner.name);
 
     // 文件名
-    printf(" %s\n", e->name);
+    printf(" %s\n", path);
 
     return E_OK;
+}
+
+static void
+stat_fs_tree(const struct entry *e, const char *parent_path)
+{
+    int i;
+    struct user owner;
+    char path[NAME_LENGTH * MAX_FILES];
+
+    if (e == NULL)
+        return;
+
+    // 权限组
+    switch (e->type) {
+        case TYPE_DIR:
+            printf("d");
+            break;
+        default:
+            printf("-");
+    }
+    perm_stat(e->owner_perm);
+    perm_stat(e->other_perm);
+
+    // 所有者
+    if (user_get_by_id(e->owner_id, &owner) != E_OK)
+        printf(" unknown");
+    else
+        printf(" %s", owner.name);
+
+    // 文件名
+    printf("\t%s%s\n", parent_path, e->name);
+
+    if (e->type == TYPE_DIR) {
+        memset(path, 0, NAME_LENGTH * MAX_FILES);
+        if (strlen(parent_path) == 0)
+            sprintf(path, "%c", PATH_SEP);
+        else
+            sprintf(path, "%s%s%c", parent_path, e->name, PATH_SEP);
+
+        for (i = 0; i < e->count; i++)
+            stat_fs_tree(e->files[i], path);
+    }
+}
+
+int
+stat_fs(const struct user *user)
+{
+    stat_fs_tree(root, "");
 }

@@ -18,4 +18,10 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
+
+// windows 下的 getline 实现
+//
+// @see getline(3)
+size_t u_getline(char **, size_t *, FILE *);
+
 #endif  /* #ifndef UTILS_H */
