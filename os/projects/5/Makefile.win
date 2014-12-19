@@ -1,0 +1,15 @@
+.PHONY: build clean
+
+CC=gcc.exe
+RM=rm.exe -f
+CFLAGS=-g
+TARGET=repl.exe
+PARTIALS=fs.c proc.c sys_call.c utils.c
+
+build: $(TARGET)
+
+repl.exe: repl.c
+	$(CC) repl.c $(PARTIALS) -o $@ $(CFLAGS)
+
+clean:
+	$(RM) $(TARGET) *.o
