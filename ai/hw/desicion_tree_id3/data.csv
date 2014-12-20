@@ -1,0 +1,13 @@
+其他地点,等候条件,周末,顾客,价格,下雨,预约,等候时间估计,等待?
+yes,no,no,some,ex,no,yes,0-10,yes
+yes,no,no,full,ch,no,no,30-60,no
+no,yes,no,some,ch,no,no,0-10,yes
+yes,no,yes,full,ch,yes,no,10-30,yes
+yes,no,yes,full,ex,no,yes,>60,no
+no,yes,no,some,mid,yes,yes,0-10,yes
+no,yes,no,none,ch,yes,no,0-10,no
+no,no,no,some,mid,yes,yes,0-10,yes
+no,yes,yes,full,ch,yes,no,>60,no
+yes,yes,yes,full,ex,no,yes,10-30,no
+no,no,no,none,ch,no,no,0-10,no
+yes,yes,yes,full,ch,no,no,30-60,yes
