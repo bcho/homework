@@ -1,3 +1,7 @@
+var html;
+(function (html) {
+    html.help = '<article class="help-article">    <h1>图书馆书籍管理系统使用帮助</h1>    <section id="article-overview" class="help-article-section">        <h3>系统概况</h3>        <p>write something...</p>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>借阅图书</h3>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>归还图书</h3>    </section>    <section id="article-enter-book" class="help-article-section">        <h3>登记图书</h3>    </section>    <section id="article-enter-user" class="help-article-section">        <h3>登记读者</h3>    </section>    <section id="article-book-profile" class="help-article-section">        <h3>图书详情</h3>    </section>    <section id="article-user-profile" class="help-article-section">        <h3>读者详情</h3>    </section></article>';
+})(html || (html = {}));
 /// <reference path="type/sql.d.ts" />
 /// <reference path="type/jquery.d.ts" />
 /// <reference path="type/underscore.d.ts" />
@@ -8,6 +12,7 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+/// <reference path="partials/html.ts" />
 // ----------------------------------------------------------------------------
 // Models
 // ----------------------------------------------------------------------------
@@ -26,27 +31,15 @@ var QueryResultModel = (function (_super) {
             results: []
         };
     };
-    Object.defineProperty(QueryResultModel.prototype, "query", {
-        get: function () {
-            return this.get('query');
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(QueryResultModel.prototype, "fields", {
-        get: function () {
-            return this.get('fields');
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(QueryResultModel.prototype, "results", {
-        get: function () {
-            return this.get('results');
-        },
-        enumerable: true,
-        configurable: true
-    });
+    QueryResultModel.prototype.getQuery = function () {
+        return this.get('query');
+    };
+    QueryResultModel.prototype.getFields = function () {
+        return this.get('fields');
+    };
+    QueryResultModel.prototype.getResults = function () {
+        return this.get('results');
+    };
     return QueryResultModel;
 })(Backbone.Model);
 // ----------------------------------------------------------------------------
@@ -90,23 +83,23 @@ var StatView = (function (_super) {
     };
     StatView.prototype.renderQuery = function () {
         var q;
-        q = this.queryTmpl({ d: this.model.query });
+        q = this.queryTmpl({ d: this.model.getQuery() });
         this.$query.html(q);
     };
     // TODO refactor
     StatView.prototype.renderTable = function () {
-        var rows = [], row = [], fieldName, model;
-        for (var i = 0; i < this.model.fields.length; i++) {
-            rows.push(this.tdTmpl({ d: this.model.fields[i] }));
+        var rows = [], row = [], fieldName, fields = this.model.getFields(), results = this.model.getResults(), model;
+        for (var i = 0; i < fields.length; i++) {
+            rows.push(this.tdTmpl({ d: fields[i] }));
         }
         this.$tableHead.html(this.trTmpl({ d: rows.join('') }));
         // Render table rows.
         rows = [];
-        for (var i = 0; i < this.model.results.length; i++) {
-            model = this.model.results[i];
+        for (var i = 0; i < results.length; i++) {
+            model = results[i];
             row = [];
-            for (var j = 0; j < this.model.fields.length; j++) {
-                fieldName = this.model.fields[j];
+            for (var j = 0; j < fields.length; j++) {
+                fieldName = fields[j];
                 row.push(this.tdTmpl({ d: model[fieldName] }));
             }
             rows.push(this.trTmpl({
@@ -179,7 +172,3 @@ $(function () {
         });
     }, 1000);
 });
-var html;
-(function (html) {
-    html.help = '<article class="help-article">    <h1>图书馆书籍管理系统使用帮助</h1>    <section id="article-overview" class="help-article-section">        <h3>系统概况</h3>        <p>write something...</p>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>借阅图书</h3>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>归还图书</h3>    </section>    <section id="article-enter-book" class="help-article-section">        <h3>登记图书</h3>    </section>    <section id="article-enter-user" class="help-article-section">        <h3>登记读者</h3>    </section>    <section id="article-book-profile" class="help-article-section">        <h3>图书详情</h3>    </section>    <section id="article-user-profile" class="help-article-section">        <h3>读者详情</h3>    </section></article>';
-})(html || (html = {}));

@@ -3,6 +3,8 @@
 /// <reference path="type/underscore.d.ts" />
 /// <reference path="type/backbone.d.ts" />
 
+/// <reference path="partials/html.ts" />
+
 // ----------------------------------------------------------------------------
 // Models
 // ----------------------------------------------------------------------------
@@ -21,9 +23,9 @@ class QueryResultModel extends Backbone.Model {
         }
     }
 
-    get query(): string { return this.get('query'); }
-    get fields(): string { return this.get('fields'); }
-    get results(): string { return this.get('results'); }
+    getQuery(): string { return this.get('query'); }
+    getFields(): string { return this.get('fields'); }
+    getResults(): string { return this.get('results'); }
 }
 
 // ----------------------------------------------------------------------------
@@ -84,7 +86,7 @@ class StatView extends Backbone.View<QueryResultModel> {
     private renderQuery(): void {
         var q: string;
 
-        q = this.queryTmpl({d: this.model.query});
+        q = this.queryTmpl({d: this.model.getQuery()});
         this.$query.html(q);
     }
 
@@ -93,21 +95,23 @@ class StatView extends Backbone.View<QueryResultModel> {
         var rows: string[] = [],
             row: string[] = [],
             fieldName: string,
+            fields =  this.model.getFields(),
+            results = this.model.getResults(),
             model: any;
 
         // Render table header.
-        for (var i = 0; i < this.model.fields.length; i++) {
-            rows.push(this.tdTmpl({d: this.model.fields[i]}));
+        for (var i = 0; i < fields.length; i++) {
+            rows.push(this.tdTmpl({d: fields[i]}));
         }
         this.$tableHead.html(this.trTmpl({d: rows.join('') }));
 
         // Render table rows.
         rows = [];
-        for (var i = 0; i < this.model.results.length; i++) {
-            model = this.model.results[i];
+        for (var i = 0; i < results.length; i++) {
+            model = results[i];
             row = [];
-            for (var j = 0; j < this.model.fields.length; j++) {
-                fieldName = this.model.fields[j];
+            for (var j = 0; j < fields.length; j++) {
+                fieldName = fields[j];
                 row.push(this.tdTmpl({d: model[fieldName]}));
             }
             rows.push(this.trTmpl({
