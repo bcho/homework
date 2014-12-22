@@ -48,8 +48,23 @@ class HeaderView extends Backbone.View<Backbone.Model> {
     }
 
     switchView(e: any): HeaderView {
+        return this.setActiviyView($(e.target.parentElement));
+    }
+
+    switchViewWithTabName(tabName: string): HeaderView {
+        // TODO unifiy views naming scheme.
+        var $target: JQuery = $('li[name=' + tabName + ']');
+
+        if ($target) {
+            this.setActiviyView($target);
+        }
+
+        return this;
+    }
+
+    private setActiviyView($target: JQuery): HeaderView {
         this.$navItems.removeClass('active');
-        $(e.target.parentElement).addClass('active');
+        $target.addClass('active');
 
         return this;
     }
@@ -138,6 +153,16 @@ class FormView extends Backbone.View<Backbone.Model> {
 // ----------------------------------------------------------------------------
 
 class Route extends Backbone.Router {
+
+    private formView: FormView
+    private headerView: HeaderView
+
+    constructor() {
+        super()
+
+        this.formView = new FormView({el: $('#form')});
+        this.headerView = new HeaderView({el: $('#header')});
+    }
     
     routes() {
         return {
@@ -152,20 +177,49 @@ class Route extends Backbone.Router {
         };
     }
 
-    help(): void {
-        var formView = new FormView({el: $('#form')});
-
-        formView.render(html.help);
-    }
-
     overview(): void {
-        console.log('overview');
+        this.formView.render(html.overview);
+        this.headerView.switchViewWithTabName('overview');
     }
+
+    bookBorrow(): void {
+        this.formView.render(html.bookborrow);
+        this.headerView.switchViewWithTabName('bookborrow');
+    }
+
+    bookReturn(): void {
+        this.formView.render(html.bookreturn);
+        this.headerView.switchViewWithTabName('bookreturn');
+    }
+
+    bookQuery(): void {
+        this.formView.render(html.bookquery);
+        this.headerView.switchViewWithTabName('bookquery');
+    }
+
+    bookAdd(): void {
+        this.formView.render(html.bookadd);
+        this.headerView.switchViewWithTabName('bookadd');
+    }
+
+    readerQuery(): void {
+        this.formView.render(html.readerquery);
+        this.headerView.switchViewWithTabName('readerquery');
+    }
+
+    readerAdd(): void {
+        this.formView.render(html.readeradd);
+        this.headerView.switchViewWithTabName('readeradd');
+    }
+
+    help(): void {
+        this.formView.render(html.help);
+        this.headerView.switchViewWithTabName('help');
+    }
+
 }
 
 $(() => {
-    var headerView = new HeaderView({el: $('#header')});
-
     new Route();
     Backbone.history.start();
 

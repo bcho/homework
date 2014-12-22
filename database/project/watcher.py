@@ -10,6 +10,7 @@ def compile_ts():
     shell('tsc --out js/app.js ts/app.ts ts/partials/html.ts -t ES5')()
 
 server.watch('ts/*.ts', compile_ts)
+server.watch('ts/partials/*.html', compile_ts)
 server.watch('./**/*.html')
 server.watch('./**/*.js')
 
