@@ -4,6 +4,7 @@
 /// <reference path="type/backbone.d.ts" />
 
 /// <reference path="partials/html.ts" />
+/// <reference path="partials/sqlQuery.ts" />
 
 // ----------------------------------------------------------------------------
 // Models
@@ -94,10 +95,20 @@ class Seeder {
 
     run(): void {
         this.seedTables();
+        this.seedBooks();
+        this.seedUsers();
     }
 
     private seedTables(): void {
-        console.log(this.db);
+        this.db.exec(sqlQuery.createtable);
+    }
+
+    private seedBooks(): void {
+        this.db.exec(sqlQuery.initbook);
+    }
+
+    private seedUsers(): void {
+        this.db.exec(sqlQuery.inituser);
     }
 }
 
@@ -298,4 +309,6 @@ $(() => {
     Backbone.history.start();
 
     new StatView({el: $('#stats'), model: DB.queryResult});
+
+    (new Seeder(DB)).run();
 });

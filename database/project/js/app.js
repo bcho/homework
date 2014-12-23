@@ -9,6 +9,12 @@ var html;
     html.help = '<article class="help-article">    <h1>图书馆书籍管理系统使用帮助</h1>    <section id="article-overview" class="help-article-section">        <h3>系统概况</h3>        <p>write something...</p>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>借阅图书</h3>    </section>    <section id="article-borrow-book" class="help-article-section">        <h3>归还图书</h3>    </section>    <section id="article-enter-book" class="help-article-section">        <h3>登记图书</h3>    </section>    <section id="article-enter-user" class="help-article-section">        <h3>登记读者</h3>    </section>    <section id="article-book-profile" class="help-article-section">        <h3>图书详情</h3>    </section>    <section id="article-user-profile" class="help-article-section">        <h3>读者详情</h3>    </section></article>';
     html.bookadd = '                <div class="page-header">                    <h3>图书详情</h3>                </div>                <form action="#" role="form" class="book-profile">                    <div class="row form-group">                        <div class="col-xs-8 book-profile-title">                            <label for="book-profile-title">书籍名称</label>                            <input name="book-profile-title" type="text" class="form-control" placeholder="书籍名称" />                        </div>                        <div class="col-xs-4 book-profile-no">                            <label for="book-profile-no">书籍编码</label>                            <input name="book-profile-no" type="text" class="form-control" placeholder="书籍编码" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-6 book-profile-isbn">                            <label for="book-profile-isbn">ISBN 编码</label>                            <input type="text" class="form-control" placeholder="ISBN 编码" />                        </div>                    </div>                    <div class="book-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success" href="#">借出</a>                            <a class="btn btn-success" href="#">归还</a>                            <a class="btn btn-success" href="#">新增</a>                        </div>                    </div>                </form>                <div class="book-profile-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>借阅情况</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>借阅时间</td>                                    <td>应归还时间</td>                                    <td>归还时间</td>                                    <td>借阅读者</td>                                </tr>                            </thead>                            <tbody>                                <tr>                                    <td>2014/10/1</td>                                    <td>2014/11/5</td>                                    <td>2014/11/10</td>                                    <td>张三</td>                                </tr>                                <tr>                                    <td>2014/11/12</td>                                    <td>2014/12/15</td>                                    <td>2014/12/1</td>                                    <td>张三</td>                                </tr>                                <tr>                                    <td>2014/12/5</td>                                    <td>2015/1/5</td>                                    <td></td>                                    <td>张三</td>                                </tr>                            </tbody>                        </table>                    </div>                </div>';
 })(html || (html = {}));
+var sqlQuery;
+(function (sqlQuery) {
+    sqlQuery.createtable = 'create table book(    no string,    title string,    isbn string,    category string,    description text,    created_at timestamp,    updated_at timestamp,    primary key(no),    unique(isbn));create table user(    no string,    name string,    gender string,    faculty string,    created_at timestamp,    updated_at timestamp,    primary key(no));create table book_borrowing_log(    id integer,    book_no string,    user_no string,    expire_at timestamp,    returned_at timestamp,    created_at timestamp,    foreign key(book_no) references book(no),    foreign key(user_no) references user(no));';
+    sqlQuery.inituser = 'insert into user    (no, name, gender, faculty, created_at, updated_at)values    ("3112005816", "张三", "男", "计算机学院", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),    ("3112005817", "李四", "男", "计算机学院", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);';
+    sqlQuery.initbook = 'insert into book    (no, title, isbn, category, description, created_at, updated_at)values    ("E0094868", "A first course in database systems", "9787111247333", "", "", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),    ("A0836869", "编译原理", "7302089795", "", "", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),    ("A1840127", "数据库系统概论", "704007494X", "", "", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);';
+})(sqlQuery || (sqlQuery = {}));
 /// <reference path="type/sql.d.ts" />
 /// <reference path="type/jquery.d.ts" />
 /// <reference path="type/underscore.d.ts" />
@@ -20,6 +26,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 /// <reference path="partials/html.ts" />
+/// <reference path="partials/sqlQuery.ts" />
 // ----------------------------------------------------------------------------
 // Models
 // ----------------------------------------------------------------------------
@@ -100,9 +107,17 @@ var Seeder = (function () {
     }
     Seeder.prototype.run = function () {
         this.seedTables();
+        this.seedBooks();
+        this.seedUsers();
     };
     Seeder.prototype.seedTables = function () {
-        console.log(this.db);
+        this.db.exec(sqlQuery.createtable);
+    };
+    Seeder.prototype.seedBooks = function () {
+        this.db.exec(sqlQuery.initbook);
+    };
+    Seeder.prototype.seedUsers = function () {
+        this.db.exec(sqlQuery.inituser);
     };
     return Seeder;
 })();
@@ -257,4 +272,5 @@ $(function () {
     new Route();
     Backbone.history.start();
     new StatView({ el: $('#stats'), model: DB.queryResult });
+    (new Seeder(DB)).run();
 });
