@@ -29,6 +29,79 @@ class QueryResultModel extends Backbone.Model {
 }
 
 // ----------------------------------------------------------------------------
+// DB proxy
+// ----------------------------------------------------------------------------
+class StatmentProxy {
+
+    private queryResultModel
+    private stmtString
+    private stmt
+    
+    constructor(db, queryResultModel: QueryResultModel, stmtString: string) {
+        this.queryResultModel = queryResultModel;
+        this.stmtString = stmtString;
+        this.stmt = db.prepare(stmtString);
+    }
+
+    bind(params: any): any {
+        return this.stmt.bind(params);
+    }
+
+    execute(params?: any): any {
+        var rv: any[] = [],
+            columnNames: string[];
+
+        this.bind(params);
+        while (this.stmt.step()) {
+            rv.push(this.stmt.getAsObject());
+            columnNames = this.stmt.getColumnNames();
+        }
+
+        this.queryResultModel.set({
+            query: this.stmtString,
+            fields: columnNames,
+            results: rv
+        });
+
+        return rv;
+    }
+}
+
+// TODO use interface to define db manager.
+var DB = {
+    db: new SQL.Database(),
+    queryResult: new QueryResultModel(),
+
+    run(stmt: string): any {
+        return this.db.run(stmt);
+    },
+
+    exec(stmt: string): any {
+        return this.db.exec(stmt);
+    },
+
+    prepare(stmt: string): StatmentProxy {
+        return new StatmentProxy(this.db, this.queryResult, stmt);
+    }
+};
+
+// ----------------------------------------------------------------------------
+// Seeder
+// ----------------------------------------------------------------------------
+class Seeder {
+
+    constructor(private db: any) {}
+
+    run(): void {
+        this.seedTables();
+    }
+
+    private seedTables(): void {
+        console.log(this.db);
+    }
+}
+
+// ----------------------------------------------------------------------------
 // Views
 // ----------------------------------------------------------------------------
 class HeaderView extends Backbone.View<Backbone.Model> {
@@ -224,23 +297,5 @@ $(() => {
     new Route();
     Backbone.history.start();
 
-    var q = new QueryResultModel(),
-        statView = new StatView({el: $('#stats'), model: q});
-
-    window.setTimeout(function () {
-        q.set({
-            'query': 'select * from products',
-            'fields': ['id', 'name'],
-            'results': [
-                {
-                    id: 1,
-                    name: 'foobar'
-                },
-                {
-                    id: 2,
-                    name: 'test'
-                }
-            ]
-        });
-    }, 1000);
+    new StatView({el: $('#stats'), model: DB.queryResult});
 });

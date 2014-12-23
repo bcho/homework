@@ -50,6 +50,63 @@ var QueryResultModel = (function (_super) {
     return QueryResultModel;
 })(Backbone.Model);
 // ----------------------------------------------------------------------------
+// DB proxy
+// ----------------------------------------------------------------------------
+var StatmentProxy = (function () {
+    function StatmentProxy(db, queryResultModel, stmtString) {
+        this.queryResultModel = queryResultModel;
+        this.stmtString = stmtString;
+        this.stmt = db.prepare(stmtString);
+    }
+    StatmentProxy.prototype.bind = function (params) {
+        return this.stmt.bind(params);
+    };
+    StatmentProxy.prototype.execute = function (params) {
+        var rv = [], columnNames;
+        this.bind(params);
+        while (this.stmt.step()) {
+            rv.push(this.stmt.getAsObject());
+            columnNames = this.stmt.getColumnNames();
+        }
+        this.queryResultModel.set({
+            query: this.stmtString,
+            fields: columnNames,
+            results: rv
+        });
+        return rv;
+    };
+    return StatmentProxy;
+})();
+// TODO use interface to define db manager.
+var DB = {
+    db: new SQL.Database(),
+    queryResult: new QueryResultModel(),
+    run: function (stmt) {
+        return this.db.run(stmt);
+    },
+    exec: function (stmt) {
+        return this.db.exec(stmt);
+    },
+    prepare: function (stmt) {
+        return new StatmentProxy(this.db, this.queryResult, stmt);
+    }
+};
+// ----------------------------------------------------------------------------
+// Seeder
+// ----------------------------------------------------------------------------
+var Seeder = (function () {
+    function Seeder(db) {
+        this.db = db;
+    }
+    Seeder.prototype.run = function () {
+        this.seedTables();
+    };
+    Seeder.prototype.seedTables = function () {
+        console.log(this.db);
+    };
+    return Seeder;
+})();
+// ----------------------------------------------------------------------------
 // Views
 // ----------------------------------------------------------------------------
 var HeaderView = (function (_super) {
@@ -199,21 +256,5 @@ var Route = (function (_super) {
 $(function () {
     new Route();
     Backbone.history.start();
-    var q = new QueryResultModel(), statView = new StatView({ el: $('#stats'), model: q });
-    window.setTimeout(function () {
-        q.set({
-            'query': 'select * from products',
-            'fields': ['id', 'name'],
-            'results': [
-                {
-                    id: 1,
-                    name: 'foobar'
-                },
-                {
-                    id: 2,
-                    name: 'test'
-                }
-            ]
-        });
-    }, 1000);
+    new StatView({ el: $('#stats'), model: DB.queryResult });
 });
