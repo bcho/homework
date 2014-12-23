@@ -29,6 +29,34 @@ class QueryResultModel extends Backbone.Model {
     getResults(): string { return this.get('results'); }
 }
 
+class BookModel extends Backbone.Model {
+    
+    defaults() {
+        return {
+            no: '',
+            title: '',
+            isbn: '',
+            category: '',
+            description: '',
+            created_at: '',
+            updated_at: ''
+        };
+    }
+}
+
+class UserModel extends Backbone.Model {
+
+    defaults() {
+        return {
+            name: '',
+            gender: '',
+            faculty: '',
+            created_at: '',
+            updated_at: ''
+        };
+    }
+}
+
 // ----------------------------------------------------------------------------
 // DB proxy
 // ----------------------------------------------------------------------------
@@ -221,6 +249,17 @@ class StatView extends Backbone.View<QueryResultModel> {
     }
 }
 
+class DashboardView extends Backbone.View<Backbone.Model> {
+
+    private tmpl = _.template(html.overview)
+
+    render(count): DashboardView {
+        $(this.el).html(this.tmpl(count));
+
+        return this;
+    }
+}
+
 class FormView extends Backbone.View<Backbone.Model> {
 
     $el: JQuery
@@ -263,8 +302,17 @@ class Route extends Backbone.Router {
     }
 
     overview(): void {
-        this.formView.render(html.overview);
         this.headerView.switchViewWithTabName('overview');
+
+        var rv: any,
+            stat = {'books': 0, 'users': 0};
+        rv = DB.prepare('select count(*) as count from book;').execute();
+        stat.books = rv[0].count;
+        rv = DB.prepare('select count(*) as count from user;').execute();
+        stat.users = rv[0].count;
+        
+        var view = new DashboardView({ el: $('#form') });
+        view.render(stat);
     }
 
     bookBorrow(): void {
@@ -305,10 +353,9 @@ class Route extends Backbone.Router {
 }
 
 $(() => {
+    new StatView({el: $('#stats'), model: DB.queryResult});
+    (new Seeder(DB)).run();
+
     new Route();
     Backbone.history.start();
-
-    new StatView({el: $('#stats'), model: DB.queryResult});
-
-    (new Seeder(DB)).run();
 });
