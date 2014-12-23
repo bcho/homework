@@ -166,6 +166,7 @@ class Route extends Backbone.Router {
     
     routes() {
         return {
+            '': 'overview',
             'overview': 'overview',
             'book/borrow': 'bookBorrow',
             'book/return': 'bookReturn',
@@ -173,7 +174,7 @@ class Route extends Backbone.Router {
             'book/add': 'bookAdd',
             'reader/query': 'readerQuery',
             'reader/add': 'readerAdd',
-            'help': 'help',
+            'help': 'help'
         };
     }
 

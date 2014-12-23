@@ -151,6 +151,7 @@ var Route = (function (_super) {
     }
     Route.prototype.routes = function () {
         return {
+            '': 'overview',
             'overview': 'overview',
             'book/borrow': 'bookBorrow',
             'book/return': 'bookReturn',
@@ -158,7 +159,7 @@ var Route = (function (_super) {
             'book/add': 'bookAdd',
             'reader/query': 'readerQuery',
             'reader/add': 'readerAdd',
-            'help': 'help',
+            'help': 'help'
         };
     };
     Route.prototype.overview = function () {
