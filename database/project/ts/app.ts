@@ -7,7 +7,7 @@
 /// <reference path="partials/sqlQuery.ts" />
 
 // ----------------------------------------------------------------------------
-// Models
+// Models & Collections
 // ----------------------------------------------------------------------------
 class QueryResultModel extends Backbone.Model {
 
@@ -30,6 +30,8 @@ class QueryResultModel extends Backbone.Model {
 }
 
 class BookModel extends Backbone.Model {
+
+    idAttribute = 'no'
     
     defaults() {
         return {
@@ -46,6 +48,8 @@ class BookModel extends Backbone.Model {
 
 class UserModel extends Backbone.Model {
 
+    idAttribute = 'no'
+
     defaults() {
         return {
             name: '',
@@ -55,6 +59,34 @@ class UserModel extends Backbone.Model {
             updated_at: ''
         };
     }
+}
+
+class BaseCollection<TModel extends Backbone.Model> extends Backbone.Collection<Backbone.Model> {
+
+    table: string;
+
+    fetch(options?: Backbone.CollectionFetchOptions): any {
+        options = options ? _.clone(options) : {};
+
+        var rv = DB.prepare('select * from ' + this.table).execute();
+        var method = options.reset ? 'reset' : 'set';
+        this[method](rv, options);
+
+        this.trigger('sync', this, rv, options);
+    }
+
+}
+
+class BookCollection extends BaseCollection<BookModel> {
+
+    table = 'book';
+
+}
+
+class UserCollection extends BaseCollection<UserModel> {
+
+    table = 'user'
+
 }
 
 // ----------------------------------------------------------------------------
@@ -253,10 +285,26 @@ class DashboardView extends Backbone.View<Backbone.Model> {
 
     private tmpl = _.template(html.overview)
 
-    render(count): DashboardView {
-        $(this.el).html(this.tmpl(count));
+    render(): DashboardView {
+        $(this.el).html(this.tmpl({
+            books: this.queryBookCount(),
+            users: this.queryUserCount()
+        }));
 
         return this;
+    }
+
+    // FIXME should separate view & model/collection.
+    private queryUserCount(): number {
+        var rv = DB.prepare('select count(*) as count from user').execute();
+
+        return rv[0].count;
+    }
+
+    private queryBookCount(): number {
+        var rv = DB.prepare('select count(*) as count from book').execute();
+
+        return rv[0].count;
     }
 }
 
@@ -280,11 +328,20 @@ class Route extends Backbone.Router {
     private formView: FormView
     private headerView: HeaderView
 
+    private booksColl: BookCollection
+    private usersColl: UserCollection
+
     constructor() {
         super()
 
         this.formView = new FormView({el: $('#form')});
         this.headerView = new HeaderView({el: $('#header')});
+
+        this.booksColl = new BookCollection();
+        this.usersColl = new UserCollection();
+
+        this.booksColl.fetch();
+        this.usersColl.fetch();
     }
     
     routes() {
@@ -304,15 +361,7 @@ class Route extends Backbone.Router {
     overview(): void {
         this.headerView.switchViewWithTabName('overview');
 
-        var rv: any,
-            stat = {'books': 0, 'users': 0};
-        rv = DB.prepare('select count(*) as count from book;').execute();
-        stat.books = rv[0].count;
-        rv = DB.prepare('select count(*) as count from user;').execute();
-        stat.users = rv[0].count;
-        
-        var view = new DashboardView({ el: $('#form') });
-        view.render(stat);
+        (new DashboardView({el: $('#form')})).render();
     }
 
     bookBorrow(): void {

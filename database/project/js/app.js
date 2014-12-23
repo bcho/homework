@@ -28,7 +28,7 @@ var __extends = this.__extends || function (d, b) {
 /// <reference path="partials/html.ts" />
 /// <reference path="partials/sqlQuery.ts" />
 // ----------------------------------------------------------------------------
-// Models
+// Models & Collections
 // ----------------------------------------------------------------------------
 var QueryResultModel = (function (_super) {
     __extends(QueryResultModel, _super);
@@ -60,6 +60,7 @@ var BookModel = (function (_super) {
     __extends(BookModel, _super);
     function BookModel() {
         _super.apply(this, arguments);
+        this.idAttribute = 'no';
     }
     BookModel.prototype.defaults = function () {
         return {
@@ -78,6 +79,7 @@ var UserModel = (function (_super) {
     __extends(UserModel, _super);
     function UserModel() {
         _super.apply(this, arguments);
+        this.idAttribute = 'no';
     }
     UserModel.prototype.defaults = function () {
         return {
@@ -90,6 +92,36 @@ var UserModel = (function (_super) {
     };
     return UserModel;
 })(Backbone.Model);
+var BaseCollection = (function (_super) {
+    __extends(BaseCollection, _super);
+    function BaseCollection() {
+        _super.apply(this, arguments);
+    }
+    BaseCollection.prototype.fetch = function (options) {
+        options = options ? _.clone(options) : {};
+        var rv = DB.prepare('select * from ' + this.table).execute();
+        var method = options.reset ? 'reset' : 'set';
+        this[method](rv, options);
+        this.trigger('sync', this, rv, options);
+    };
+    return BaseCollection;
+})(Backbone.Collection);
+var BookCollection = (function (_super) {
+    __extends(BookCollection, _super);
+    function BookCollection() {
+        _super.apply(this, arguments);
+        this.table = 'book';
+    }
+    return BookCollection;
+})(BaseCollection);
+var UserCollection = (function (_super) {
+    __extends(UserCollection, _super);
+    function UserCollection() {
+        _super.apply(this, arguments);
+        this.table = 'user';
+    }
+    return UserCollection;
+})(BaseCollection);
 // ----------------------------------------------------------------------------
 // DB proxy
 // ----------------------------------------------------------------------------
@@ -240,9 +272,21 @@ var DashboardView = (function (_super) {
         _super.apply(this, arguments);
         this.tmpl = _.template(html.overview);
     }
-    DashboardView.prototype.render = function (count) {
-        $(this.el).html(this.tmpl(count));
+    DashboardView.prototype.render = function () {
+        $(this.el).html(this.tmpl({
+            books: this.queryBookCount(),
+            users: this.queryUserCount()
+        }));
         return this;
+    };
+    // FIXME should separate view & model/collection.
+    DashboardView.prototype.queryUserCount = function () {
+        var rv = DB.prepare('select count(*) as count from user').execute();
+        return rv[0].count;
+    };
+    DashboardView.prototype.queryBookCount = function () {
+        var rv = DB.prepare('select count(*) as count from book').execute();
+        return rv[0].count;
     };
     return DashboardView;
 })(Backbone.View);
@@ -266,6 +310,10 @@ var Route = (function (_super) {
         _super.call(this);
         this.formView = new FormView({ el: $('#form') });
         this.headerView = new HeaderView({ el: $('#header') });
+        this.booksColl = new BookCollection();
+        this.usersColl = new UserCollection();
+        this.booksColl.fetch();
+        this.usersColl.fetch();
     }
     Route.prototype.routes = function () {
         return {
@@ -282,13 +330,7 @@ var Route = (function (_super) {
     };
     Route.prototype.overview = function () {
         this.headerView.switchViewWithTabName('overview');
-        var rv, stat = { 'books': 0, 'users': 0 };
-        rv = DB.prepare('select count(*) as count from book;').execute();
-        stat.books = rv[0].count;
-        rv = DB.prepare('select count(*) as count from user;').execute();
-        stat.users = rv[0].count;
-        var view = new DashboardView({ el: $('#form') });
-        view.render(stat);
+        (new DashboardView({ el: $('#form') })).render();
     };
     Route.prototype.bookBorrow = function () {
         this.formView.render(html.bookborrow);
