@@ -1,4 +1,5 @@
 /// <reference path="type/sql.d.ts" />
+/// <reference path="type/squel.d.ts" />
 /// <reference path="type/jquery.d.ts" />
 /// <reference path="type/underscore.d.ts" />
 /// <reference path="type/backbone.d.ts" />
@@ -61,14 +62,16 @@ class UserModel extends Backbone.Model {
     }
 }
 
-class BaseCollection<TModel extends Backbone.Model> extends Backbone.Collection<Backbone.Model> {
+class BaseCollection<TModel extends Backbone.Model> extends
+    Backbone.Collection<Backbone.Model>
+{
 
     table: string;
 
     fetch(options?: Backbone.CollectionFetchOptions): any {
         options = options ? _.clone(options) : {};
 
-        var rv = DB.prepare('select * from ' + this.table).execute();
+        var rv = DB.prepare(this.table, 'select * from ' + this.table).execute();
         var method = options.reset ? 'reset' : 'set';
         this[method](rv, options);
 
@@ -94,11 +97,17 @@ class UserCollection extends BaseCollection<UserModel> {
 // ----------------------------------------------------------------------------
 class StatmentProxy {
 
+    private db
+    private table
     private queryResultModel
     private stmtString
     private stmt
     
-    constructor(db, queryResultModel: QueryResultModel, stmtString: string) {
+    constructor(table: string, db, queryResultModel: QueryResultModel,
+                stmtString: string
+    ) {
+        this.db = db;
+        this.table = table;
         this.queryResultModel = queryResultModel;
         this.stmtString = stmtString;
         this.stmt = db.prepare(stmtString);
@@ -110,7 +119,7 @@ class StatmentProxy {
 
     execute(params?: any): any {
         var rv: any[] = [],
-            columnNames: string[];
+            columnNames = this.getTableColumns();
 
         this.bind(params);
         while (this.stmt.step()) {
@@ -125,6 +134,16 @@ class StatmentProxy {
         });
 
         return rv;
+    }
+
+    private getTableColumns(): string[] {
+        var rv = this.db.exec('PRAGMA table_info("' + this.table + '")');
+
+        if (rv.length < 1) {
+            return [];
+        }
+
+        return _.map(rv[0].values, (i) => { return i[1]; });
     }
 }
 
@@ -141,8 +160,8 @@ var DB = {
         return this.db.exec(stmt);
     },
 
-    prepare(stmt: string): StatmentProxy {
-        return new StatmentProxy(this.db, this.queryResult, stmt);
+    prepare(table: string, stmt: string): StatmentProxy {
+        return new StatmentProxy(table, this.db, this.queryResult, stmt);
     }
 };
 
@@ -154,9 +173,11 @@ class Seeder {
     constructor(private db: any) {}
 
     run(): void {
+        console.log('Seeding database...');
         this.seedTables();
         this.seedBooks();
         this.seedUsers();
+        this.seedBookBorrowingLogs();
     }
 
     private seedTables(): void {
@@ -169,6 +190,10 @@ class Seeder {
 
     private seedUsers(): void {
         this.db.exec(sqlQuery.inituser);
+    }
+
+    private seedBookBorrowingLogs(): void {
+        this.db.exec(sqlQuery.initbookborrowinglog);
     }
 }
 
@@ -296,15 +321,110 @@ class DashboardView extends Backbone.View<Backbone.Model> {
 
     // FIXME should separate view & model/collection.
     private queryUserCount(): number {
-        var rv = DB.prepare('select count(*) as count from user').execute();
+        var rv = DB.prepare('user', 'select count(*) as count from user').execute();
 
         return rv[0].count;
     }
 
     private queryBookCount(): number {
-        var rv = DB.prepare('select count(*) as count from book').execute();
+        var rv = DB.prepare('book', 'select count(*) as count from book').execute();
 
         return rv[0].count;
+    }
+}
+
+class QueryView<TModel extends Backbone.Model> extends
+    Backbone.View<Backbone.Model>
+{
+    protected table = ''
+    protected emptyValue = ''
+
+    // Query fields.
+    protected fields(): any {
+        return {};
+    }
+
+    protected query(): any[] {
+        var stmt = DB.prepare(this.table, this.generateQuery().toString());
+
+        return stmt.execute();
+    }
+
+    protected generateQuery(): any {
+        var queryClauses: string[] = this.grabUserInput(),
+            stmt = squel.select().from(this.table);
+        
+        for (var i = 0; i < queryClauses.length; i++) {
+            stmt = stmt.where(queryClauses[i]);
+        }
+
+        return stmt;
+    }
+
+    protected grabUserInput(): string[] {
+        var definedFields = _.extend({}, this.fields()),
+            queryFields: string[] = [],
+            $form = $('form[role=form]', this.el);
+
+        _.each(definedFields, (q: (...data: any[]) => string, fieldName) => {
+            var userInput = $('input[name=' + fieldName + ']', $form).val();
+
+            if (! userInput || userInput === this.emptyValue) {
+                return;
+            }
+
+            queryFields.push(q({ value: userInput }));
+        });
+
+        return queryFields;
+    }
+}
+
+class BookQueryView extends QueryView<BookModel> {
+
+    protected table = 'book';
+    private tmpl = html.bookquery
+    private $resultTable: JQuery
+    private resultRowTmpl = _.template(html.bookresultrow)
+
+    constructor(options?: any) {
+        super(options);
+
+        $(this.el).html(this.tmpl);
+        this.$resultTable = $('.book-query-stats table' ,this.el);
+    }
+
+    events() {
+        return {
+            'click .book-query-actions .btn-success': 'render'
+        };
+    }
+
+    protected fields() {
+        return {
+            'book-query-title': _.template('title like "%<%= value %>%"'),
+            'book-query-no': _.template('no = "<%= value %>"'),
+            'book-query-isbn': _.template('isbn = "<%= value %>"')
+        }; 
+    }
+
+    render(): BookQueryView {
+        var books = this.query();
+
+        this.renderResultTable(books);
+
+        return this;
+    }
+
+    protected renderResultTable(books: any[]): void {
+        var $tbody = $('tbody', this.$resultTable),
+            rows: string[] = [];
+
+        rows = _.map(books, (book) => {
+            return this.resultRowTmpl(book);
+        });
+
+        $tbody.html(rows.join(''));
     }
 }
 
@@ -375,8 +495,9 @@ class Route extends Backbone.Router {
     }
 
     bookQuery(): void {
-        this.formView.render(html.bookquery);
         this.headerView.switchViewWithTabName('bookquery');
+
+        (new BookQueryView({el: $('#form')})).render();
     }
 
     bookAdd(): void {

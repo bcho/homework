@@ -23,13 +23,14 @@ create table user(
 );
 
 create table book_borrowing_log(
-    id integer,
+    id integer auto increment,
     book_no string,
     user_no string,
     expire_at timestamp,
     returned_at timestamp,
     created_at timestamp,
 
+    primary key(id),
     foreign key(book_no) references book(no),
     foreign key(user_no) references user(no)
 );
