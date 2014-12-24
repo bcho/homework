@@ -391,7 +391,7 @@ class BookQueryView extends QueryView<BookModel> {
         super(options);
 
         $(this.el).html(this.tmpl);
-        this.$resultTable = $('.book-query-stats table' ,this.el);
+        this.$resultTable = $('.book-query-stats table', this.el);
     }
 
     events() {
@@ -417,14 +417,52 @@ class BookQueryView extends QueryView<BookModel> {
     }
 
     protected renderResultTable(books: any[]): void {
-        var $tbody = $('tbody', this.$resultTable),
-            rows: string[] = [];
+        var $tbody = $('tbody', this.$resultTable);
 
-        rows = _.map(books, (book) => {
-            return this.resultRowTmpl(book);
-        });
+        $tbody.html(_.map(books, this.resultRowTmpl).join(''));
+    }
+}
 
-        $tbody.html(rows.join(''));
+class UserQueryView extends QueryView<UserModel> {
+
+    protected table = 'user';
+    private tmpl = html.readerquery
+    private $resultTable: JQuery
+    private resultRowTmpl = _.template(html.readerresultrow)
+
+    constructor(options?: any) {
+        super(options);
+
+        $(this.el).html(this.tmpl);
+        this.$resultTable = $('.user-query-stats table', this.el);
+    }
+
+    events() {
+        return {
+            'click .user-query-actions .btn-success': 'render'
+        };
+    }
+
+    protected fields() {
+        return {
+            'user-query-name': _.template('name like "%<%= value %>%"'),
+            'user-query-no': _.template('no = "<%= value %>"'),
+            'user-query-faculty': _.template('faculty like "%<%= faculty %>%"')
+        };
+    }
+
+    render(): UserQueryView {
+        var users = this.query();
+
+        this.renderResultTable(users);
+
+        return this;
+    }
+
+    protected renderResultTable(users: any[]): void {
+        var $tbody = $('tbody', this.$resultTable);
+
+        $tbody.html(_.map(users, this.resultRowTmpl).join(''));
     }
 }
 
@@ -506,8 +544,9 @@ class Route extends Backbone.Router {
     }
 
     readerQuery(): void {
-        this.formView.render(html.readerquery);
         this.headerView.switchViewWithTabName('readerquery');
+
+        (new UserQueryView({el: $('#form')})).render();
     }
 
     readerAdd(): void {
