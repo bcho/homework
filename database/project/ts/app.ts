@@ -423,6 +423,52 @@ class BookQueryView extends QueryView<BookModel> {
     }
 }
 
+class BookProfileView extends Backbone.View<BookModel> {
+
+    protected tmpl = _.template(html.bookprofile);
+
+    render(bookNo: string): BookProfileView {
+        var book = this.query(bookNo);
+
+        if (book) {
+            this.renderProfile(book);
+        } else {
+            this.renderNotFound(bookNo);
+        }
+
+        return this;
+    }
+
+    private renderProfile(book: any): void {
+        console.log(this.queryBorrowLogs(book.no));
+    }
+
+    private renderNotFound(bookNo: string): void {
+        $(this.el).html(_.template(html.bookprofilenotfound)({no: bookNo}));
+    }
+
+    private query(bookNo: string): any {
+        var stmt = squel.select().from('book')
+                .where('no = ?',  bookNo);
+
+        var rv = DB.prepare('book', stmt.toString()).execute();
+        if (rv.length < 1) {
+            return null;
+        }
+
+        return rv[0];
+    }
+
+    private queryBorrowLogs(bookNo: string): any {
+        var stmt = squel.select().from('book')
+            .where('book.no = ?', bookNo)
+            .left_join('book_borrowing_log', 'log', 'log.book_no = book.no')
+            .left_join('user', null, 'user.no = log.user_no');
+
+        return DB.prepare('book', stmt.toString()).execute();
+    }
+}
+
 class UserQueryView extends QueryView<UserModel> {
 
     protected table = 'user';
@@ -510,6 +556,7 @@ class Route extends Backbone.Router {
             'book/return': 'bookReturn',
             'book/query': 'bookQuery',
             'book/add': 'bookAdd',
+            'book/:no': 'bookProfile',
             'reader/query': 'readerQuery',
             'reader/add': 'readerAdd',
             'help': 'help'
@@ -541,6 +588,10 @@ class Route extends Backbone.Router {
     bookAdd(): void {
         this.formView.render(html.bookadd);
         this.headerView.switchViewWithTabName('bookadd');
+    }
+
+    bookProfile(bookNo): void {
+        (new BookProfileView({el: $('#form')})).render(bookNo);
     }
 
     readerQuery(): void {

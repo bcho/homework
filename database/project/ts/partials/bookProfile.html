@@ -1,0 +1,53 @@
+                <div class="page-header">
+                    <h3><%= title %> 书籍详情</h3>
+                </div>
+                <form action="#" role="form" class="book-query">
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-profile-title">书籍名称</label>
+                            <input name="book-profile-title" type="text" class="form-control" placeholder="书籍名称" value="<%= title %>" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-profile-no">书籍编号</label>
+                            <input name="book-profile-no" type="text" class="form-control" placeholder="书籍编号" value="<%= no %>" />
+                        </div>
+                        <div class="col-xs-4">
+                            <label for="book-profile-isbn">ISBN 编码</label>
+                            <input name="book-profile-isbn" type="text" class="form-control" placeholder="ISBN 编码" value="<%= isbn %>" />
+                        </div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col-xs-4">
+                            <label for="book-profile-borrow-stats">借阅次数</label>
+                            <input class="form-control" type="text" name="book-profile-borrow-stats" placeholder="借阅次数" value="<%= borrow_times %>">
+                        </div>
+                    </div>
+                    <div class="book-profile-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-primary">更新图书</a>
+                            <a class="btn btn-success">借出图书</a>
+                            <a class="btn btn-danger">删除图书</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="book-profile-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>借阅记录</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>借阅读者</td>
+                                    <td>借阅日期</td>
+                                    <td>应该归还日期</td>
+                                    <td>归还日期</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>

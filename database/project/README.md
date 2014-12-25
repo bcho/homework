@@ -14,6 +14,8 @@
     * [x] return book page
     * [x] book profile page
     * [x] user profile page
-- [ ] auto create view support
+- [x] auto create view support
 - [ ] web app
+    * [ ] reader / book detail page
+    * [ ] borrow page
 - [ ] report
