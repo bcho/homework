@@ -1,7 +1,7 @@
                 <div class="page-header">
                     <h3><%= title %> 书籍详情</h3>
                 </div>
-                <form action="#" role="form" class="book-query">
+                <form action="#" role="form" class="book-profile" data-book-no="<%= no %>">
                     <div class="row form-group">
                         <div class="col-xs-4">
                             <label for="book-profile-title">书籍名称</label>
@@ -21,14 +21,14 @@
                     <div class="row form-group">
                         <div class="col-xs-4">
                             <label for="book-profile-borrow-stats">借阅次数</label>
-                            <input class="form-control" type="text" name="book-profile-borrow-stats" placeholder="借阅次数" value="<%= borrow_times %>">
+                            <input class="form-control" type="text" name="book-profile-borrow-stats" placeholder="借阅次数" value="<%= borrow_times %>" readonly>
                         </div>
                     </div>
                     <div class="book-profile-actions row">
                         <div class="btn-group col-md-4" role="group">
-                            <a class="btn btn-primary">更新图书</a>
-                            <a class="btn btn-success">借出图书</a>
-                            <a class="btn btn-danger">删除图书</a>
+                            <a class="btn btn-primary book-profile-update">更新图书</a>
+                            <a class="btn btn-success book-profile-borrow <%= can_borrow %>">借出图书</a>
+                            <a class="btn btn-danger book-profile-remove">删除图书</a>
                         </div>
                     </div>
                 </form>

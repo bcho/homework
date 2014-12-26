@@ -427,6 +427,13 @@ class BookProfileView extends Backbone.View<BookModel> {
 
     protected tmpl = _.template(html.bookprofile);
 
+    events(): any {
+        return {
+            'click a.book-profile-update': 'updateProfile',
+            'click a.book-profile-remove': 'removeBook'
+        };
+    }
+
     render(bookNo: string): BookProfileView {
         var book = this.query(bookNo);
 
@@ -440,7 +447,19 @@ class BookProfileView extends Backbone.View<BookModel> {
     }
 
     private renderProfile(book: any): void {
-        console.log(this.queryBorrowLogs(book.no));
+        var $el = $(this.el),
+            rowTmpl = _.template(html.bookborrowlogrow),
+            borrowLogs: string[];
+
+        borrowLogs = _.map(this.queryBorrowLogs(book.no), rowTmpl);
+
+        book['borrow_times'] = borrowLogs.length;
+        book['can_borrow'] = this.queryCanBorrow(book.no) ? '' : 'hide';
+
+        $el.html(this.tmpl(book));
+        $('.book-profile-stats tbody', $el).html(borrowLogs.join(''));
+
+        this.delegateEvents();
     }
 
     private renderNotFound(bookNo: string): void {
@@ -460,13 +479,84 @@ class BookProfileView extends Backbone.View<BookModel> {
     }
 
     private queryBorrowLogs(bookNo: string): any {
-        var stmt = squel.select().from('book')
-            .where('book.no = ?', bookNo)
-            .left_join('book_borrowing_log', 'log', 'log.book_no = book.no')
+        var stmt = squel.select()
+            .from('book_borrowing_log', 'log')
+            .where('log.book_no = ?', bookNo)
             .left_join('user', null, 'user.no = log.user_no');
 
-        return DB.prepare('book', stmt.toString()).execute();
+        return DB.prepare('book_borrowing_log', stmt.toString()).execute();
     }
+
+    private queryCanBorrow(bookNo: string): boolean {
+        var stmt = squel.select()
+            .field('count(*)', 'not_returned')
+            .from('book_borrowing_log', 'log')
+            .where('log.book_no = ?', bookNo)
+            .where('log.returned_at is null');
+
+        var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
+
+        return rv[0]['not_returned'] <= 0;
+    }
+
+    private updateProfile(): boolean {
+        var $form = $('.book-profile', this.el),
+            bookTitle = $('[name=book-profile-title]', $form).val(),
+            bookNo = $('[name=book-profile-no]', $form).val(),
+            bookIsbn = $('[name=book-profile-isbn]', $form).val(),
+            originalBookNo = this.getOriginalBookNo();
+
+        var stmt = squel.update()
+            .table('book')
+            .set('no', bookNo)
+            .set('isbn', bookIsbn)
+            .set('title', bookTitle)
+            .where('no = ?', originalBookNo);
+
+        try {
+            DB.exec(stmt.toString());
+            alert('更新成功');
+
+            this.render(bookNo);
+        } catch (e) {
+            console.log(e);
+
+            alert('更新失败');
+        }
+
+        return true;
+    }
+
+    private removeBook(): boolean {
+        var bookNo = this.getOriginalBookNo();
+
+        if (! this.queryCanBorrow(bookNo)) {
+            alert('不能删除本书记录');
+
+            return true;
+        }
+
+        var stmt = squel.delete()
+            .from('book')
+            .where('no = ?', bookNo);
+
+        try {
+            DB.exec(stmt.toString());
+            alert('删除成功');
+            location.href = '/#book/query';
+        } catch (e) {
+            console.log(e);
+
+            alert('删除失败');
+        }
+
+        return true;
+    }
+
+    private getOriginalBookNo(): string {
+        return $('.book-profile', this.el).data('book-no');
+    }
+
 }
 
 class UserQueryView extends QueryView<UserModel> {
