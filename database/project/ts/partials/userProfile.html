@@ -1,0 +1,61 @@
+                <div class="page-header">
+                    <h3>读者 <%= name %> 详情</h3>
+                </div>
+                <form action="#" role="form" class="user-profile" data-user-no="<%= no %>">
+                    <div class="row form-group">
+                        <div class="col-xs-4 user-profile-name">
+                            <label for="user-profile-name">姓名</label>
+                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" value="<%= name %>" />
+                        </div>
+                        <div class="col-xs-4 user-profile-no">
+                            <label for="user-profile-no">学号</label>
+                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" value="<%= no %>" />
+                        </div>
+                        <div class="col-xs-4 user-profile-faculty">
+                            <label for="user-profile-faculty">学院</label>
+                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" value="<%= faculty %>" />
+                        </div>
+                    </div>
+                    <div class="user-profile-actions row">
+                        <div class="btn-group col-md-4" role="group">
+                            <a class="btn btn-success user-profile-update">更新</a>
+                            <a class="btn btn-danger user-profile-remove">删除</a>
+                        </div>
+                    </div>
+                </form>
+                <div class="user-profile-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>持书情况</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>书籍名称</td>
+                                    <td>书籍编号</td>
+                                    <td>借阅时间</td>
+                                    <td>应归还时间</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>借阅记录</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>书籍名称</td>
+                                    <td>书籍编号</td>
+                                    <td>借阅时间</td>
+                                    <td>归还时间</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>

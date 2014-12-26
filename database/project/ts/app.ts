@@ -430,7 +430,7 @@ class BookProfileView extends Backbone.View<BookModel> {
     events(): any {
         return {
             'click a.book-profile-update': 'updateProfile',
-            'click a.book-profile-remove': 'removeBook'
+            'click a.book-profile-remove': 'removeProfile'
         };
     }
 
@@ -527,7 +527,7 @@ class BookProfileView extends Backbone.View<BookModel> {
         return true;
     }
 
-    private removeBook(): boolean {
+    private removeProfile(): boolean {
         var bookNo = this.getOriginalBookNo();
 
         if (! this.queryCanBorrow(bookNo)) {
@@ -602,6 +602,91 @@ class UserQueryView extends QueryView<UserModel> {
     }
 }
 
+class UserProfileView extends Backbone.View<UserModel> {
+
+    protected tmpl = _.template(html.userprofile);
+
+    events(): any {
+        return {
+            'click a.user-profile-update': 'updateProfile',
+            'click a.user-profile-remove': 'removeProfile'
+        };
+    }
+
+    render(userNo: string): UserProfileView {
+        var user = this.query(userNo);
+
+        if (user) {
+            this.renderProfile(user);
+        } else {
+            this.renderNotFound(userNo);
+        }
+
+        return this;
+    }
+
+    private renderProfile(user: any): void {
+        var $el = $(this.el);
+
+        $el.html(this.tmpl(user));
+
+        this.delegateEvents();
+    }
+
+    private renderNotFound(userNo: string): void {
+        $(this.el).html(_.template(html.userprofilenotfound)({no: userNo}));
+    }
+
+    private query(userNo: string): any {
+        var stmt = squel.select().from('user')
+                .where('no = ?',  userNo);
+
+        var rv = DB.prepare('user', stmt.toString()).execute();
+        if (rv.length < 1) {
+            return null;
+        }
+
+        return rv[0];
+    }
+
+    private updateProfile(): boolean {
+        var $form = $('.user-profile', this.el),
+            userName = $('[name=user-profile-name]', $form).val(),
+            userNo = $('[name=user-profile-no]', $form).val(),
+            userFaculty = $('[name=user-profile-faculty]', $form).val(),
+            originalUserNo = this.getOriginalUserNo();
+
+        var stmt = squel.update()
+            .table('user')
+            .set('no', userNo)
+            .set('name', userName)
+            .set('faculty', userFaculty)
+            .where('no = ?', originalUserNo);
+
+        try {
+            DB.exec(stmt.toString());
+            alert('更新成功');
+
+            this.render(userNo);
+        } catch (e) {
+            console.log(e);
+
+            alert('更新失败');
+        }
+
+        return true;
+    }
+
+    private removeProfile(): boolean {
+        return true;
+    }
+
+    private getOriginalUserNo(): string {
+        return $('.user-profile', this.el).data('user-no');
+    }
+
+}
+
 class FormView extends Backbone.View<Backbone.Model> {
 
     $el: JQuery
@@ -649,6 +734,7 @@ class Route extends Backbone.Router {
             'book/:no': 'bookProfile',
             'reader/query': 'readerQuery',
             'reader/add': 'readerAdd',
+            'reader/:no': 'readerProfile',
             'help': 'help'
         };
     }
@@ -693,6 +779,10 @@ class Route extends Backbone.Router {
     readerAdd(): void {
         this.formView.render(html.readeradd);
         this.headerView.switchViewWithTabName('readeradd');
+    }
+
+    readerProfile(userNo): void {
+        (new UserProfileView({el: $('#form')})).render(userNo);
     }
 
     help(): void {
