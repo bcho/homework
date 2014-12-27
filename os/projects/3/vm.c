@@ -91,12 +91,12 @@ vm_alloc(unsigned int vpage)
     int ppage, i;
 
     if ((ppage = phy_alloc()) == -1) {
-        fprintf(stderr, "内存已满\n");
+        printf("内存已满\n");
 
         // 当前使用 FIFO 算法来进行替换
         //
         // TODO 支持其他算法 (esp. LRU)
-        fprintf(stderr, "替换物理内存页：%d\n", victim_ppage);
+        printf("替换物理内存页：%d\n", victim_ppage);
         phy_disalloc(victim_ppage);
         for (i = 0; i < NVPG; i++)
             if (page_table[i].present && page_table[i].ppage == victim_ppage)
@@ -110,7 +110,7 @@ vm_alloc(unsigned int vpage)
         victim_ppage = (victim_ppage + 1) % NPPG;
     }
 
-    fprintf(stderr, "分配虚拟内存页：%d <- %d\n", vpage, ppage);
+    printf("分配虚拟内存页：%d <- %d\n", vpage, ppage);
     page_table[vpage].ppage = ppage;
     page_table[vpage].present = 1;
 }
@@ -122,14 +122,14 @@ vm_hit(unsigned int va)
 
     // TODO boundary check
     
-    printf("访问虚拟内存地址: 0x%04x\n", va);
+    fprintf(stderr, "访问虚拟内存地址: 0x%04x\n", va);
     vpage = PTX(va);
     if (page_table[vpage].present) {
         pa = PPA(page_table[vpage].ppage, VAO(va));
-        printf("访问物理内存地址: 0x%04x\n", pa);
+        fprintf(stderr, "访问物理内存地址: 0x%04x\n", pa);
     } else {
         // page fault
-        fprintf(stderr, "虚拟内存页 %d 不在内存中\n", vpage);
+        printf("虚拟内存页 %d 不在内存中\n", vpage);
         vm_alloc(vpage);
 
         vm_hit(va);
