@@ -7,11 +7,8 @@ main()
     int i;
 
     vm_init();
-    vm_dump();
-    vm_hit(0x1012);
-    vm_dump();
 
-    for (i = VMEM - 1; i > 0; i--)
+    for (i = 0; i < VMEM; i++)
         vm_hit(i);
     vm_dump();
 

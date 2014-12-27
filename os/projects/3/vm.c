@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #define FULLMAGIC ((1 << NPPG) - 1)
 
@@ -14,6 +15,9 @@ struct pg_entry {
 
 // 物理内存占用情况
 unsigned long physical_mem = 0u;
+
+// 指向当前可以替换的物理内存页
+unsigned int victim_ppage = 0u;
 
 // 页表
 struct pg_entry page_table[NVPG];
@@ -77,26 +81,39 @@ void
 vm_init()
 {
     physical_mem = 0u;
+    victim_ppage = 0u;
     memset(page_table, 0, NVPG * sizeof(struct pg_entry));
 }
 
 void
 vm_alloc(unsigned int vpage)
 {
-    int ppage;
+    int ppage, i;
 
     if ((ppage = phy_alloc()) == -1) {
-        // TODO swap out a page
-        printf("内存已满\n");
-        vm_dump();
+        fprintf(stderr, "内存已满\n");
 
-        return;
+        // 当前使用 FIFO 算法来进行替换
+        //
+        // TODO 支持其他算法 (esp. LRU)
+        fprintf(stderr, "替换物理内存页：%d\n", victim_ppage);
+        phy_disalloc(victim_ppage);
+        for (i = 0; i < NVPG; i++)
+            if (page_table[i].present && page_table[i].ppage == victim_ppage)
+                page_table[i].present = 0;
+
+        // 使用该页
+        ppage = phy_alloc();
+        assert(ppage != -1);
+
+        // 更新可替换页
+        victim_ppage = (victim_ppage + 1) % NPPG;
     }
 
-    page_table[vpage].ppage == ppage;
+    fprintf(stderr, "分配虚拟内存页：%d <- %d\n", vpage, ppage);
+    page_table[vpage].ppage = ppage;
     page_table[vpage].present = 1;
 }
-
 
 void
 vm_hit(unsigned int va)
@@ -112,10 +129,10 @@ vm_hit(unsigned int va)
         printf("访问物理内存地址: 0x%04x\n", pa);
     } else {
         // page fault
-        printf("页面 %d 不在内存中\n", vpage);
+        fprintf(stderr, "虚拟内存页 %d 不在内存中\n", vpage);
         vm_alloc(vpage);
 
-        // vm_hit(va);
+        vm_hit(va);
     }
 }
 
@@ -131,7 +148,7 @@ vm_dump()
     for (i = 0; i < NVPG; i++) {
         printf("\t页面 %03d: ", i);
         if (page_table[i].present)
-            printf("已加载");
+            printf("已加载 %d", page_table[i].ppage);
         else
             printf("未加载");
         if (i % 4 == 3)
