@@ -1,10 +1,16 @@
 .PHONY: clean
 
 CFLAGS=-g
-TARGET=main
+MAIN=main
+ADDR=addr
 OBJS=vm.o
 
-$(TARGET): $(TARGET).c $(OBJS)
+all: $(MAIN) $(ADDR)
+
+$(MAIN): $(MAIN).c $(OBJS)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+$(ADDR): $(ADDR).c $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 
