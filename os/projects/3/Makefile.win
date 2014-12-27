@@ -1,0 +1,17 @@
+.PHONY: build clean
+
+CC=gcc.exe
+RM=rm.exe -f
+CFLAGS=-lm -g
+TARGET=addr.exe main.exe
+PARTIALS=vm.c
+
+build: $(TARGET)
+
+addr.exe: addr.c
+	$(CC) addr.c $(PARTIALS) -o $@ $(CFLAGS)
+
+main.exe: main.c
+	$(CC) main.c $(PARTIALS) -o $@ $(CFLAGS)
+
+clean:

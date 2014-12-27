@@ -13,6 +13,10 @@ $(MAIN): $(MAIN).c $(OBJS)
 $(ADDR): $(ADDR).c $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-
 clean:
 	rm -rf *.o *_test $(TARGET) *.zip
+
+prepare-win:
+	./convert.sh
+	zip win.zip converted/**
+	rm -rf converted
