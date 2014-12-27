@@ -25,4 +25,9 @@
 // 虚拟页数
 #define NVPG (1 << (VAWIDTH - PTXSHIFT))
 
+
+// 控制指令
+#define INST_FINISH -1
+#define INST_VMDUMP -2
+
 #endif /* #ifndef CONFIG_H */
