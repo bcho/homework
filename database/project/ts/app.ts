@@ -783,6 +783,110 @@ class UserProfileView extends Backbone.View<UserModel> {
 
 }
 
+class ReturnBookView extends Backbone.View<Backbone.Model> {
+
+    $el: JQuery
+    tmpl = _.template(html.returnbook);
+
+    events(): any {
+        return {
+            'click #book-borrow-return-user-borrowing tbody tr': 'fillForm',
+            'click .book-borrow-return-submit': 'submit'
+        };
+    }
+
+    fillForm(e): boolean {
+        var $el = $(e.target.parentElement),
+            $field = $('input[name=book-borrow-return-book-no]', this.el),
+            bookNo = $el.data('book-no');
+
+        $field.val(bookNo);
+
+        return true;
+    }
+
+    submit(): boolean {
+        var userNo = $('.book-borrow-return-form', this.el).data('user-no'),
+            bookNo = $('input[name=book-borrow-return-book-no]', this.el).val();
+
+        if (! userNo || ! bookNo) {
+            return true;
+        }
+
+        var stmt = squel
+            .update()
+            .set('returned_at = CURRENT_DATE')
+            .table('book_borrowing_log')
+            .where('returned_at is null')
+            .where('book_no = ?', bookNo)
+            .where('user_no = ?', userNo);
+
+        try {
+            console.log(stmt.toString());
+            DB.exec(stmt.toString());
+            alert('归还成功');
+
+            this.render(userNo);
+        } catch (e) {
+            console.log(e);
+
+            alert('归还失败');
+        }
+
+        return true;
+    }
+
+    render(userNo: string): ReturnBookView {
+        var user = this.queryUser(userNo);
+
+        if (! user) {
+            alert("没有找到读者记录：" + userNo);
+
+            location.href = "/#overview";
+
+            return;
+        }
+
+        this.$el.html(this.tmpl({
+            user: user
+        }));
+
+        this.renderBorrowingBooks(user);
+
+        this.delegateEvents();
+    }
+
+    private renderBorrowingBooks(user: any): void {
+        var $el = $('#book-borrow-return-user-borrowing tbody', this.el),
+            rowTmpl = _.template(html.bookborrowreturnuserborrowingrow),
+            books = this.queryBorrowingBooks(user.no);
+
+        $el.html(_.map(books, rowTmpl).join(''));
+    }
+
+    private queryUser(userNo): any {
+        var stmt = squel
+            .select()
+            .from('user')
+            .where('no = ?', userNo);
+
+        var rv = DB.prepare('user', stmt.toString()).execute();
+
+        return rv.length > 0 ? rv[0] : null;
+    }
+
+    private queryBorrowingBooks(userNo: string): any[] {
+        var stmt = squel.select()
+            .from('book')
+            .join('book_borrowing_log', 'log', 'log.book_no = book.no')
+            .where('log.user_no = ?', userNo)
+            .where('log.returned_at is null');
+
+        return DB.prepare('book_borrowing_log', stmt.toString()).execute();
+    }
+
+}
+
 class FormView extends Backbone.View<Backbone.Model> {
 
     $el: JQuery
@@ -824,7 +928,7 @@ class Route extends Backbone.Router {
             '': 'overview',
             'overview': 'overview',
             'book/borrow': 'bookBorrow',
-            'book/return': 'bookReturn',
+            'book/return/:readerNo': 'bookReturn',
             'book/query': 'bookQuery',
             'book/add': 'bookAdd',
             'book/:no': 'bookProfile',
@@ -846,9 +950,8 @@ class Route extends Backbone.Router {
         this.headerView.switchViewWithTabName('bookborrow');
     }
 
-    bookReturn(): void {
-        this.formView.render(html.bookreturn);
-        this.headerView.switchViewWithTabName('bookreturn');
+    bookReturn(readerNo): void {
+        (new ReturnBookView({ el: $('#form') })).render(readerNo);
     }
 
     bookQuery(): void {
