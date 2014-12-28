@@ -17,6 +17,6 @@
 - [x] auto create view support
 - [ ] foreign key cascade
 - [ ] web app
-    * [ ] reader / book detail page
+    * [x] reader / book detail page
     * [ ] borrow page
 - [ ] report

@@ -95,7 +95,7 @@ class UserCollection extends BaseCollection<UserModel> {
 // ----------------------------------------------------------------------------
 // DB proxy
 // ----------------------------------------------------------------------------
-class StatmentProxy {
+class StatementProxy {
 
     private db
     private table
@@ -110,7 +110,14 @@ class StatmentProxy {
         this.table = table;
         this.queryResultModel = queryResultModel;
         this.stmtString = stmtString;
-        this.stmt = db.prepare(stmtString);
+
+        try {
+            this.stmt = db.prepare(stmtString);
+        } catch (e) {
+            console.log(stmtString);
+
+            throw e;
+        }
     }
 
     bind(params: any): any {
@@ -118,6 +125,17 @@ class StatmentProxy {
     }
 
     execute(params?: any): any {
+        try {
+            return this._execute(params);
+        } catch (e) {
+            console.log(this.stmtString);
+            console.log(this.stmt);
+
+            throw e;
+        }
+    }
+
+    protected _execute(params?: any): any {
         var rv: any[] = [],
             columnNames = this.getTableColumns();
 
@@ -160,8 +178,8 @@ var DB = {
         return this.db.exec(stmt);
     },
 
-    prepare(table: string, stmt: string): StatmentProxy {
-        return new StatmentProxy(table, this.db, this.queryResult, stmt);
+    prepare(table: string, stmt: string): StatementProxy {
+        return new StatementProxy(table, this.db, this.queryResult, stmt);
     }
 };
 
@@ -604,7 +622,7 @@ class UserQueryView extends QueryView<UserModel> {
 
 class UserProfileView extends Backbone.View<UserModel> {
 
-    protected tmpl = _.template(html.userprofile);
+    protected tmpl = _.template(html.readerprofile);
 
     events(): any {
         return {
@@ -630,11 +648,30 @@ class UserProfileView extends Backbone.View<UserModel> {
 
         $el.html(this.tmpl(user));
 
+        this.renderBorrowingBooks(user);
+        this.renderBorrowedBooks(user);
+
         this.delegateEvents();
     }
 
+    private renderBorrowingBooks(user: any): void {
+        var $el = $('#user-profile-borrowing tbody', this.el),
+            rowTmpl = _.template(html.readerborrowlogrow),
+            books = this.queryBorrowingBooks(user.no);
+
+        $el.html(_.map(books, rowTmpl).join(''));
+    }
+
+    private renderBorrowedBooks(user: any): void {
+        var $el = $('#user-profile-borrowed tbody', this.el),
+            rowTmpl = _.template(html.readerborrowlogrow),
+            books = this.queryBorrowedBooks(user.no);
+
+        $el.html(_.map(books, rowTmpl).join(''));
+    }
+
     private renderNotFound(userNo: string): void {
-        $(this.el).html(_.template(html.userprofilenotfound)({no: userNo}));
+        $(this.el).html(_.template(html.readerprofilenotfound)({no: userNo}));
     }
 
     private query(userNo: string): any {
@@ -647,6 +684,25 @@ class UserProfileView extends Backbone.View<UserModel> {
         }
 
         return rv[0];
+    }
+
+    private queryBorrowingBooks(userNo: string): any[] {
+        var stmt = squel.select()
+            .from('book')
+            .join('book_borrowing_log', 'log', 'log.book_no = book.no')
+            .where('log.user_no = ?', userNo)
+            .where('log.returned_at is null');
+
+        return DB.prepare('book_borrowing_log', stmt.toString()).execute();
+    }
+
+    private queryBorrowedBooks(userNo: string): any[] {
+        var stmt = squel.select()
+            .from('book')
+            .join('book_borrowing_log', 'log', 'log.book_no = book.no')
+            .where('log.user_no = ?', userNo);
+
+        return DB.prepare('book_borrowing_log', stmt.toString()).execute();
     }
 
     private queryCanDelete(userNo: string): boolean {
