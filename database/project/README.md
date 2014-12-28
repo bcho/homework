@@ -18,5 +18,8 @@
 - [ ] foreign key cascade
 - [ ] web app
     * [x] reader / book detail page
+    * [x] return page
+    * [ ] new reader
+    * [ ] new book
     * [ ] borrow page
 - [ ] report

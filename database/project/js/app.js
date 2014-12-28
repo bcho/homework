@@ -262,6 +262,7 @@ var HeaderView = (function (_super) {
     };
     return HeaderView;
 })(Backbone.View);
+var headerView = new HeaderView({ el: $('#header') });
 var StatView = (function (_super) {
     __extends(StatView, _super);
     function StatView(options) {
@@ -316,6 +317,7 @@ var DashboardView = (function (_super) {
         this.tmpl = _.template(html.overview);
     }
     DashboardView.prototype.render = function () {
+        headerView.switchViewWithTabName('overview');
         $(this.el).html(this.tmpl({
             books: this.queryBookCount(),
             users: this.queryUserCount()
@@ -392,8 +394,8 @@ var BookQueryView = (function (_super) {
         };
     };
     BookQueryView.prototype.render = function () {
-        var books = this.query();
-        this.renderResultTable(books);
+        headerView.switchViewWithTabName('bookquery');
+        this.renderResultTable(this.query());
         return this;
     };
     BookQueryView.prototype.renderResultTable = function (books) {
@@ -416,6 +418,7 @@ var BookProfileView = (function (_super) {
     };
     BookProfileView.prototype.render = function (bookNo) {
         var book = this.query(bookNo);
+        headerView.switchViewWithTabName('bookquery');
         if (book) {
             this.renderProfile(book);
         }
@@ -513,8 +516,8 @@ var UserQueryView = (function (_super) {
         };
     };
     UserQueryView.prototype.render = function () {
-        var users = this.query();
-        this.renderResultTable(users);
+        headerView.switchViewWithTabName('readerquery');
+        this.renderResultTable(this.query());
         return this;
     };
     UserQueryView.prototype.renderResultTable = function (users) {
@@ -537,6 +540,7 @@ var UserProfileView = (function (_super) {
     };
     UserProfileView.prototype.render = function (userNo) {
         var user = this.query(userNo);
+        headerView.switchViewWithTabName('readerquery');
         if (user) {
             this.renderProfile(user);
         }
@@ -662,6 +666,7 @@ var ReturnBookView = (function (_super) {
     };
     ReturnBookView.prototype.render = function (userNo) {
         var user = this.queryUser(userNo);
+        headerView.render(html.readerquery);
         if (!user) {
             alert("没有找到读者记录：" + userNo);
             location.href = "/#overview";
@@ -707,7 +712,6 @@ var Route = (function (_super) {
     function Route() {
         _super.call(this);
         this.formView = new FormView({ el: $('#form') });
-        this.headerView = new HeaderView({ el: $('#header') });
         this.booksColl = new BookCollection();
         this.usersColl = new UserCollection();
         this.booksColl.fetch();
@@ -729,41 +733,38 @@ var Route = (function (_super) {
         };
     };
     Route.prototype.overview = function () {
-        this.headerView.switchViewWithTabName('overview');
         (new DashboardView({ el: $('#form') })).render();
     };
     Route.prototype.bookBorrow = function () {
         this.formView.render(html.bookborrow);
-        this.headerView.switchViewWithTabName('bookborrow');
+        headerView.switchViewWithTabName('bookborrow');
     };
     Route.prototype.bookReturn = function (readerNo) {
         (new ReturnBookView({ el: $('#form') })).render(readerNo);
     };
     Route.prototype.bookQuery = function () {
-        this.headerView.switchViewWithTabName('bookquery');
         (new BookQueryView({ el: $('#form') })).render();
     };
     Route.prototype.bookAdd = function () {
         this.formView.render(html.bookadd);
-        this.headerView.switchViewWithTabName('bookadd');
+        headerView.switchViewWithTabName('bookadd');
     };
     Route.prototype.bookProfile = function (bookNo) {
         (new BookProfileView({ el: $('#form') })).render(bookNo);
     };
     Route.prototype.readerQuery = function () {
-        this.headerView.switchViewWithTabName('readerquery');
         (new UserQueryView({ el: $('#form') })).render();
     };
     Route.prototype.readerAdd = function () {
         this.formView.render(html.readeradd);
-        this.headerView.switchViewWithTabName('readeradd');
+        headerView.switchViewWithTabName('readeradd');
     };
     Route.prototype.readerProfile = function (userNo) {
         (new UserProfileView({ el: $('#form') })).render(userNo);
     };
     Route.prototype.help = function () {
         this.formView.render(html.help);
-        this.headerView.switchViewWithTabName('help');
+        headerView.switchViewWithTabName('help');
     };
     return Route;
 })(Backbone.Router);

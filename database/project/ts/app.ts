@@ -257,6 +257,8 @@ class HeaderView extends Backbone.View<Backbone.Model> {
     }
 }
 
+var headerView = new HeaderView({el: $('#header')});
+
 class StatView extends Backbone.View<QueryResultModel> {
 
     private $tableHead: JQuery
@@ -329,6 +331,8 @@ class DashboardView extends Backbone.View<Backbone.Model> {
     private tmpl = _.template(html.overview)
 
     render(): DashboardView {
+        headerView.switchViewWithTabName('overview');
+
         $(this.el).html(this.tmpl({
             books: this.queryBookCount(),
             users: this.queryUserCount()
@@ -427,9 +431,8 @@ class BookQueryView extends QueryView<BookModel> {
     }
 
     render(): BookQueryView {
-        var books = this.query();
-
-        this.renderResultTable(books);
+        headerView.switchViewWithTabName('bookquery');
+        this.renderResultTable(this.query());
 
         return this;
     }
@@ -454,6 +457,8 @@ class BookProfileView extends Backbone.View<BookModel> {
 
     render(bookNo: string): BookProfileView {
         var book = this.query(bookNo);
+
+        headerView.switchViewWithTabName('bookquery');
 
         if (book) {
             this.renderProfile(book);
@@ -606,9 +611,8 @@ class UserQueryView extends QueryView<UserModel> {
     }
 
     render(): UserQueryView {
-        var users = this.query();
-
-        this.renderResultTable(users);
+        headerView.switchViewWithTabName('readerquery');
+        this.renderResultTable(this.query());
 
         return this;
     }
@@ -633,6 +637,8 @@ class UserProfileView extends Backbone.View<UserModel> {
 
     render(userNo: string): UserProfileView {
         var user = this.query(userNo);
+
+        headerView.switchViewWithTabName('readerquery');
 
         if (user) {
             this.renderProfile(user);
@@ -839,6 +845,8 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
     render(userNo: string): ReturnBookView {
         var user = this.queryUser(userNo);
 
+        headerView.render(html.readerquery);
+
         if (! user) {
             alert("没有找到读者记录：" + userNo);
 
@@ -905,7 +913,6 @@ class FormView extends Backbone.View<Backbone.Model> {
 class Route extends Backbone.Router {
 
     private formView: FormView
-    private headerView: HeaderView
 
     private booksColl: BookCollection
     private usersColl: UserCollection
@@ -914,7 +921,6 @@ class Route extends Backbone.Router {
         super()
 
         this.formView = new FormView({el: $('#form')});
-        this.headerView = new HeaderView({el: $('#header')});
 
         this.booksColl = new BookCollection();
         this.usersColl = new UserCollection();
@@ -940,14 +946,12 @@ class Route extends Backbone.Router {
     }
 
     overview(): void {
-        this.headerView.switchViewWithTabName('overview');
-
         (new DashboardView({el: $('#form')})).render();
     }
 
     bookBorrow(): void {
         this.formView.render(html.bookborrow);
-        this.headerView.switchViewWithTabName('bookborrow');
+        headerView.switchViewWithTabName('bookborrow');
     }
 
     bookReturn(readerNo): void {
@@ -955,14 +959,12 @@ class Route extends Backbone.Router {
     }
 
     bookQuery(): void {
-        this.headerView.switchViewWithTabName('bookquery');
-
         (new BookQueryView({el: $('#form')})).render();
     }
 
     bookAdd(): void {
         this.formView.render(html.bookadd);
-        this.headerView.switchViewWithTabName('bookadd');
+        headerView.switchViewWithTabName('bookadd');
     }
 
     bookProfile(bookNo): void {
@@ -970,14 +972,12 @@ class Route extends Backbone.Router {
     }
 
     readerQuery(): void {
-        this.headerView.switchViewWithTabName('readerquery');
-
         (new UserQueryView({el: $('#form')})).render();
     }
 
     readerAdd(): void {
         this.formView.render(html.readeradd);
-        this.headerView.switchViewWithTabName('readeradd');
+        headerView.switchViewWithTabName('readeradd');
     }
 
     readerProfile(userNo): void {
@@ -986,7 +986,7 @@ class Route extends Backbone.Router {
 
     help(): void {
         this.formView.render(html.help);
-        this.headerView.switchViewWithTabName('help');
+        headerView.switchViewWithTabName('help');
     }
 
 }
