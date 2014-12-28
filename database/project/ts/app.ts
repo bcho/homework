@@ -649,6 +649,18 @@ class UserProfileView extends Backbone.View<UserModel> {
         return rv[0];
     }
 
+    private queryCanDelete(userNo: string): boolean {
+        var stmt = squel.select()
+            .field('count(*)', 'not_returned')
+            .from('book_borrowing_log', 'log')
+            .where('log.user_no = ?', userNo)
+            .where('log.returned_at is null');
+
+        var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
+
+        return rv[0]['not_returned'] <= 0;
+    }
+
     private updateProfile(): boolean {
         var $form = $('.user-profile', this.el),
             userName = $('[name=user-profile-name]', $form).val(),
@@ -678,6 +690,27 @@ class UserProfileView extends Backbone.View<UserModel> {
     }
 
     private removeProfile(): boolean {
+        var userNo = this.getOriginalUserNo(),
+            stmt = squel.delete()
+            .from('user')
+            .where('no = ?', userNo);
+
+        if (! this.queryCanDelete(userNo)) {
+            alert('不能删除读者记录');
+
+            return true;
+        }
+
+        try {
+            DB.exec(stmt.toString());
+            alert('删除成功');
+            location.href = '/#reader/query';
+        } catch (e) {
+            console.log(e);
+
+            alert('删除失败');
+        }
+
         return true;
     }
 

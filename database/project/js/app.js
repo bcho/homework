@@ -18,7 +18,7 @@ var html;
 })(html || (html = {}));
 var sqlQuery;
 (function (sqlQuery) {
-    sqlQuery.createtable = 'create table book(    no string,    title string,    isbn string,    category string,    description text,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp,    primary key(no),    unique(isbn));create table user(    no string,    name string,    gender string,    faculty string,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp,    primary key(no));create table book_borrowing_log(    id integer auto increment,    book_no string,    user_no string,    expire_at date,    returned_at date,    borrowed_at date default (CURRENT_DATE),    primary key(id),    foreign key(book_no) references book(no),    foreign key(user_no) references user(no));';
+    sqlQuery.createtable = 'PRAGMA foreign_keys = ON;create table book(    no string primary key,    title string,    isbn string unique,    category string,    description text,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp);create table user(    no string primary key,    name string,    gender string,    faculty string,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp);create table book_borrowing_log(    id integer primary key,    book_no string references book(no) on delete cascade on update cascade,    user_no string references user(no) on delete cascade on update cascade,    expire_at date,    returned_at date,    borrowed_at date default (CURRENT_DATE));';
     sqlQuery.initbookborrowinglog = 'insert into book_borrowing_log    (book_no, user_no, expire_at)values    ("E0094868", "3112005816", date("now", "+3 months")),    ("A1840127", "3112005816", date("now", "+3 months"));';
     sqlQuery.inituser = 'insert into user    (no, name, gender, faculty)values    ("3112005816", "张三", "男", "计算机学院"),    ("3112005817", "李四", "男", "计算机学院");';
     sqlQuery.initbook = 'insert into book    (no, title, isbn, category, description)values    ("E0094868", "A first course in database systems", "9787111247333", "", ""),    ("A0836869", "编译原理", "7302089795", "", ""),    ("A1840127", "数据库系统概论", "704007494X", "", "");';
@@ -543,6 +543,11 @@ var UserProfileView = (function (_super) {
         }
         return rv[0];
     };
+    UserProfileView.prototype.queryCanDelete = function (userNo) {
+        var stmt = squel.select().field('count(*)', 'not_returned').from('book_borrowing_log', 'log').where('log.user_no = ?', userNo).where('log.returned_at is null');
+        var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
+        return rv[0]['not_returned'] <= 0;
+    };
     UserProfileView.prototype.updateProfile = function () {
         var $form = $('.user-profile', this.el), userName = $('[name=user-profile-name]', $form).val(), userNo = $('[name=user-profile-no]', $form).val(), userFaculty = $('[name=user-profile-faculty]', $form).val(), originalUserNo = this.getOriginalUserNo();
         var stmt = squel.update().table('user').set('no', userNo).set('name', userName).set('faculty', userFaculty).where('no = ?', originalUserNo);
@@ -558,6 +563,20 @@ var UserProfileView = (function (_super) {
         return true;
     };
     UserProfileView.prototype.removeProfile = function () {
+        var userNo = this.getOriginalUserNo(), stmt = squel.delete().from('user').where('no = ?', userNo);
+        if (!this.queryCanDelete(userNo)) {
+            alert('不能删除读者记录');
+            return true;
+        }
+        try {
+            DB.exec(stmt.toString());
+            alert('删除成功');
+            location.href = '/#reader/query';
+        }
+        catch (e) {
+            console.log(e);
+            alert('删除失败');
+        }
         return true;
     };
     UserProfileView.prototype.getOriginalUserNo = function () {

@@ -21,8 +21,8 @@ create table user(
 
 create table book_borrowing_log(
     id integer primary key,
-    book_no string references book(no) on delete restrict on update cascade,
-    user_no string references user(no) on delete restrict on update cascade,
+    book_no string references book(no) on delete cascade on update cascade,
+    user_no string references user(no) on delete cascade on update cascade,
     expire_at date,
     returned_at date,
     borrowed_at date default (CURRENT_DATE)
