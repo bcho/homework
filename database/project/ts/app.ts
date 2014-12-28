@@ -644,8 +644,11 @@ class UserProfileView extends Backbone.View<UserModel> {
     }
 
     private renderProfile(user: any): void {
-        var $el = $(this.el);
+        var $el = $(this.el),
+            hasBorrowingBooks = this.queryHasBorrowingBooks(user.no);
 
+        user['disable_return_book_btn'] = hasBorrowingBooks ? '' : 'disabled';
+        user['disable_remove_btn'] = hasBorrowingBooks ? 'disabled' : '';
         $el.html(this.tmpl(user));
 
         this.renderBorrowingBooks(user);
@@ -706,6 +709,10 @@ class UserProfileView extends Backbone.View<UserModel> {
     }
 
     private queryCanDelete(userNo: string): boolean {
+        return (! this.queryHasBorrowingBooks(userNo));
+    }
+
+    private queryHasBorrowingBooks(userNo: string): boolean {
         var stmt = squel.select()
             .field('count(*)', 'not_returned')
             .from('book_borrowing_log', 'log')
@@ -714,7 +721,7 @@ class UserProfileView extends Backbone.View<UserModel> {
 
         var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
 
-        return rv[0]['not_returned'] <= 0;
+        return rv[0]['not_returned'] > 0;
     }
 
     private updateProfile(): boolean {
