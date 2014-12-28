@@ -1,36 +1,29 @@
+PRAGMA foreign_keys = ON;
+
 create table book(
-    no string,
+    no string primary key,
     title string,
-    isbn string,
+    isbn string unique,
     category string,
     description text,
     created_at timestamp default (CURRENT_TIMESTAMP),
-    updated_at timestamp,
-
-    primary key(no),
-    unique(isbn)
+    updated_at timestamp
 );
 
 create table user(
-    no string,
+    no string primary key,
     name string,
     gender string,
     faculty string,
     created_at timestamp default (CURRENT_TIMESTAMP),
-    updated_at timestamp,
-
-    primary key(no)
+    updated_at timestamp
 );
 
 create table book_borrowing_log(
-    id integer auto increment,
-    book_no string,
-    user_no string,
+    id integer primary key,
+    book_no string references book(no) on delete restrict on update cascade,
+    user_no string references user(no) on delete restrict on update cascade,
     expire_at date,
     returned_at date,
-    borrowed_at date default (CURRENT_DATE),
-
-    primary key(id),
-    foreign key(book_no) references book(no),
-    foreign key(user_no) references user(no)
+    borrowed_at date default (CURRENT_DATE)
 );
