@@ -538,8 +538,10 @@ class BookProfileView extends Backbone.View<BookModel> {
 
         try {
             DB.exec(stmt.toString());
+
             alert('更新成功');
 
+            this.undelegateEvents();
             this.render(bookNo);
         } catch (e) {
             console.log(e);
@@ -565,7 +567,10 @@ class BookProfileView extends Backbone.View<BookModel> {
 
         try {
             DB.exec(stmt.toString());
+
             alert('删除成功');
+
+            this.undelegateEvents();
             location.href = '/#book/query';
         } catch (e) {
             console.log(e);
@@ -746,8 +751,10 @@ class UserProfileView extends Backbone.View<UserModel> {
 
         try {
             DB.exec(stmt.toString());
+
             alert('更新成功');
 
+            this.undelegateEvents();
             this.render(userNo);
         } catch (e) {
             console.log(e);
@@ -772,7 +779,10 @@ class UserProfileView extends Backbone.View<UserModel> {
 
         try {
             DB.exec(stmt.toString());
+
             alert('删除成功');
+
+            this.undelegateEvents();
             location.href = '/#reader/query';
         } catch (e) {
             console.log(e);
@@ -828,7 +838,6 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
             .where('user_no = ?', userNo);
 
         try {
-            console.log(stmt.toString());
             DB.exec(stmt.toString());
             alert('归还成功');
 
@@ -893,6 +902,60 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
         return DB.prepare('book_borrowing_log', stmt.toString()).execute();
     }
 
+}
+
+class AddBookView extends Backbone.View<Backbone.Model> {
+
+    tmpl = _.template(html.bookadd);
+
+    events(): any {
+        return {
+            'click .btn-submit': 'submit'
+        }
+    }
+
+    render(): AddBookView {
+        headerView.switchViewWithTabName('bookadd');
+
+        $(this.el).html(this.tmpl);
+
+        return this;
+    }
+
+    submit(e: any): boolean {
+        var $form = $('.book-profile', this.el),
+            bookTitle = $('[name=book-profile-title]', $form).val(),
+            bookNo = $('[name=book-profile-no]', $form).val(),
+            bookISBN = $('[name=book-profile-isbn]', $form).val();
+        
+        console.log(e);
+
+        if (!bookTitle || !bookNo || !bookISBN) {
+            alert("书籍信息有误");
+            return true;
+        }
+
+        var stmt = squel
+            .insert()
+            .into('book')
+            .set('title', bookTitle)
+            .set('no', bookNo)
+            .set('isbn', bookISBN);
+
+        try {
+            DB.exec(stmt.toString());
+            alert('创建成功');
+
+            this.undelegateEvents();
+            location.href = '/#book/' + bookNo;
+        } catch (e) {
+            console.log(e);
+
+            alert('创建失败');
+        }
+        
+        return true;
+    }
 }
 
 class FormView extends Backbone.View<Backbone.Model> {
@@ -963,8 +1026,7 @@ class Route extends Backbone.Router {
     }
 
     bookAdd(): void {
-        this.formView.render(html.bookadd);
-        headerView.switchViewWithTabName('bookadd');
+        (new AddBookView({el: $('#form')})).render();
     }
 
     bookProfile(bookNo): void {

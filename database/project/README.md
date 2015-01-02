@@ -15,7 +15,7 @@
     * [x] book profile page
     * [x] user profile page
 - [x] auto create view support
-- [ ] foreign key cascade
+- [x] foreign key cascade
 - [ ] web app
     * [x] reader / book detail page
     * [x] return page
