@@ -2,16 +2,17 @@ var html;
 (function (html) {
     html.readerprofilenotfound = '<h3>没有找到读者： <%= no %></h3>';
     html.readerborrowlogrow = '<tr>    <td>        <a href="/#book/<%= no %>"><%= title %></a>    </td>    <td><%= no %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td>    <td><%= returned_at %></td></tr>';
-    html.bookborrow = '                <div class="page-header">                    <h3>借出图书</h3>                </div>                <form action="#" role="form" class="book-borrow-return">                    <div class="row form-group">                        <div class="col-xs-8">                            <label for="book-borrow-return-user-name">读者姓名</label>                            <input name="book-borrow-return-user-name" type="text" class="form-control" placeholder="读者姓名" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-borrow-return-book-no">书籍编码</label>                            <input name="book-borrow-return-book-no" type="text" class="form-control" placeholder="书籍编码" />                        </div>                        <div class="col-xs-4">                            <label for="book-borrow-return-book-title">书籍名称</label>                            <input name="book-borrow-return-book-title" type="text" class="form-control" placeholder="书籍名称" />                        </div>                    </div>                    <div class="user-query-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success" href="#">借出</a>                        </div>                    </div>                </form>';
+    html.bookborrow = '                <div class="page-header">                    <h3>借出图书</h3>                </div>                <form action="#" role="form" class="book-borrow-return" data-book-no="<%= book.no %>">                    <div class="row form-group">                        <div class="col-xs-8">                            <label for="book-borrow-return-user-no">读者学号</label>                            <input name="book-borrow-return-user-no" type="text" class="form-control" placeholder="读者学号" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-borrow-return-book-no">书籍编码</label>                            <input name="book-borrow-return-book-no" type="text" value="<%= book.no %>" class="form-control" placeholder="书籍编码" readonly />                        </div>                        <div class="col-xs-4">                            <label for="book-borrow-return-book-title">书籍名称</label>                            <input name="book-borrow-return-book-title" type="text" value="<%= book.title %>" class="form-control" placeholder="书籍名称" readonly />                        </div>                    </div>                    <div class="user-query-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success book-borrow-return-submit">借出</a>                        </div>                    </div>                </form>                <div class="book-borrow-return-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>读者记录</h3>                        </div>                        <table id="book-borrow-return-users" class="table">                            <thead>                                <tr>                                    <td>姓名</td>                                    <td>学号</td>                                    <td>学院</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
     html.returnbook = '            <div class="page-header">                <h3>归还图书</h3>            </div>            <form action="#" role="form" class="book-borrow-return-form" data-user-no="<%= user.no %>">                <div class="row form-group">                    <div class="col-xs-8">                        <label for="book-borrow-return-user-name">读者姓名</label>                        <input name="book-borrow-return-user-name" type="text" class="form-control" placeholder="读者姓名" value="<%= user.name %>" readonly />                    </div>                </div>                <div class="row form-group">                    <div class="col-xs-8">                        <label for="book-borrow-return-book-no">书籍编码</label>                        <input name="book-borrow-return-book-no" type="text" class="form-control" placeholder="书籍编码" />                    </div>                </div>                <div class="book-borrow-return row">                    <div class="btn-group col-md-4" role="group">                        <a class="btn btn-success book-borrow-return-submit">归还</a>                    </div>                </div>            </form>            <div class="book-borrow-return-stats row">                <div class="col-md-12">                    <div class="page-header">                        <h3>持书情况</h3>                    </div>                    <table id="book-borrow-return-user-borrowing" class="table">                        <thead>                            <tr>                                <td>书籍名称</td>                                <td>书籍编号</td>                                <td>借阅时间</td>                                <td>应归还时间</td>                            </tr>                        </thead>                        <tbody>                        </tbody>                    </table>                </div>            </div>';
     html.bookquery = '                <div class="page-header">                    <h3>查询条件</h3>                </div>                <form action="#" role="form" class="book-query">                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-query-title">书籍名称</label>                            <input name="book-query-title" type="text" class="form-control" placeholder="书籍名称" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-query-no">书籍编号</label>                            <input name="book-query-no" type="text" class="form-control" placeholder="书籍编号" />                        </div>                        <div class="col-xs-4">                            <label for="book-query-isbn">ISBN 编码</label>                            <input name="book-query-isbn" type="text" class="form-control" placeholder="ISBN 编码" />                        </div>                    </div>                    <div class="book-query-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success">查询</a>                        </div>                    </div>                </form>                <div class="book-query-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>查询结果</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>书籍名称</td>                                    <td>书籍编号</td>                                    <td>书籍 ISBN</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
-    html.bookprofile = '                <div class="page-header">                    <h3><%= title %> 书籍详情</h3>                </div>                <form action="#" role="form" class="book-profile" data-book-no="<%= no %>">                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-title">书籍名称</label>                            <input name="book-profile-title" type="text" class="form-control" placeholder="书籍名称" value="<%= title %>" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-no">书籍编号</label>                            <input name="book-profile-no" type="text" class="form-control" placeholder="书籍编号" value="<%= no %>" />                        </div>                        <div class="col-xs-4">                            <label for="book-profile-isbn">ISBN 编码</label>                            <input name="book-profile-isbn" type="text" class="form-control" placeholder="ISBN 编码" value="<%= isbn %>" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-borrow-stats">借阅次数</label>                            <input class="form-control" type="text" name="book-profile-borrow-stats" placeholder="借阅次数" value="<%= borrow_times %>" readonly>                        </div>                    </div>                    <div class="book-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-primary book-profile-update">更新图书</a>                            <a class="btn btn-success book-profile-borrow <%= can_borrow %>">借出图书</a>                            <a class="btn btn-danger book-profile-remove">删除图书</a>                        </div>                    </div>                </form>                <div class="book-profile-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>借阅记录</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>借阅读者</td>                                    <td>借阅日期</td>                                    <td>应该归还日期</td>                                    <td>归还日期</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
+    html.bookprofile = '                <div class="page-header">                    <h3><%= title %> 书籍详情</h3>                </div>                <form action="#" role="form" class="book-profile" data-book-no="<%= no %>">                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-title">书籍名称</label>                            <input name="book-profile-title" type="text" class="form-control" placeholder="书籍名称" value="<%= title %>" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-no">书籍编号</label>                            <input name="book-profile-no" type="text" class="form-control" placeholder="书籍编号" value="<%= no %>" />                        </div>                        <div class="col-xs-4">                            <label for="book-profile-isbn">ISBN 编码</label>                            <input name="book-profile-isbn" type="text" class="form-control" placeholder="ISBN 编码" value="<%= isbn %>" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="book-profile-borrow-stats">借阅次数</label>                            <input class="form-control" type="text" name="book-profile-borrow-stats" placeholder="借阅次数" value="<%= borrow_times %>" readonly>                        </div>                    </div>                    <div class="book-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-primary book-profile-update">更新图书</a>                            <a class="btn btn-success book-profile-borrow <%= can_borrow %>" href="/#book/<%= no %>/borrow">借出图书</a>                            <a class="btn btn-danger book-profile-remove">删除图书</a>                        </div>                    </div>                </form>                <div class="book-profile-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>借阅记录</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>借阅读者</td>                                    <td>借阅日期</td>                                    <td>应该归还日期</td>                                    <td>归还日期</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
     html.readerquery = '                <div class="page-header">                    <h3>查询条件</h3>                </div>                <form action="#" role="form" class="user-query">                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="user-query-name">读者姓名</label>                            <input name="user-query-name" type="text" class="form-control" placeholder="读者姓名" />                        </div>                    </div>                    <div class="row form-group">                        <div class="col-xs-4">                            <label for="user-query-no">读者学号</label>                            <input name="user-query-no" type="text" class="form-control" placeholder="读者学号" />                        </div>                        <div class="col-xs-4">                            <label for="user-query-faculty">读者学院</label>                            <input name="user-query-faculty" type="text" class="form-control" placeholder="读者学院" />                        </div>                    </div>                    <div class="user-query-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success">查询</a>                        </div>                    </div>                </form>                <div class="user-query-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>查询结果</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>读者姓名</td>                                    <td>读者学号</td>                                    <td>读者学院</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
     html.readerprofile = '                <div class="page-header">                    <h3>读者 <%= name %> 详情</h3>                </div>                <form action="#" role="form" class="user-profile" data-user-no="<%= no %>">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-name">                            <label for="user-profile-name">姓名</label>                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" value="<%= name %>" />                        </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" value="<%= no %>" />                        </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-faculty">学院</label>                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" value="<%= faculty %>" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success user-profile-update">更新</a>                            <a class="btn btn-primary user-profile-return" <%= disable_return_book_btn %> href="/#book/return/<%= no %>">还书</a>                            <a class="btn btn-danger user-profile-remove" <%= disable_remove_btn %>>删除</a>                        </div>                    </div>                </form>                <div class="user-profile-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>持书情况</h3>                        </div>                        <table class="table" id="user-profile-borrowing">                            <thead>                                <tr>                                    <td>书籍名称</td>                                    <td>书籍编号</td>                                    <td>借阅时间</td>                                    <td>应归还时间</td>                                    <td>归还时间</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                    <div class="col-md-12">                        <div class="page-header">                            <h3>借阅记录</h3>                        </div>                        <table class="table" id="user-profile-borrowed">                            <thead>                                <tr>                                    <td>书籍名称</td>                                    <td>书籍编号</td>                                    <td>借阅时间</td>                                    <td>应归还时间</td>                                    <td>归还时间</td>                                </tr>                            </thead>                            <tbody>                            </tbody>                        </table>                    </div>                </div>';
     html.bookborrowlogrow = '<tr>    <td><%= name %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td>    <td><%= returned_at %></td></tr>';
     html.bookborrowreturnuserborrowingrow = '<tr data-book-no="<%= no %>">    <td><%= title %></td>    <td><%= no %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td></tr>';
+    html.bookborrowuserrow = '<tr data-user-no="<%= no %>">    <td><%= name %></td>    <td><%= no %></td>    <td><%= faculty %></td></tr>';
     html.overview = '                <div class="page-header">                    <h1>藏书情况</h1>                </div>                <div>                    <p>共有藏书 <%= books %> 册</p>                </div>                <div class="page-header">                    <h1>读者情况</h1>                </div>                <div>                    <p>共有登记读者 <%= users %> 名</p>                </div>';
-    html.readeradd = '                <div class="page-header">                    <h3>读者详情</h3>                </div>                <form action="#" role="form" class="user-profile">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-name">                            <label for="user-profile-name">姓名</label>                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" />                        </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" />                        </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-faculty">学院</label>                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success btn-submit">新增</a>                        </div>                    </div>                </form>';
+    html.readeradd = '                <div class="page-header">                    <h3>读者详情</h3>                </div>                <form action="#" role="form" class="user-profile">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-name">                            <label for="user-profile-name">姓名</label>                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" />                        </div>                    <div class="row form-group">                    </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" />                        </div>                    <div class="row form-group">                    </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-faculty">学院</label>                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success btn-submit">新增</a>                        </div>                    </div>                </form>';
     html.bookprofilenotfound = '<h3>没有找到图书： <%= no %></h3>';
     html.readerresultrow = '<tr>    <td>        <a href="/#reader/<%= no %>"><%= name %></a>    </td>    <td><%= no %></td>    <td><%= faculty %></td></tr>';
     html.bookresultrow = '<tr>    <td>        <a href="/#book/<%= no %>"><%= title %></a>    </td>    <td><%= no %></td>    <td><%= isbn %></td></tr>';
@@ -23,6 +24,7 @@ var sqlQuery;
     sqlQuery.createtable = 'PRAGMA foreign_keys = ON;create table book(    no string primary key,    title string,    isbn string unique,    category string,    description text,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp);create table user(    no string primary key,    name string,    gender string,    faculty string,    created_at timestamp default (CURRENT_TIMESTAMP),    updated_at timestamp);create table book_borrowing_log(    id integer primary key,    book_no string references book(no) on delete cascade on update cascade,    user_no string references user(no) on delete cascade on update cascade,    expire_at date,    returned_at date,    borrowed_at date default (CURRENT_DATE));';
     sqlQuery.initbookborrowinglog = 'insert into book_borrowing_log    (book_no, user_no, expire_at)values    ("E0094868", "3112005816", date("now", "+3 months")),    ("A1840127", "3112005816", date("now", "+3 months"));insert into book_borrowing_log    (book_no, user_no, expire_at, returned_at)values    ("A0836869", "3112005816", date("now", "+3 months"), date("now", "+1 months"));';
     sqlQuery.inituser = 'insert into user    (no, name, gender, faculty)values    ("3112005816", "张三", "男", "计算机学院"),    ("3112005817", "李四", "男", "计算机学院");';
+    sqlQuery.borrowbook = 'insert into book_borrowing_log    (user_no, book_no, expire_at)values    ("<%= userNo %>", "<%= bookNo %>", date("now", "+3 months"));';
     sqlQuery.initbook = 'insert into book    (no, title, isbn, category, description)values    ("E0094868", "A first course in database systems", "9787111247333", "", ""),    ("A0836869", "编译原理", "7302089795", "", ""),    ("A1840127", "数据库系统概论", "704007494X", "", "");';
 })(sqlQuery || (sqlQuery = {}));
 /// <reference path="type/sql.d.ts" />
@@ -653,6 +655,7 @@ var ReturnBookView = (function (_super) {
     ReturnBookView.prototype.submit = function () {
         var userNo = $('.book-borrow-return-form', this.el).data('user-no'), bookNo = $('input[name=book-borrow-return-book-no]', this.el).val();
         if (!userNo || !bookNo) {
+            alert('请填写书籍编号');
             return true;
         }
         var stmt = squel.update().set('returned_at = CURRENT_DATE').table('book_borrowing_log').where('returned_at is null').where('book_no = ?', bookNo).where('user_no = ?', userNo);
@@ -680,6 +683,7 @@ var ReturnBookView = (function (_super) {
         }));
         this.renderBorrowingBooks(user);
         this.delegateEvents();
+        return this;
     };
     ReturnBookView.prototype.renderBorrowingBooks = function (user) {
         var $el = $('#book-borrow-return-user-borrowing tbody', this.el), rowTmpl = _.template(html.bookborrowreturnuserborrowingrow), books = this.queryBorrowingBooks(user.no);
@@ -770,6 +774,86 @@ var AddUserView = (function (_super) {
     };
     return AddUserView;
 })(Backbone.View);
+var BorrowBookView = (function (_super) {
+    __extends(BorrowBookView, _super);
+    function BorrowBookView() {
+        _super.apply(this, arguments);
+        this.tmpl = _.template(html.bookborrow);
+    }
+    BorrowBookView.prototype.events = function () {
+        return {
+            'click .book-borrow-return-submit': 'submit',
+            'click #book-borrow-return-users tbody tr': 'fillForm'
+        };
+    };
+    BorrowBookView.prototype.submit = function (e) {
+        var bookNo = $('.book-borrow-return', this.el).data('book-no'), userNo = $('[name=book-borrow-return-user-no]', this.el).val();
+        if (!bookNo || !userNo) {
+            alert('请填写读者学号');
+            return true;
+        }
+        var stmt = _.template(sqlQuery.borrowbook)({
+            userNo: userNo,
+            bookNo: bookNo
+        });
+        try {
+            DB.exec(stmt);
+            alert('借出成功');
+            this.undelegateEvents();
+            location.href = '/#book/' + bookNo;
+        }
+        catch (e) {
+            console.log(e);
+            alert('借出失败');
+        }
+        return true;
+    };
+    BorrowBookView.prototype.fillForm = function (e) {
+        var $el = $(e.target.parentElement), $field = $('[name=book-borrow-return-user-no]', this.el), userNo = $el.data('user-no');
+        $field.val(userNo);
+        return true;
+    };
+    BorrowBookView.prototype.render = function (bookNo) {
+        var book = this.queryBook(bookNo);
+        headerView.switchViewWithTabName('bookquery');
+        if (!book) {
+            alert("没有找到图书：" + bookNo);
+            location.href = "/#overview";
+            return;
+        }
+        if (!this.queryBookCanBorrow(bookNo)) {
+            alert("图书" + bookNo + "已被借出");
+            location.href = "/#overview";
+            return;
+        }
+        this.$el.html(this.tmpl({
+            book: book
+        }));
+        this.renderUsers();
+        this.delegateEvents();
+        return this;
+    };
+    BorrowBookView.prototype.renderUsers = function () {
+        var $el = $('#book-borrow-return-users tbody', this.el), rowTmpl = _.template(html.bookborrowuserrow), users = this.queryUsers();
+        $el.html(_.map(users, rowTmpl).join(''));
+    };
+    BorrowBookView.prototype.queryBook = function (bookNo) {
+        var stmt = squel.select().from('book').where('no = ?', bookNo);
+        var rv = DB.prepare('book', stmt.toString()).execute();
+        return rv.length > 0 ? rv[0] : null;
+    };
+    BorrowBookView.prototype.queryBookCanBorrow = function (bookNo) {
+        var stmt = squel.select().field('count(*)', 'not_returned').from('book_borrowing_log', 'log').where('log.book_no = ?', bookNo).where('log.returned_at is null');
+        var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
+        return rv[0]['not_returned'] <= 0;
+    };
+    BorrowBookView.prototype.queryUsers = function () {
+        var stmt = squel.select().from('user');
+        var rv = DB.prepare('user', stmt.toString()).execute();
+        return rv;
+    };
+    return BorrowBookView;
+})(Backbone.View);
 var FormView = (function (_super) {
     __extends(FormView, _super);
     function FormView() {
@@ -798,7 +882,7 @@ var Route = (function (_super) {
         return {
             '': 'overview',
             'overview': 'overview',
-            'book/borrow': 'bookBorrow',
+            'book/:no/borrow': 'bookBorrow',
             'book/return/:readerNo': 'bookReturn',
             'book/query': 'bookQuery',
             'book/add': 'bookAdd',
@@ -812,9 +896,8 @@ var Route = (function (_super) {
     Route.prototype.overview = function () {
         (new DashboardView({ el: $('#form') })).render();
     };
-    Route.prototype.bookBorrow = function () {
-        this.formView.render(html.bookborrow);
-        headerView.switchViewWithTabName('bookborrow');
+    Route.prototype.bookBorrow = function (bookNo) {
+        (new BorrowBookView({ el: $('#form') })).render(bookNo);
     };
     Route.prototype.bookReturn = function (readerNo) {
         (new ReturnBookView({ el: $('#form') })).render(readerNo);

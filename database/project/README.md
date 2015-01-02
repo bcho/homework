@@ -16,10 +16,10 @@
     * [x] user profile page
 - [x] auto create view support
 - [x] foreign key cascade
-- [ ] web app
+- [x] web app
     * [x] reader / book detail page
     * [x] return page
-    * [ ] new reader
-    * [ ] new book
-    * [ ] borrow page
+    * [x] new reader
+    * [x] new book
+    * [x] borrow page
 - [ ] report

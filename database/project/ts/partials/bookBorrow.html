@@ -1,26 +1,44 @@
                 <div class="page-header">
                     <h3>借出图书</h3>
                 </div>
-                <form action="#" role="form" class="book-borrow-return">
+                <form action="#" role="form" class="book-borrow-return" data-book-no="<%= book.no %>">
                     <div class="row form-group">
                         <div class="col-xs-8">
-                            <label for="book-borrow-return-user-name">读者姓名</label>
-                            <input name="book-borrow-return-user-name" type="text" class="form-control" placeholder="读者姓名" />
+                            <label for="book-borrow-return-user-no">读者学号</label>
+                            <input name="book-borrow-return-user-no" type="text" class="form-control" placeholder="读者学号" />
                         </div>
                     </div>
                     <div class="row form-group">
                         <div class="col-xs-4">
                             <label for="book-borrow-return-book-no">书籍编码</label>
-                            <input name="book-borrow-return-book-no" type="text" class="form-control" placeholder="书籍编码" />
+                            <input name="book-borrow-return-book-no" type="text" value="<%= book.no %>" class="form-control" placeholder="书籍编码" readonly />
                         </div>
                         <div class="col-xs-4">
                             <label for="book-borrow-return-book-title">书籍名称</label>
-                            <input name="book-borrow-return-book-title" type="text" class="form-control" placeholder="书籍名称" />
+                            <input name="book-borrow-return-book-title" type="text" value="<%= book.title %>" class="form-control" placeholder="书籍名称" readonly />
                         </div>
                     </div>
                     <div class="user-query-actions row">
                         <div class="btn-group col-md-4" role="group">
-                            <a class="btn btn-success" href="#">借出</a>
+                            <a class="btn btn-success book-borrow-return-submit">借出</a>
                         </div>
                     </div>
                 </form>
+                <div class="book-borrow-return-stats row">
+                    <div class="col-md-12">
+                        <div class="page-header">
+                            <h3>读者记录</h3>
+                        </div>
+                        <table id="book-borrow-return-users" class="table">
+                            <thead>
+                                <tr>
+                                    <td>姓名</td>
+                                    <td>学号</td>
+                                    <td>学院</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>

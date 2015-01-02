@@ -27,7 +27,7 @@
                     <div class="book-profile-actions row">
                         <div class="btn-group col-md-4" role="group">
                             <a class="btn btn-primary book-profile-update">更新图书</a>
-                            <a class="btn btn-success book-profile-borrow <%= can_borrow %>">借出图书</a>
+                            <a class="btn btn-success book-profile-borrow <%= can_borrow %>" href="/#book/<%= no %>/borrow">借出图书</a>
                             <a class="btn btn-danger book-profile-remove">删除图书</a>
                         </div>
                     </div>

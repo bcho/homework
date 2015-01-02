@@ -811,7 +811,7 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
         };
     }
 
-    fillForm(e): boolean {
+    fillForm(e: any): boolean {
         var $el = $(e.target.parentElement),
             $field = $('input[name=book-borrow-return-book-no]', this.el),
             bookNo = $el.data('book-no');
@@ -826,6 +826,8 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
             bookNo = $('input[name=book-borrow-return-book-no]', this.el).val();
 
         if (! userNo || ! bookNo) {
+            alert('请填写书籍编号');
+
             return true;
         }
 
@@ -871,6 +873,8 @@ class ReturnBookView extends Backbone.View<Backbone.Model> {
         this.renderBorrowingBooks(user);
 
         this.delegateEvents();
+
+        return this;
     }
 
     private renderBorrowingBooks(user: any): void {
@@ -1009,6 +1013,133 @@ class AddUserView extends Backbone.View<Backbone.Model> {
 
 }
 
+class BorrowBookView extends Backbone.View<Backbone.Model> {
+
+    $el: JQuery;
+    tmpl = _.template(html.bookborrow);
+
+    events(): any {
+        return {
+            'click .book-borrow-return-submit': 'submit',
+            'click #book-borrow-return-users tbody tr': 'fillForm'
+        };
+    }
+
+    submit(e: any): boolean {
+        var bookNo = $('.book-borrow-return', this.el).data('book-no'),
+            userNo = $('[name=book-borrow-return-user-no]', this.el).val();
+
+        if (! bookNo || ! userNo) {
+            alert('请填写读者学号');
+
+            return true;
+        }
+
+        var stmt = _.template(sqlQuery.borrowbook)({
+            userNo: userNo,
+            bookNo: bookNo
+        });
+
+        try {
+            DB.exec(stmt);
+
+            alert('借出成功');
+
+            this.undelegateEvents();
+            location.href = '/#book/' + bookNo;
+        } catch (e) {
+            console.log(e);
+
+            alert('借出失败');
+        }
+
+        return true;
+    }
+
+    fillForm(e: any): boolean {
+        var $el = $(e.target.parentElement),
+            $field = $('[name=book-borrow-return-user-no]', this.el),
+            userNo = $el.data('user-no');
+
+        $field.val(userNo);
+
+        return true;
+    }
+
+    render(bookNo: string): BorrowBookView {
+        var book = this.queryBook(bookNo);
+
+        headerView.switchViewWithTabName('bookquery');
+
+        if (! book) {
+            alert("没有找到图书：" + bookNo);
+
+            location.href = "/#overview";
+
+            return;
+        }
+
+        if (! this.queryBookCanBorrow(bookNo)) {
+            alert("图书" + bookNo + "已被借出");
+
+            location.href = "/#overview";
+
+            return;
+        }
+
+        this.$el.html(this.tmpl({
+            book: book
+        }));
+
+        this.renderUsers();
+
+        this.delegateEvents();
+
+        return this;
+    }
+
+    private renderUsers(): void {
+        var $el = $('#book-borrow-return-users tbody', this.el),
+            rowTmpl = _.template(html.bookborrowuserrow),
+            users = this.queryUsers();
+
+        $el.html(_.map(users, rowTmpl).join(''));
+    }
+
+    private queryBook(bookNo: string): any {
+        var stmt = squel
+            .select()
+            .from('book')
+            .where('no = ?', bookNo);
+
+        var rv = DB.prepare('book', stmt.toString()).execute();
+
+        return rv.length > 0 ? rv[0]: null;
+    }
+
+    private queryBookCanBorrow(bookNo: string): boolean {
+        var stmt = squel.select()
+            .field('count(*)', 'not_returned')
+            .from('book_borrowing_log', 'log')
+            .where('log.book_no = ?', bookNo)
+            .where('log.returned_at is null');
+
+        var rv = DB.prepare('book_borrowing_log', stmt.toString()).execute();
+
+        return rv[0]['not_returned'] <= 0;
+    }
+
+    private queryUsers(): any {
+        var stmt = squel
+            .select()
+            .from('user');
+
+        var rv = DB.prepare('user', stmt.toString()).execute();
+
+        return rv;
+    }
+}
+
 class FormView extends Backbone.View<Backbone.Model> {
 
     $el: JQuery
@@ -1047,7 +1178,7 @@ class Route extends Backbone.Router {
         return {
             '': 'overview',
             'overview': 'overview',
-            'book/borrow': 'bookBorrow',
+            'book/:no/borrow': 'bookBorrow',
             'book/return/:readerNo': 'bookReturn',
             'book/query': 'bookQuery',
             'book/add': 'bookAdd',
@@ -1063,13 +1194,12 @@ class Route extends Backbone.Router {
         (new DashboardView({el: $('#form')})).render();
     }
 
-    bookBorrow(): void {
-        this.formView.render(html.bookborrow);
-        headerView.switchViewWithTabName('bookborrow');
+    bookBorrow(bookNo): void {
+        (new BorrowBookView({el: $('#form')})).render(bookNo);
     }
 
     bookReturn(readerNo): void {
-        (new ReturnBookView({ el: $('#form') })).render(readerNo);
+        (new ReturnBookView({el: $('#form')})).render(readerNo);
     }
 
     bookQuery(): void {
