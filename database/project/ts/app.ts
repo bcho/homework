@@ -928,8 +928,6 @@ class AddBookView extends Backbone.View<Backbone.Model> {
             bookNo = $('[name=book-profile-no]', $form).val(),
             bookISBN = $('[name=book-profile-isbn]', $form).val();
         
-        console.log(e);
-
         if (!bookTitle || !bookNo || !bookISBN) {
             alert("书籍信息有误");
             return true;
@@ -956,6 +954,59 @@ class AddBookView extends Backbone.View<Backbone.Model> {
         
         return true;
     }
+}
+
+class AddUserView extends Backbone.View<Backbone.Model> {
+
+    tmpl = _.template(html.readeradd);
+
+    events(): any {
+        return {
+            'click .btn-submit': 'submit'
+        }
+    }
+
+    render(): AddBookView {
+        headerView.switchViewWithTabName('readeradd');
+
+        $(this.el).html(this.tmpl);
+
+        return this;
+    }
+
+    submit(e: any): boolean {
+        var $form = $('.user-profile', this.el),
+            userName = $('[name=user-profile-name]', $form).val(),
+            userNo = $('[name=user-profile-no]', $form).val(),
+            userFaculty = $('[name=user-profile-faculty]', $form).val();
+        
+        if (!userName || !userNo || !userFaculty) {
+            alert("读者信息有误");
+            return true;
+        }
+
+        var stmt = squel
+            .insert()
+            .into('user')
+            .set('name', userName)
+            .set('no', userNo)
+            .set('faculty', userFaculty);
+
+        try {
+            DB.exec(stmt.toString());
+            alert('创建成功');
+
+            this.undelegateEvents();
+            location.href = '/#reader/' + userNo;
+        } catch (e) {
+            console.log(e);
+
+            alert('创建失败');
+        }
+        
+        return true;
+    }
+
 }
 
 class FormView extends Backbone.View<Backbone.Model> {
@@ -1038,8 +1089,7 @@ class Route extends Backbone.Router {
     }
 
     readerAdd(): void {
-        this.formView.render(html.readeradd);
-        headerView.switchViewWithTabName('readeradd');
+        (new AddUserView({el: $('#form')})).render();
     }
 
     readerProfile(userNo): void {

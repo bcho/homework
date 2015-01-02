@@ -11,7 +11,7 @@ var html;
     html.bookborrowlogrow = '<tr>    <td><%= name %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td>    <td><%= returned_at %></td></tr>';
     html.bookborrowreturnuserborrowingrow = '<tr data-book-no="<%= no %>">    <td><%= title %></td>    <td><%= no %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td></tr>';
     html.overview = '                <div class="page-header">                    <h1>藏书情况</h1>                </div>                <div>                    <p>共有藏书 <%= books %> 册</p>                </div>                <div class="page-header">                    <h1>读者情况</h1>                </div>                <div>                    <p>共有登记读者 <%= users %> 名</p>                </div>';
-    html.readeradd = '                <div class="page-header">                    <h3>读者详情</h3>                </div>                <form action="#" role="form" class="user-profile">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-title">                            <label for="user-profile-title">姓名</label>                            <input name="user-profile-title" type="text" class="form-control" placeholder="张三" />                        </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="3112005816" />                        </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-isbn">学院</label>                            <input type="text" class="form-control" placeholder="计算机学院" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success" href="#">新增</a>                        </div>                    </div>                </form>                <div class="user-profile-stats row">                    <div class="col-md-12">                        <div class="page-header">                            <h3>持书情况</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>书籍名称</td>                                    <td>书籍编号</td>                                    <td>借阅时间</td>                                    <td>应归还时间</td>                                </tr>                            </thead>                            <tbody>                                <tr>                                    <td>大学数学</td>                                    <td>TP 12345</td>                                    <td>2014/10/1</td>                                    <td>2014/11/5</td>                                </tr>                                <tr>                                    <td>大学英语</td>                                    <td>TP 67890</td>                                    <td>2014/11/12</td>                                    <td>2014/12/15</td>                                </tr>                            </tbody>                        </table>                    </div>                    <div class="col-md-12">                        <div class="page-header">                            <h3>借阅记录</h3>                        </div>                        <table class="table">                            <thead>                                <tr>                                    <td>书籍名称</td>                                    <td>书籍编号</td>                                    <td>借阅时间</td>                                    <td>归还时间</td>                                </tr>                            </thead>                            <tbody>                                <tr>                                    <td>大学数学</td>                                    <td>TP 12345</td>                                    <td>2014/9/1</td>                                    <td>2014/10/1</td>                                </tr>                            </tbody>                        </table>                    </div>                </div>';
+    html.readeradd = '                <div class="page-header">                    <h3>读者详情</h3>                </div>                <form action="#" role="form" class="user-profile">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-name">                            <label for="user-profile-name">姓名</label>                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" />                        </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" />                        </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-faculty">学院</label>                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success btn-submit">新增</a>                        </div>                    </div>                </form>';
     html.bookprofilenotfound = '<h3>没有找到图书： <%= no %></h3>';
     html.readerresultrow = '<tr>    <td>        <a href="/#reader/<%= no %>"><%= name %></a>    </td>    <td><%= no %></td>    <td><%= faculty %></td></tr>';
     html.bookresultrow = '<tr>    <td>        <a href="/#book/<%= no %>"><%= title %></a>    </td>    <td><%= no %></td>    <td><%= isbn %></td></tr>';
@@ -714,7 +714,6 @@ var AddBookView = (function (_super) {
     };
     AddBookView.prototype.submit = function (e) {
         var $form = $('.book-profile', this.el), bookTitle = $('[name=book-profile-title]', $form).val(), bookNo = $('[name=book-profile-no]', $form).val(), bookISBN = $('[name=book-profile-isbn]', $form).val();
-        console.log(e);
         if (!bookTitle || !bookNo || !bookISBN) {
             alert("书籍信息有误");
             return true;
@@ -733,6 +732,43 @@ var AddBookView = (function (_super) {
         return true;
     };
     return AddBookView;
+})(Backbone.View);
+var AddUserView = (function (_super) {
+    __extends(AddUserView, _super);
+    function AddUserView() {
+        _super.apply(this, arguments);
+        this.tmpl = _.template(html.readeradd);
+    }
+    AddUserView.prototype.events = function () {
+        return {
+            'click .btn-submit': 'submit'
+        };
+    };
+    AddUserView.prototype.render = function () {
+        headerView.switchViewWithTabName('readeradd');
+        $(this.el).html(this.tmpl);
+        return this;
+    };
+    AddUserView.prototype.submit = function (e) {
+        var $form = $('.user-profile', this.el), userName = $('[name=user-profile-name]', $form).val(), userNo = $('[name=user-profile-no]', $form).val(), userFaculty = $('[name=user-profile-faculty]', $form).val();
+        if (!userName || !userNo || !userFaculty) {
+            alert("读者信息有误");
+            return true;
+        }
+        var stmt = squel.insert().into('user').set('name', userName).set('no', userNo).set('faculty', userFaculty);
+        try {
+            DB.exec(stmt.toString());
+            alert('创建成功');
+            this.undelegateEvents();
+            location.href = '/#reader/' + userNo;
+        }
+        catch (e) {
+            console.log(e);
+            alert('创建失败');
+        }
+        return true;
+    };
+    return AddUserView;
 })(Backbone.View);
 var FormView = (function (_super) {
     __extends(FormView, _super);
@@ -796,8 +832,7 @@ var Route = (function (_super) {
         (new UserQueryView({ el: $('#form') })).render();
     };
     Route.prototype.readerAdd = function () {
-        this.formView.render(html.readeradd);
-        headerView.switchViewWithTabName('readeradd');
+        (new AddUserView({ el: $('#form') })).render();
     };
     Route.prototype.readerProfile = function (userNo) {
         (new UserProfileView({ el: $('#form') })).render(userNo);
