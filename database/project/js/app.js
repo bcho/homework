@@ -877,6 +877,7 @@ var Route = (function (_super) {
         this.usersColl = new UserCollection();
         this.booksColl.fetch();
         this.usersColl.fetch();
+        this.prevView = null;
     }
     Route.prototype.routes = function () {
         return {
@@ -894,35 +895,49 @@ var Route = (function (_super) {
         };
     };
     Route.prototype.overview = function () {
-        (new DashboardView({ el: $('#form') })).render();
+        this.cleanUpView();
+        this.prevView = (new DashboardView({ el: $('#form') })).render();
     };
     Route.prototype.bookBorrow = function (bookNo) {
-        (new BorrowBookView({ el: $('#form') })).render(bookNo);
+        this.cleanUpView();
+        this.prevView = (new BorrowBookView({ el: $('#form') })).render(bookNo);
     };
     Route.prototype.bookReturn = function (readerNo) {
-        (new ReturnBookView({ el: $('#form') })).render(readerNo);
+        this.cleanUpView();
+        this.prevView = (new ReturnBookView({ el: $('#form') })).render(readerNo);
     };
     Route.prototype.bookQuery = function () {
-        (new BookQueryView({ el: $('#form') })).render();
+        this.cleanUpView();
+        this.prevView = (new BookQueryView({ el: $('#form') })).render();
     };
     Route.prototype.bookAdd = function () {
-        (new AddBookView({ el: $('#form') })).render();
+        this.cleanUpView();
+        this.prevView = (new AddBookView({ el: $('#form') })).render();
     };
     Route.prototype.bookProfile = function (bookNo) {
-        (new BookProfileView({ el: $('#form') })).render(bookNo);
+        this.cleanUpView();
+        this.prevView = (new BookProfileView({ el: $('#form') })).render(bookNo);
     };
     Route.prototype.readerQuery = function () {
-        (new UserQueryView({ el: $('#form') })).render();
+        this.cleanUpView();
+        this.prevView = (new UserQueryView({ el: $('#form') })).render();
     };
     Route.prototype.readerAdd = function () {
-        (new AddUserView({ el: $('#form') })).render();
+        this.cleanUpView();
+        this.prevView = (new AddUserView({ el: $('#form') })).render();
     };
     Route.prototype.readerProfile = function (userNo) {
-        (new UserProfileView({ el: $('#form') })).render(userNo);
+        this.cleanUpView();
+        this.prevView = (new UserProfileView({ el: $('#form') })).render(userNo);
     };
     Route.prototype.help = function () {
-        this.formView.render(html.help);
+        this.prevView = this.formView.render(html.help);
         headerView.switchViewWithTabName('help');
+    };
+    Route.prototype.cleanUpView = function () {
+        if (this.prevView) {
+            this.prevView.undelegateEvents();
+        }
     };
     return Route;
 })(Backbone.Router);

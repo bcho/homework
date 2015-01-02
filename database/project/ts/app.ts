@@ -1158,6 +1158,7 @@ class FormView extends Backbone.View<Backbone.Model> {
 class Route extends Backbone.Router {
 
     private formView: FormView
+    private prevView;
 
     private booksColl: BookCollection
     private usersColl: UserCollection
@@ -1172,6 +1173,8 @@ class Route extends Backbone.Router {
 
         this.booksColl.fetch();
         this.usersColl.fetch();
+
+        this.prevView = null;
     }
     
     routes() {
@@ -1191,44 +1194,59 @@ class Route extends Backbone.Router {
     }
 
     overview(): void {
-        (new DashboardView({el: $('#form')})).render();
+        this.cleanUpView();
+        this.prevView = (new DashboardView({el: $('#form')})).render();
     }
 
     bookBorrow(bookNo): void {
-        (new BorrowBookView({el: $('#form')})).render(bookNo);
+        this.cleanUpView();
+        this.prevView = (new BorrowBookView({el: $('#form')})).render(bookNo);
     }
 
     bookReturn(readerNo): void {
-        (new ReturnBookView({el: $('#form')})).render(readerNo);
+        this.cleanUpView();
+        this.prevView = (new ReturnBookView({el: $('#form')})).render(readerNo);
     }
 
     bookQuery(): void {
-        (new BookQueryView({el: $('#form')})).render();
+        this.cleanUpView();
+        this.prevView = (new BookQueryView({el: $('#form')})).render();
     }
 
     bookAdd(): void {
-        (new AddBookView({el: $('#form')})).render();
+        this.cleanUpView();
+        this.prevView = (new AddBookView({el: $('#form')})).render();
     }
 
     bookProfile(bookNo): void {
-        (new BookProfileView({el: $('#form')})).render(bookNo);
+        this.cleanUpView();
+        this.prevView = (new BookProfileView({el: $('#form')})).render(bookNo);
     }
 
     readerQuery(): void {
-        (new UserQueryView({el: $('#form')})).render();
+        this.cleanUpView();
+        this.prevView = (new UserQueryView({el: $('#form')})).render();
     }
 
     readerAdd(): void {
-        (new AddUserView({el: $('#form')})).render();
+        this.cleanUpView();
+        this.prevView = (new AddUserView({el: $('#form')})).render();
     }
 
     readerProfile(userNo): void {
-        (new UserProfileView({el: $('#form')})).render(userNo);
+        this.cleanUpView();
+        this.prevView = (new UserProfileView({el: $('#form')})).render(userNo);
     }
 
     help(): void {
-        this.formView.render(html.help);
+        this.prevView = this.formView.render(html.help);
         headerView.switchViewWithTabName('help');
+    }
+
+    private cleanUpView(): void {
+        if (this.prevView) {
+            this.prevView.undelegateEvents();
+        }
     }
 
 }
