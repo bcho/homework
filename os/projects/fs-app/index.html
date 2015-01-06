@@ -5,15 +5,50 @@
     <title>文件系统</title>
     <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="css/vendor/keen-dashboards.css">
+    <link rel="stylesheet" href="css/vendor/font-awesome.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body id="grid" class="application container-fluid">
-    <div id="files-workspace" class="row">
+    <div id="files" class="row">
         <div id="files-tree" class="col-sm-3 chart-wrapper">
             <div class="chart-title">
                 磁盘目录
             </div>
             <div class="chart-stage">
+                <ul class="files-tree">
+                    <li>
+                        <i class="fa fa-folder-open-o"></i>
+                        home
+                    </li>
+                    <li class="files-tree-sub">
+                        <ul class="files-tree">
+                            <li>
+                                <i class="fa fa-file-word-o"></i>
+                                documents
+                            </li>
+                            <li>
+                                <i class="fa fa-folder-open-o"></i>
+                                workshop
+                            </li>
+                            <li class="files-tree-sub">
+                                <ul class="files-tree">
+                                    <li>
+                                        <i class="fa fa-file-word-o"></i>
+                                        foo.txt
+                                    </li>
+                                    <li>
+                                        <i class="fa fa-file-word-o"></i>
+                                        bar.txt
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <i class="fa fa-folder-o"></i>
+                                zeta
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
         <div id="files-directory" class="col-sm-9">

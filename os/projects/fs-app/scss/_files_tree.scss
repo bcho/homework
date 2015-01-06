@@ -1,0 +1,21 @@
+#files-tree {
+  height: 100%;
+}
+
+.files-tree {
+  padding-left: 0;
+  list-style: none;
+
+  li {
+    i {
+      margin-right: 5px;
+    }
+  }
+}
+
+.files-tree-sub {
+  margin-left: 5px;
+  padding-left: 10px;
+
+  border-left: 1px solid $color-gray;
+}
