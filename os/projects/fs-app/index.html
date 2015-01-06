@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>文件系统</title>
+    <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="css/vendor/keen-dashboards.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body id="grid" class="application container-fluid">
+    <div id="files-workspace" class="row">
+        <div id="files-tree" class="col-sm-3 chart-wrapper">
+            <div class="chart-title">
+                磁盘目录
+            </div>
+            <div class="chart-stage">
+            </div>
+        </div>
+        <div id="files-directory" class="col-sm-9">
+            <div id="files-directory-files" class="chart-wrapper">
+                <div id="file-path-breadcrumb" class="chart-title">
+                    /home/hbc/workshop
+                </div>
+                <div class="chart-stage row">
+                    <div class="file col-sm-2">
+                        <header class="file-icon"></header>
+                        <section>
+                            <h3>foo.txt</h3>
+                            <p>创建时间: 2015/01/06 10:30:00</p>
+                            <p>修改时间: 2015/01/06 10:31:00</p>
+                            <p>拥有者: hbc</p>
+                        </section>
+                    </div>
+                    <div class="file col-sm-2">
+                        <header class="file-icon"></header>
+                        <section>
+                            <h3>bar.txt</h3>
+                            <p>创建时间: 2015/01/06 10:30:00</p>
+                            <p>修改时间: 2015/01/06 10:31:00</p>
+                            <p>拥有者: hbc</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="prompt" class="row">
+        <div id="files-infos" class="col-sm-3">
+            <div id="disk-infos" class="chart-wrapper">
+                <div class="chart-title">磁盘使用情况</div>
+                <div id="disk-nodes" class="chart-stage"></div>
+            </div>
+            <div id="user-infos" class="chart-wrapper">
+                <div class="chart-title">当前用户</div>
+                <div id="user-me" class="chart-stage">
+                    <p>hbc</p>
+                </div>
+                <div class="chart-notes">
+                    <a href="#">登出</a>
+                </div>
+            </div>
+        </div>
+        <div id="command-prompt" class="col-sm-9 chart-wrapper">
+            <div class="chart-title">
+                $ &gt;_
+            </div>
+            <div class="chart-stage"></div>
+        </div>
+    </div>
+</body>
+</html>

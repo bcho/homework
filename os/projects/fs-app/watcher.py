@@ -14,8 +14,20 @@ def compile_ts():
     shell('tsc --out %s %s -t ES5' % (output, files))()
 
 
-server.watch('ts/*.ts', compile_ts)
-server.watch('./**/*.html')
+def compile_scss():
+    output = 'css/style.css'
+    files = ' '.join([
+        'scss/style.scss'
+    ])
+
+    print('here')
+    shell('sass --scss %s %s' % (files, output))()
+
+
+server.watch('./ts/*.ts', compile_ts)
+server.watch('./scss/*.scss', compile_scss)
+server.watch('index.html')
 server.watch('./**/*.js')
+server.watch('./**/*.css')
 
 server.serve()
