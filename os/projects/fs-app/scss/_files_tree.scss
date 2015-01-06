@@ -1,5 +1,7 @@
 #files-tree {
-  height: 100%;
+  & > .chart-wrapper {
+    min-height: 400px;
+  }
 }
 
 .files-tree {

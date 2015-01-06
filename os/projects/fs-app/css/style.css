@@ -1,23 +1,15 @@
 #grid {
   width: 100%;
-  padding-top: 0; }
-
-#files {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  height: 50%; }
+  padding-top: 10px; }
 
 #prompt {
   position: absolute;
-  top: 53%;
-  left: 15px;
-  right: 25px;
-  height: 40%; }
+  left: 20px;
+  right: 20px;
+  bottom: 20px; }
 
-#files-tree {
-  height: 100%; }
+#files-tree > .chart-wrapper {
+  min-height: 400px; }
 
 .files-tree {
   padding-left: 0;
@@ -30,11 +22,8 @@
   padding-left: 10px;
   border-left: 1px solid #bdc3c7; }
 
-#files-directory {
-  height: 100%; }
-
 #files-directory-files {
-  height: 100%; }
+  min-height: 400px; }
 
 .breadcrumb {
   padding: 0 5px;

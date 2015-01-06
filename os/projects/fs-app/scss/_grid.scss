@@ -1,21 +1,15 @@
 #grid {
   width: 100%;
 
-  padding-top: 0;
+  padding-top: 10px;
 }
 
 #files {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  height: 50%;
 }
 
 #prompt {
   position: absolute;
-  top: 53%; 
-  left: 15px;
-  right: 25px;
-  height: 40%;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
 }
