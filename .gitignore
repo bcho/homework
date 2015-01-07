@@ -1,5 +1,5 @@
 *.o
 *swp
-*out
+*.out
 *pyc
 __pycache__/
