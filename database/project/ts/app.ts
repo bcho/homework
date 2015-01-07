@@ -193,6 +193,7 @@ class Seeder {
     run(): void {
         console.log('Seeding database...');
         this.seedTables();
+        this.seedViews();
         this.seedBooks();
         this.seedUsers();
         this.seedBookBorrowingLogs();
@@ -200,6 +201,10 @@ class Seeder {
 
     private seedTables(): void {
         this.db.exec(sqlQuery.createtable);
+    }
+
+    private seedViews(): void {
+        this.db.exec(sqlQuery.createview);
     }
 
     private seedBooks(): void {

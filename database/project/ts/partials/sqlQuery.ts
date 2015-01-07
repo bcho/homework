@@ -3,4 +3,5 @@ module sqlQuery {
 export var initbookborrowinglog = 'insert into book_borrowing_log    (book_no, user_no, expire_at)values    ("E0094868", "3112005816", date("now", "+3 months")),    ("A1840127", "3112005816", date("now", "+3 months"));insert into book_borrowing_log    (book_no, user_no, expire_at, returned_at)values    ("A0836869", "3112005816", date("now", "+3 months"), date("now", "+1 months"));'
 export var inituser = 'insert into user    (no, name, gender, faculty)values    ("3112005816", "张三", "男", "计算机学院"),    ("3112005817", "李四", "男", "计算机学院");'
 export var borrowbook = 'insert into book_borrowing_log    (user_no, book_no, expire_at)values    ("<%= userNo %>", "<%= bookNo %>", date("now", "+3 months"));'
+export var createview = 'create view not_returned_book as select book.* from book join book_borrowing_log `log` on `log`.book_no = book.no where `log`.returned_at is null;'
 export var initbook = 'insert into book    (no, title, isbn, category, description)values    ("E0094868", "A first course in database systems", "9787111247333", "", ""),    ("A0836869", "编译原理", "7302089795", "", ""),    ("A1840127", "数据库系统概论", "704007494X", "", "");' }
