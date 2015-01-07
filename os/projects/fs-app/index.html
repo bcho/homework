@@ -10,8 +10,8 @@
 </head>
 <body id="grid" class="application container-fluid">
     <div id="files" class="row">
-        <div id="files-tree" class="col-sm-3">
-            <div class="chart-wrapper">
+        <div class="col-sm-3">
+            <div id="files-tree" class="chart-wrapper">
                 <div class="chart-title">
                     磁盘目录
                 </div>
@@ -53,9 +53,9 @@
                 </div>
             </div>
         </div>
-        <div id="files-directory" class="col-sm-9">
-            <div id="files-directory-files" class="chart-wrapper">
-                <div id="file-path-breadcrumb" class="chart-title">
+        <div class="col-sm-9">
+            <div id="files-directory" class="chart-wrapper">
+                <div class="chart-title">
                     <ol class="breadcrumb">
                         <li>当前路径</li>
                         <li><a href="#">root</a></li>
@@ -66,8 +66,10 @@
                 </div>
                 <div class="chart-stage row">
                     <div class="file col-sm-2">
-                        <header class="file-icon"></header>
-                        <section>
+                        <header class="file-icon">
+                            <i class="fa fa-file-word-o"></i>
+                        </header>
+                        <section class="file-meta">
                             <h3>foo.txt</h3>
                             <p>创建时间: 2015/01/06 10:30:00</p>
                             <p>修改时间: 2015/01/06 10:31:00</p>
@@ -75,8 +77,10 @@
                         </section>
                     </div>
                     <div class="file col-sm-2">
-                        <header class="file-icon"></header>
-                        <section>
+                        <header class="file-icon">
+                            <i class="fa fa-file-word-o"></i>
+                        </header>
+                        <section class="file-meta">
                             <h3>bar.txt</h3>
                             <p>创建时间: 2015/01/06 10:30:00</p>
                             <p>修改时间: 2015/01/06 10:31:00</p>
@@ -88,11 +92,11 @@
         </div>
     </div>
     <div id="prompt" class="row">
-        <div id="files-infos" class="col-sm-3">
+        <div class="col-sm-3">
             <div id="disk-infos" class="chart-wrapper">
                 <div class="chart-title">磁盘使用情况</div>
-                <div id="disk-nodes" class="chart-stage">
-                    <ul>
+                <div class="chart-stage">
+                    <ul class="disk-nodes">
                         <li class="used"></li>
                         <li class="used"></li>
                         <li class="used"></li>
@@ -154,8 +158,8 @@
                 </div>
             </div>
         </div>
-        <div id="command-prompt" class="col-sm-9">
-            <div class="chart-wrapper">
+        <div class="col-sm-9">
+            <div id="command-prompt" class="chart-wrapper">
                 <div class="chart-title">
                     $ &gt;_
                 </div>

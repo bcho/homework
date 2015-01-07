@@ -1,10 +1,7 @@
-#user-infos {}
-
-#disk-infos {
-  ul {
-    padding-left: 0;
-    list-style: none;
-  }
+.disk-nodes {
+  padding-left: 0;
+  list-style: none;
+  background-color: $color-white;
 
   li {
     display: block;
@@ -18,7 +15,7 @@
     background-color: $color-gray;
 
     &.used {
-      background-color: $color-light;
+      background-color: $color-blue;
     }
   }
 }

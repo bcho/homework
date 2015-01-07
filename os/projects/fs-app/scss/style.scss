@@ -1,6 +1,13 @@
-@import "config.scss";
+@import 'utils/variables';
 
-@import "grid";
-@import "files_tree";
-@import "files_directory";
-@import "files_infos";
+@import 'layout/command_prompt';
+@import 'layout/disk_infos';
+@import 'layout/files';
+@import 'layout/files_tree';
+@import 'layout/files_directory';
+@import 'layout/grid';
+@import 'layout/prompt';
+
+@import 'components/chart';
+@import 'components/disk_nodes';
+@import 'components/files_tree';

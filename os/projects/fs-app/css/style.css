@@ -1,6 +1,15 @@
+#files {
+  min-height: 400px; }
+
+#files-tree {
+  min-height: 400px; }
+
+#files-directory {
+  min-height: 400px; }
+
 #grid {
   width: 100%;
-  padding-top: 10px; }
+  padding-top: 0; }
 
 #prompt {
   position: absolute;
@@ -8,8 +17,26 @@
   right: 20px;
   bottom: 20px; }
 
-#files-tree > .chart-wrapper {
-  min-height: 400px; }
+.chart-title .breadcrumb {
+  padding: 0 5px;
+  margin-bottom: 0;
+  background-color: transparent; }
+
+.disk-nodes {
+  padding-left: 0;
+  list-style: none;
+  background-color: white; }
+  .disk-nodes li {
+    display: block;
+    float: left;
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    margin: 0;
+    border: 1px solid white;
+    background-color: #bdc3c7; }
+    .disk-nodes li.used {
+      background-color: #3498db; }
 
 .files-tree {
   padding-left: 0;
@@ -21,26 +48,3 @@
   margin-left: 5px;
   padding-left: 10px;
   border-left: 1px solid #bdc3c7; }
-
-#files-directory-files {
-  min-height: 400px; }
-
-.breadcrumb {
-  padding: 0 5px;
-  margin-bottom: 0;
-  background-color: transparent; }
-
-#disk-infos ul {
-  padding-left: 0;
-  list-style: none; }
-#disk-infos li {
-  display: block;
-  float: left;
-  width: 10px;
-  height: 10px;
-  padding: 0;
-  margin: 0;
-  border: 1px solid white;
-  background-color: #bdc3c7; }
-  #disk-infos li.used {
-    background-color: #3498db; }
