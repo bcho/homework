@@ -340,6 +340,7 @@ class DashboardView extends Backbone.View<Backbone.Model> {
 
         $(this.el).html(this.tmpl({
             books: this.queryBookCount(),
+            notReturnedBooks: this.queryNotReturnedBookCount(),
             users: this.queryUserCount()
         }));
 
@@ -355,6 +356,15 @@ class DashboardView extends Backbone.View<Backbone.Model> {
 
     private queryBookCount(): number {
         var rv = DB.prepare('book', 'select count(*) as count from book').execute();
+
+        return rv[0].count;
+    }
+
+    private queryNotReturnedBookCount(): number {
+        var rv = DB.prepare(
+            'not_returned_book',
+            'select count(*) as count from not_returned_book'
+        ).execute();
 
         return rv[0].count;
     }

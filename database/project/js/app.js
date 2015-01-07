@@ -11,7 +11,7 @@ var html;
     html.bookborrowlogrow = '<tr>    <td><%= name %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td>    <td><%= returned_at %></td></tr>';
     html.bookborrowreturnuserborrowingrow = '<tr data-book-no="<%= no %>">    <td><%= title %></td>    <td><%= no %></td>    <td><%= borrowed_at %></td>    <td><%= expire_at %></td></tr>';
     html.bookborrowuserrow = '<tr data-user-no="<%= no %>">    <td><%= name %></td>    <td><%= no %></td>    <td><%= faculty %></td></tr>';
-    html.overview = '                <div class="page-header">                    <h1>藏书情况</h1>                </div>                <div>                    <p>共有藏书 <%= books %> 册</p>                </div>                <div class="page-header">                    <h1>读者情况</h1>                </div>                <div>                    <p>共有登记读者 <%= users %> 名</p>                </div>';
+    html.overview = '                <div class="page-header">                    <h1>藏书情况</h1>                </div>                <div>                    <p>共有藏书 <%= books %> 册</p>                    <p>未归还图书 <%= notReturnedBooks %> 册</p>                </div>                <div class="page-header">                    <h1>读者情况</h1>                </div>                <div>                    <p>共有登记读者 <%= users %> 名</p>                </div>';
     html.readeradd = '                <div class="page-header">                    <h3>读者详情</h3>                </div>                <form action="#" role="form" class="user-profile">                    <div class="row form-group">                        <div class="col-xs-4 user-profile-name">                            <label for="user-profile-name">姓名</label>                            <input name="user-profile-name" type="text" class="form-control" placeholder="姓名" />                        </div>                    <div class="row form-group">                    </div>                        <div class="col-xs-4 user-profile-no">                            <label for="user-profile-no">学号</label>                            <input name="user-profile-no" type="text" class="form-control" placeholder="学号" />                        </div>                    <div class="row form-group">                    </div>                        <div class="col-xs-4 user-profile-faculty">                            <label for="user-profile-faculty">学院</label>                            <input name="user-profile-faculty" type="text" class="form-control" placeholder="学院" />                        </div>                    </div>                    <div class="user-profile-actions row">                        <div class="btn-group col-md-4" role="group">                            <a class="btn btn-success btn-submit">新增</a>                        </div>                    </div>                </form>';
     html.bookprofilenotfound = '<h3>没有找到图书： <%= no %></h3>';
     html.readerresultrow = '<tr>    <td>        <a href="/#reader/<%= no %>"><%= name %></a>    </td>    <td><%= no %></td>    <td><%= faculty %></td></tr>';
@@ -327,6 +327,7 @@ var DashboardView = (function (_super) {
         headerView.switchViewWithTabName('overview');
         $(this.el).html(this.tmpl({
             books: this.queryBookCount(),
+            notReturnedBooks: this.queryNotReturnedBookCount(),
             users: this.queryUserCount()
         }));
         return this;
@@ -338,6 +339,10 @@ var DashboardView = (function (_super) {
     };
     DashboardView.prototype.queryBookCount = function () {
         var rv = DB.prepare('book', 'select count(*) as count from book').execute();
+        return rv[0].count;
+    };
+    DashboardView.prototype.queryNotReturnedBookCount = function () {
+        var rv = DB.prepare('not_returned_book', 'select count(*) as count from not_returned_book').execute();
         return rv[0].count;
     };
     return DashboardView;
