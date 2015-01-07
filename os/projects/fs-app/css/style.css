@@ -9,7 +9,7 @@
 
 #grid {
   width: 100%;
-  padding-top: 0; }
+  padding-top: 10px; }
 
 #prompt {
   position: absolute;
@@ -37,6 +37,19 @@
     background-color: #bdc3c7; }
     .disk-nodes li.used {
       background-color: #3498db; }
+
+.file-icon {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  text-align: center; }
+  .file-icon i.fa {
+    font-size: 100px;
+    color: #2c3e50; }
+
+.file-meta h3 {
+  margin-top: 2px;
+  font-size: 18px;
+  text-align: center; }
 
 .files-tree {
   padding-left: 0;

@@ -1,0 +1,23 @@
+.file {
+}
+
+.file-icon {
+  padding-top: 5px;
+  padding-bottom: 5px;
+
+  text-align: center;
+
+  i.fa {
+    font-size: 100px;
+    color: $color-black;
+  }
+}
+
+.file-meta {
+  h3 {
+    margin-top: 2px;
+
+    font-size: 18px;
+    text-align: center;
+  }
+}
