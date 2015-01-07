@@ -61,3 +61,33 @@
   margin-left: 5px;
   padding-left: 10px;
   border-left: 1px solid #bdc3c7; }
+
+.prompt {
+  position: relative;
+  min-height: 150px;
+  padding: 5px;
+  color: white;
+  background-color: black; }
+
+.prompt-screen {
+  max-height: 115px;
+  margin-bottom: 35px;
+  font-family: monaco, courier;
+  overflow-y: scroll; }
+  .prompt-screen p {
+    line-height: 1;
+    margin-bottom: 5px; }
+
+.prompt-control {
+  position: absolute;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  right: 5px; }
+
+.prompt-input {
+  width: 100%;
+  outline: none;
+  border: none;
+  background-color: black;
+  font-family: monaco, courier; }

@@ -1,0 +1,38 @@
+.prompt {
+  position: relative;
+  min-height: 150px;
+  padding: 5px;
+
+  color: $color-white;
+  background-color: rgb(0, 0, 0);
+}
+
+.prompt-screen {
+  max-height: 115px;
+  margin-bottom: 35px;
+
+  font-family: monaco, courier;
+  overflow-y: scroll;
+
+  p {
+    line-height: 1;
+    margin-bottom: 5px;
+  }
+}
+
+.prompt-control {
+  position: absolute;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  right: 5px;
+}
+
+.prompt-input {
+  width: 100%;
+
+  outline: none;
+  border: none;
+  background-color: rgb(0, 0, 0);
+  font-family: monaco, courier;
+}
