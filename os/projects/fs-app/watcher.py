@@ -20,12 +20,11 @@ def compile_scss():
         'scss/style.scss'
     ])
 
-    print('here')
     shell('sass --scss %s %s' % (files, output))()
 
 
 server.watch('./ts/*.ts', compile_ts)
-server.watch('./scss/*.scss', compile_scss)
+server.watch('./scss/**/*.scss', compile_scss)
 server.watch('index.html')
 server.watch('./**/*.js')
 server.watch('./**/*.css')
