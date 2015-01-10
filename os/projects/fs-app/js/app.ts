@@ -24,3 +24,8 @@ FilesTree.getInstance()
 
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
+
+window.setTimeout(() => {
+    FilesTree.getInstance()
+        .chdir('home/foo');
+}, 2000);

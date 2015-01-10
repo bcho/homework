@@ -52,7 +52,7 @@ class FileEntryModel extends Backbone.Model {
         return path.reverse();
     }
 
-    getPath(): string[] {
+    getPath(): string {
         var path = [this.get('name')],
             cur = this,
             parentEntry: FileEntryModel;
@@ -62,7 +62,7 @@ class FileEntryModel extends Backbone.Model {
             path.push(cur.get('name'));
         }
 
-        return path.reverse();
+        return path.reverse().join('/');
     }
 
     getSubEntries(): FileEntryModel[] { return this.get('subEntries'); }
@@ -86,9 +86,18 @@ class FileEntryModel extends Backbone.Model {
 
         return this;
     }
+
+    toJSON(options?: any): any {
+        var encoded = super.toJSON(options);
+
+        encoded['path'] = this.getPath();
+
+        return encoded;
+    }
 }
 
-class FilesTree implements SerializableInterface {
+class FilesTree extends Backbone.Events implements SerializableInterface {
+
     private static instance: FilesTree = null;
 
     protected rootEntry: FileEntryModel;
@@ -102,6 +111,11 @@ class FilesTree implements SerializableInterface {
         return FilesTree.instance;
     }
 
+    constructor() {
+        // XXX Work around for extending from a object.
+        _.extend(this, Backbone.Events);
+    }
+
     // Change current working directory.
     chdir(path: string): FilesTree {
         var found = this.findByAbsolutePath(path);
@@ -110,13 +124,15 @@ class FilesTree implements SerializableInterface {
         }
 
         this.currentDir = found;
+        this.trigger('cwd:changed');
 
-        return this;    
+        return this;
     }
 
     // Set root entry.
     setRoot(root: FileEntryModel): FilesTree {
         this.rootEntry = root;
+        this.trigger('root:changed');
 
         return this;
     }

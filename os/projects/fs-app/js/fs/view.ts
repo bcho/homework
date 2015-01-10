@@ -14,7 +14,13 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
 
         this.ft = FilesTree.getInstance();
 
-        // TODO listen on events
+        this.listenTo(this.ft, 'cwd:changed', this.render);
+    }
+
+    events(): any {
+        return {
+            'click a[data-path]': 'chdir'
+        };
     }
 
     render(): FilesTreeView {
@@ -63,6 +69,14 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
         return this;
     }
 
+    protected chdir(e): boolean {
+        var path = $(e.target).data('path');
+
+        this.ft.chdir(path);
+
+        return false;
+    }
+
 }
 
 class FilesDirectoryView extends Backbone.View<Backbone.Model> {
@@ -75,7 +89,13 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
 
         this.ft = FilesTree.getInstance();
 
-        // TODO listen on events.
+        this.listenTo(this.ft, 'cwd:changed', this.render);
+    }
+
+    events(): any {
+        return {
+            'click a[data-path]': 'chdir'
+        };
     }
 
     render(): FilesDirectoryView {
@@ -94,14 +114,20 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
 
         path.pop();
         var parts = _.map(path, (p: FileEntryModel) => {
-            return parentTmpl({
-                'name': p.get('name')
-            });
+            return parentTmpl(p.toJSON());
         });
 
         parts.push(curTmpl(currentDir.toJSON()));
 
         $('.breadcrumb', this.$el).html(parts.join("\n"));
+    }
+
+    protected chdir(e): boolean {
+        var path = $(e.target).data('path');
+
+        this.ft.chdir(path);
+
+        return false;
     }
 
 }
