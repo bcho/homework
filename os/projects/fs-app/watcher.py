@@ -8,8 +8,6 @@ server = Server()
 def compile_ts():
     output = 'js/app.js'
     files = ' '.join([
-        'js/user/model.ts',
-        'js/user/view.ts',
         'js/app.ts'
     ])
 
@@ -25,10 +23,17 @@ def compile_scss():
     shell('sass --scss %s %s' % (files, output))()
 
 
+def compile_html_partials():
+    output = 'js/partials/html.ts'
+
+    shell('tss html *.html', output=output, cwd='./js/partials', shell=True)()
+
+
 server.watch('./js/**/*.ts', compile_ts)
+server.watch('./js/*.ts', compile_ts)
 server.watch('./scss/**/*.scss', compile_scss)
+server.watch('./js/partials/*.html', compile_html_partials)
 server.watch('index.html')
-server.watch('./**/*.js')
 server.watch('./**/*.css')
 
 server.serve()
