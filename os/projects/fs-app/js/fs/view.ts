@@ -57,10 +57,51 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
             return this.subTreeTmpl(payload);
         };
 
-        var tree = treeBuilder(entries.reverse());
+        var tree = treeBuilder(entries);
         $('.chart-stage .files-tree', this.$el).html(tree);
 
         return this;
+    }
+
+}
+
+class FilesDirectoryView extends Backbone.View<Backbone.Model> {
+
+    protected ft: FilesTree;
+    $el: JQuery;
+
+    constructor(opts?: any) {
+        super(opts);
+
+        this.ft = FilesTree.getInstance();
+
+        // TODO listen on events.
+    }
+
+    render(): FilesDirectoryView {
+        var currentDir = this.ft.getCurrentDir();
+
+        this.renderBreadcrumbs(currentDir);
+
+        return this;
+    }
+
+    protected renderBreadcrumbs(currentDir: FileEntryModel): void {
+        var path = currentDir.getEntriesTo();
+
+        var parentTmpl = _.template(html.filesDirectoryBreadcrumb),
+            curTmpl = _.template(html.filesDirectoryBreadcrumbActive);
+
+        path.pop();
+        var parts = _.map(path, (p: FileEntryModel) => {
+            return parentTmpl({
+                'name': p.get('name')
+            });
+        });
+
+        parts.push(curTmpl(currentDir.toJSON()));
+
+        $('.breadcrumb', this.$el).html(parts.join("\n"));
     }
 
 }

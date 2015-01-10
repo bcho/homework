@@ -8,6 +8,8 @@ var invalidEntryTypeException = function () {
 };
 var html;
 (function (html) {
+    html.filesDirectoryBreadcrumbActive = ["<li class=\"active\">", "    <%= name %>", "</li>", ""].join("\n");
+    html.filesDirectoryBreadcrumb = ["<li>", "    <a><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeDir = ["<li>", "    <i class=\"fa fa-folder-o\"></i>", "    <a><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeFile = ["<li>", "    <i class=\"fa fa-file-word-o\"></i>", "    <%= name %>", "</li>", ""].join("\n");
     html.filesTreeSubtree = ["<li>", "    <i class=\"fa fa-folder-open-o\"></i>", "    <a><%= name %></a>", "</li>", "<li class=\"files-tree-sub\">", "    <ul class=\"files-tree\">", "        <%= sub_tree %>", "    </ul>", "</li>", ""].join("\n");
@@ -63,13 +65,20 @@ var FileEntryModel = (function (_super) {
             cur = parentEntry;
             path.push(cur);
         }
-        return path;
+        return path.reverse();
+    };
+    FileEntryModel.prototype.getPath = function () {
+        var path = [this.get('name')], cur = this, parentEntry;
+        while ((parentEntry = cur.get('parentEntry')) !== null) {
+            cur = parentEntry;
+            path.push(cur.get('name'));
+        }
+        return path.reverse();
     };
     FileEntryModel.prototype.getSubEntries = function () {
         return this.get('subEntries');
     };
     FileEntryModel.prototype.addSubEntry = function (sub) {
-        console.log(this);
         if (!this.isDir()) {
             invalidEntryTypeException();
         }
@@ -200,11 +209,37 @@ var FilesTreeView = (function (_super) {
             payload['sub_tree'] = subTree.join("\n");
             return _this.subTreeTmpl(payload);
         };
-        var tree = treeBuilder(entries.reverse());
+        var tree = treeBuilder(entries);
         $('.chart-stage .files-tree', this.$el).html(tree);
         return this;
     };
     return FilesTreeView;
+})(Backbone.View);
+var FilesDirectoryView = (function (_super) {
+    __extends(FilesDirectoryView, _super);
+    function FilesDirectoryView(opts) {
+        _super.call(this, opts);
+        this.ft = FilesTree.getInstance();
+        // TODO listen on events.
+    }
+    FilesDirectoryView.prototype.render = function () {
+        var currentDir = this.ft.getCurrentDir();
+        this.renderBreadcrumbs(currentDir);
+        return this;
+    };
+    FilesDirectoryView.prototype.renderBreadcrumbs = function (currentDir) {
+        var path = currentDir.getEntriesTo();
+        var parentTmpl = _.template(html.filesDirectoryBreadcrumb), curTmpl = _.template(html.filesDirectoryBreadcrumbActive);
+        path.pop();
+        var parts = _.map(path, function (p) {
+            return parentTmpl({
+                'name': p.get('name')
+            });
+        });
+        parts.push(curTmpl(currentDir.toJSON()));
+        $('.breadcrumb', this.$el).html(parts.join("\n"));
+    };
+    return FilesDirectoryView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
 var UserModel = (function (_super) {
@@ -252,8 +287,14 @@ var root = new FileEntryModel({
 });
 var s = new FileEntryModel({
     'name': 'foo',
-    'entryType': FileEntryModel.TypeFile
+    'entryType': FileEntryModel.TypeDir
+});
+var b = new FileEntryModel({
+    'name': 'foo',
+    'entryType': FileEntryModel.TypeDir
 });
 root.addSubEntry(s);
-FilesTree.getInstance().setRoot(root).chdir('home/foo');
+s.addSubEntry(b);
+FilesTree.getInstance().setRoot(root).chdir('home/foo/foo');
 (new FilesTreeView({ el: $('#files-tree') })).render();
+(new FilesDirectoryView({ el: $('#files-directory') })).render();

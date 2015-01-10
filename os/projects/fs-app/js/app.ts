@@ -7,13 +7,20 @@ var root = new FileEntryModel({
 
 var s = new FileEntryModel({
     'name': 'foo',
-    'entryType': FileEntryModel.TypeFile
+    'entryType': FileEntryModel.TypeDir
+});
+
+var b = new FileEntryModel({
+    'name': 'foo',
+    'entryType': FileEntryModel.TypeDir
 });
 
 root.addSubEntry(s);
+s.addSubEntry(b);
 
 FilesTree.getInstance()
     .setRoot(root)
-    .chdir('home/foo');
+    .chdir('home/foo/foo');
 
 (new FilesTreeView({ el: $('#files-tree') })).render();
+(new FilesDirectoryView({ el: $('#files-directory') })).render();

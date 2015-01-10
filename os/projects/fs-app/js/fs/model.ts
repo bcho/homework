@@ -49,13 +49,25 @@ class FileEntryModel extends Backbone.Model {
             path.push(cur);
         }
 
-        return path;
+        return path.reverse();
+    }
+
+    getPath(): string[] {
+        var path = [this.get('name')],
+            cur = this,
+            parentEntry: FileEntryModel;
+
+        while ((parentEntry = cur.get('parentEntry')) !== null) {
+            cur = parentEntry;
+            path.push(cur.get('name'));
+        }
+
+        return path.reverse();
     }
 
     getSubEntries(): FileEntryModel[] { return this.get('subEntries'); }
 
     addSubEntry(sub: FileEntryModel): FileEntryModel {
-        console.log(this);
         if (! this.isDir()) {
             invalidEntryTypeException();
         }
