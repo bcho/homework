@@ -10,6 +10,8 @@ var html;
 (function (html) {
     html.filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">", "    <%= name %>", "</li>", ""].join("\n");
     html.filesDirectoryBreadcrumb = ["<li>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
+    html.filesDirectoryDir = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">", "    <a data-path=\"<%= path %>\">", "        <header class=\"file-icon\">", "            <i class=\"fa fa-folder-o\"></i>", "        </header>", "        <section class=\"file-meta\">", "            <h3><%= name %></h3>", "        </section>", "    </a>", "</div>", ""].join("\n");
+    html.filesDirectoryFile = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">", "    <header class=\"file-icon\">", "        <i class=\"fa fa-file-word-o\"></i>", "    </header>", "    <section class=\"file-meta\">", "        <h3><%= name %></h3>", "    </section>", "</div>", ""].join("\n");
     html.filesTreeDir = ["<li>", "    <i class=\"fa fa-folder-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeFile = ["<li data-path=\"<%= path %>\">", "    <i class=\"fa fa-file-word-o\"></i>", "    <%= name %>", "</li>", ""].join("\n");
     html.filesTreeSubtree = ["<li>", "    <i class=\"fa fa-folder-open-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", "<li class=\"files-tree-sub\">", "    <ul class=\"files-tree\">", "        <%= sub_tree %>", "    </ul>", "</li>", ""].join("\n");
@@ -229,8 +231,7 @@ var FilesTreeView = (function (_super) {
         return this;
     };
     FilesTreeView.prototype.chdir = function (e) {
-        var path = $(e.target).data('path');
-        this.ft.chdir(path);
+        this.ft.chdir($(e.currentTarget).data('path'));
         return false;
     };
     return FilesTreeView;
@@ -250,6 +251,7 @@ var FilesDirectoryView = (function (_super) {
     FilesDirectoryView.prototype.render = function () {
         var currentDir = this.ft.getCurrentDir();
         this.renderBreadcrumbs(currentDir);
+        this.renderSubEntries(currentDir);
         return this;
     };
     FilesDirectoryView.prototype.renderBreadcrumbs = function (currentDir) {
@@ -262,9 +264,19 @@ var FilesDirectoryView = (function (_super) {
         parts.push(curTmpl(currentDir.toJSON()));
         $('.breadcrumb', this.$el).html(parts.join("\n"));
     };
+    FilesDirectoryView.prototype.renderSubEntries = function (currentDir) {
+        var entries = currentDir.getSubEntries();
+        var dirTmpl = _.template(html.filesDirectoryDir), fileTmpl = _.template(html.filesDirectoryFile);
+        var icons = _.map(entries, function (e) {
+            if (e.isDir()) {
+                return dirTmpl(e.toJSON());
+            }
+            return fileTmpl(e.toJSON());
+        });
+        $('.chart-stage', this.$el).html(icons.join("\n"));
+    };
     FilesDirectoryView.prototype.chdir = function (e) {
-        var path = $(e.target).data('path');
-        this.ft.chdir(path);
+        this.ft.chdir($(e.currentTarget).data('path'));
         return false;
     };
     return FilesDirectoryView;
@@ -318,14 +330,16 @@ var s = new FileEntryModel({
     'entryType': FileEntryModel.TypeDir
 });
 var b = new FileEntryModel({
-    'name': 'foo',
+    'name': 'bar',
+    'entryType': FileEntryModel.TypeFile
+});
+var c = new FileEntryModel({
+    'name': 'baz',
     'entryType': FileEntryModel.TypeDir
 });
 root.addSubEntry(s);
 s.addSubEntry(b);
-FilesTree.getInstance().setRoot(root).chdir('home/foo/foo');
+s.addSubEntry(c);
+FilesTree.getInstance().setRoot(root).chdir('home/foo');
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
-window.setTimeout(function () {
-    FilesTree.getInstance().chdir('home/foo');
-}, 2000);

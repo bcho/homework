@@ -70,9 +70,7 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
     }
 
     protected chdir(e): boolean {
-        var path = $(e.target).data('path');
-
-        this.ft.chdir(path);
+        this.ft.chdir($(e.currentTarget).data('path'));
 
         return false;
     }
@@ -102,6 +100,7 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
         var currentDir = this.ft.getCurrentDir();
 
         this.renderBreadcrumbs(currentDir);
+        this.renderSubEntries(currentDir);
 
         return this;
     }
@@ -122,10 +121,25 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
         $('.breadcrumb', this.$el).html(parts.join("\n"));
     }
 
-    protected chdir(e): boolean {
-        var path = $(e.target).data('path');
+    protected renderSubEntries(currentDir: FileEntryModel): void {
+        var entries = currentDir.getSubEntries();
 
-        this.ft.chdir(path);
+        var dirTmpl = _.template(html.filesDirectoryDir),
+            fileTmpl = _.template(html.filesDirectoryFile);
+
+        var icons = _.map(entries, (e: FileEntryModel) => {
+            if (e.isDir()) {
+                return dirTmpl(e.toJSON());
+            }
+
+            return fileTmpl(e.toJSON());
+        });
+
+        $('.chart-stage', this.$el).html(icons.join("\n"));
+    }
+
+    protected chdir(e): boolean {
+        this.ft.chdir($(e.currentTarget).data('path'));
 
         return false;
     }

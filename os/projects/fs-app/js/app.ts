@@ -11,21 +11,22 @@ var s = new FileEntryModel({
 });
 
 var b = new FileEntryModel({
-    'name': 'foo',
+    'name': 'bar',
+    'entryType': FileEntryModel.TypeFile
+});
+
+var c = new FileEntryModel({
+    'name': 'baz',
     'entryType': FileEntryModel.TypeDir
 });
 
 root.addSubEntry(s);
 s.addSubEntry(b);
+s.addSubEntry(c);
 
 FilesTree.getInstance()
     .setRoot(root)
-    .chdir('home/foo/foo');
+    .chdir('home/foo');
 
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
-
-window.setTimeout(() => {
-    FilesTree.getInstance()
-        .chdir('home/foo');
-}, 2000);

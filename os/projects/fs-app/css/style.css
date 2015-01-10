@@ -38,6 +38,10 @@
     .disk-nodes li.used {
       background-color: #3498db; }
 
+.file a {
+  text-decoration: none;
+  color: #2c3e50; }
+
 .file-icon {
   padding-top: 5px;
   padding-bottom: 5px;
