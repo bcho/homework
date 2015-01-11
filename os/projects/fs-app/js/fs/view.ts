@@ -44,10 +44,6 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
                 remains = entries.slice(1),
                 next = remains[0] || null;
 
-            if (! next) {
-                return entryTemplate(cur);
-            }
-
             var subTree = _.map(cur.getSubEntries(), (sub: FileEntryModel) => {
                 if (sub === next) {
                     return treeBuilder(remains);
