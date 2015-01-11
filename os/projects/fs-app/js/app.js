@@ -286,8 +286,33 @@ var FilesDirectoryView = (function (_super) {
     return FilesDirectoryView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
+// Change working dir.
 var sys_chdir = function (entry) {
     FilesTree.getInstance().chdirByEntry(entry);
+    return 0;
+};
+// Open a file and return file descriptor.
+var sys_open = function (entry, mode) {
+    return 0;
+};
+// Close a file descriptior.
+var sys_close = function (fd) {
+    return 0;
+};
+// Read from file descriptor.
+var sys_read = function (fd) {
+    return '';
+};
+// Write to file descriptor.
+var sys_write = function (fd, content) {
+    return 0;
+};
+// Create an entry.
+var sys_create = function (parent, name, ownerPerm, otherPerm) {
+    return 0;
+};
+// Delete an entry.
+var sys_delete = function (entry) {
     return 0;
 };
 /// <reference path="../_ref.d.ts" />
