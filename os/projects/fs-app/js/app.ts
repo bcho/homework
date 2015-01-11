@@ -39,6 +39,4 @@ UserManager.getInstance()
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
 (new UserInfosView({ el: $('#user-infos') })).render();
-var p = new PromptView({ el: $('#command-prompt') });
-
-p.writeToScreen('foobar');
+new PromptView({ el: $('#command-prompt') });

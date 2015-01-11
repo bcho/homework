@@ -87,6 +87,8 @@ class FileEntryModel extends Backbone.Model {
         return this;
     }
 
+    getParentEntry(): FileEntryModel { return this.get('parentEntry'); }
+
     toJSON(options?: any): any {
         var encoded = super.toJSON(options);
 
@@ -123,7 +125,11 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
             pathNotFoundException(path);
         }
 
-        this.currentDir = found;
+        return this.chdirByEntry(found);
+    }
+
+    chdirByEntry(entry: FileEntryModel): FilesTree {
+        this.currentDir = entry;
         this.trigger('cwd:changed');
 
         return this;

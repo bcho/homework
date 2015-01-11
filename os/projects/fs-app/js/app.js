@@ -96,6 +96,9 @@ var FileEntryModel = (function (_super) {
         this.set('parentEntry', p);
         return this;
     };
+    FileEntryModel.prototype.getParentEntry = function () {
+        return this.get('parentEntry');
+    };
     FileEntryModel.prototype.toJSON = function (options) {
         var encoded = _super.prototype.toJSON.call(this, options);
         encoded['path'] = this.getPath();
@@ -124,7 +127,10 @@ var FilesTree = (function (_super) {
         if (!found) {
             pathNotFoundException(path);
         }
-        this.currentDir = found;
+        return this.chdirByEntry(found);
+    };
+    FilesTree.prototype.chdirByEntry = function (entry) {
+        this.currentDir = entry;
         this.trigger('cwd:changed');
         return this;
     };
@@ -280,6 +286,11 @@ var FilesDirectoryView = (function (_super) {
     return FilesDirectoryView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
+var sys_chdir = function (entry) {
+    FilesTree.getInstance().chdirByEntry(entry);
+    return 0;
+};
+/// <reference path="../_ref.d.ts" />
 var UserModel = (function (_super) {
     __extends(UserModel, _super);
     function UserModel() {
@@ -412,8 +423,31 @@ var PromptView = (function (_super) {
     return PromptView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
+var ShellEnv = (function () {
+    function ShellEnv(shell) {
+        this.shell = shell;
+    }
+    ShellEnv.prototype.readStdin = function () {
+        // XXX not implemented yet.
+        return '';
+    };
+    ShellEnv.prototype.writeStdout = function (output) {
+        this.shell.write(output);
+    };
+    ShellEnv.prototype.writeStderr = function (output) {
+        this.shell.writeErr(output);
+    };
+    ShellEnv.prototype.getUser = function () {
+        return UserManager.getInstance().getCurrentUser();
+    };
+    ShellEnv.prototype.getCWD = function () {
+        return FilesTree.getInstance().getCurrentDir();
+    };
+    return ShellEnv;
+})();
 var Shell = (function () {
     function Shell() {
+        this.commands = {};
     }
     Shell.getInstance = function () {
         if (!Shell.instance) {
@@ -426,7 +460,32 @@ var Shell = (function () {
         return this;
     };
     Shell.prototype.execute = function (cmd) {
-        this.promptView.writeToScreen(cmd.join(' '));
+        var name = cmd[0], args = cmd.slice(1);
+        if (!_.has(this.commands, name)) {
+            this.writeErr('Unknown command: ' + name);
+        }
+        else {
+            var currentUser = UserManager.getInstance().getCurrentUser();
+            if (!currentUser) {
+                this.writeErr('Please login first.');
+                return;
+            }
+            var env = new ShellEnv(this);
+            this.commands[name](env, args);
+        }
+        return this;
+    };
+    Shell.prototype.install = function (name, cmd) {
+        this.commands[name] = cmd;
+        return this;
+    };
+    Shell.prototype.write = function (output) {
+        this.promptView.writeToScreen(output);
+        return this;
+    };
+    Shell.prototype.writeErr = function (output) {
+        // TODO style error.
+        this.promptView.writeToScreen(output);
         return this;
     };
     return Shell;
@@ -487,6 +546,29 @@ var shlex = function (str) {
     return quoteOpen ? false : out;
 };
 /// <reference path="./_ref.d.ts" />
+Shell.getInstance().install('cd', function (env, args) {
+    if (args.length <= 0) {
+        return;
+    }
+    var path = args[0], cwd = env.getCWD(), subDir;
+    // XXX handle some special cases.
+    if (path === '.') {
+        subDir = cwd;
+    }
+    else if (path === '..') {
+        subDir = cwd.getParentEntry();
+    }
+    else {
+        subDir = env.getCWD().getSubEntryByName(args[0]);
+    }
+    if (!subDir || !subDir.isDir()) {
+        env.writeStderr('Cannot found dir: ' + args[0]);
+        return 1;
+    }
+    sys_chdir(subDir);
+    return 0;
+});
+/// <reference path="./_ref.d.ts" />
 var root = new FileEntryModel({
     'name': 'home',
     'entryType': FileEntryModel.TypeDir
@@ -512,5 +594,4 @@ UserManager.getInstance().setUsers(d).setCurrentUser(u);
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
 (new UserInfosView({ el: $('#user-infos') })).render();
-var p = new PromptView({ el: $('#command-prompt') });
-p.writeToScreen('foobar');
+new PromptView({ el: $('#command-prompt') });

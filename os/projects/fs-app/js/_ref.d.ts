@@ -5,3 +5,4 @@
 /// <reference path="./fs/_ref.d.ts" />
 /// <reference path="./user/_ref.d.ts" />
 /// <reference path="./prompt/_ref.d.ts" />
+/// <reference path="./command.ts" />
