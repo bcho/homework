@@ -2,12 +2,12 @@
 
 class FilesTreeView extends Backbone.View<Backbone.Model> {
 
-    protected ft: FilesTree;
     $el: JQuery;
     
-    fileTmpl = _.template(html.filesTreeFile);
-    dirTmpl = _.template(html.filesTreeDir);
-    subTreeTmpl = _.template(html.filesTreeSubtree);
+    protected ft: FilesTree;
+    protected fileTmpl = _.template(html.filesTreeFile);
+    protected dirTmpl = _.template(html.filesTreeDir);
+    protected subTreeTmpl = _.template(html.filesTreeSubtree);
 
     constructor(opts?: any) {
         super(opts);

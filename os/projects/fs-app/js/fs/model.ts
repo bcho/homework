@@ -144,7 +144,7 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
     getCurrentDir(): FileEntryModel { return this.currentDir; }
 
     // Find a entry from absolute path.
-    protected findByAbsolutePath(path: string): FileEntryModel {
+    findByAbsolutePath(path: string): FileEntryModel {
         var finder = (subs: string[], cur: FileEntryModel) => {
             if (subs.length === 0 || cur === null || ! cur.isDir()) {
                 return cur;

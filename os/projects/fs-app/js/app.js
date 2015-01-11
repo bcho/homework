@@ -15,6 +15,7 @@ var html;
     html.filesTreeDir = ["<li>", "    <i class=\"fa fa-folder-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeFile = ["<li data-path=\"<%= path %>\">", "    <i class=\"fa fa-file-word-o\"></i>", "    <%= name %>", "</li>", ""].join("\n");
     html.filesTreeSubtree = ["<li>", "    <i class=\"fa fa-folder-open-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", "<li class=\"files-tree-sub\">", "    <ul class=\"files-tree\">", "        <%= sub_tree %>", "    </ul>", "</li>", ""].join("\n");
+    html.userInfosMe = ["<p>当前用户：<span class=\"badge\"><%= currentUser.name %></span></p>", "<p>用户总数：<span class=\"badge\"><%= count %></span></p>", ""].join("\n");
 })(html || (html = {}));
 /// <reference path="../_ref.d.ts" />
 var __extends = this.__extends || function (d, b) {
@@ -287,8 +288,7 @@ var UserModel = (function (_super) {
     UserModel.prototype.defaults = function () {
         return {
             uid: 0,
-            name: '',
-            homeDir: '/'
+            name: ''
         };
     };
     UserModel.prototype.getUid = function () {
@@ -298,7 +298,8 @@ var UserModel = (function (_super) {
         return this.get('name');
     };
     UserModel.prototype.getHomeDir = function () {
-        return null;
+        var homePath = 'home/' + this.getName();
+        return FilesTree.getInstance().findByAbsolutePath(homePath);
     };
     return UserModel;
 })(Backbone.Model);
@@ -317,6 +318,68 @@ var UserCollection = (function (_super) {
     };
     return UserCollection;
 })(Backbone.Collection);
+var UserManager = (function (_super) {
+    __extends(UserManager, _super);
+    function UserManager() {
+        // XXX Work around for extending from a object.
+        _.extend(this, Backbone.Events);
+    }
+    UserManager.getInstance = function () {
+        if (!UserManager.instance) {
+            UserManager.instance = new UserManager();
+        }
+        return UserManager.instance;
+    };
+    // Get current user.
+    UserManager.prototype.getCurrentUser = function () {
+        return this.currentUser;
+    };
+    // Set current user.
+    UserManager.prototype.setCurrentUser = function (user) {
+        this.currentUser = user;
+        this.trigger('current_user:changed');
+        return this;
+    };
+    // Set users.
+    UserManager.prototype.setUsers = function (users) {
+        this.users = users;
+        this.trigger('users:changed');
+        return this;
+    };
+    // Find an user by uid.
+    UserManager.prototype.findUserByUid = function (uid) {
+        return this.users.findWhere({ uid: uid });
+    };
+    // Find an user by name.
+    UserManager.prototype.findUserByName = function (name) {
+        return this.users.findWhere({ name: name });
+    };
+    // Get #users.
+    UserManager.prototype.getUsersCount = function () {
+        return this.users.length;
+    };
+    UserManager.instance = null;
+    return UserManager;
+})(Backbone.Events);
+/// <reference path="../_ref.d.ts" />
+var UserInfosView = (function (_super) {
+    __extends(UserInfosView, _super);
+    function UserInfosView(opts) {
+        _super.call(this, opts);
+        this.meTmpl = _.template(html.userInfosMe);
+        this.userManager = UserManager.getInstance();
+        this.listenTo(this.userManager, 'currentUser:changed', this.render);
+        this.listenTo(this.userManager, 'users:changed', this.render);
+    }
+    UserInfosView.prototype.render = function () {
+        $('#user-me', this.$el).html(this.meTmpl({
+            currentUser: this.userManager.getCurrentUser().toJSON(),
+            count: this.userManager.getUsersCount()
+        }));
+        return this;
+    };
+    return UserInfosView;
+})(Backbone.View);
 /// <reference path="./_ref.d.ts" />
 var root = new FileEntryModel({
     'name': 'home',
@@ -338,5 +401,8 @@ root.addSubEntry(s);
 s.addSubEntry(b);
 s.addSubEntry(c);
 FilesTree.getInstance().setRoot(root).chdir('home/foo');
+var u = new UserModel({ uid: 1, name: 'root' }), u2 = new UserModel({ uid: 2, name: 'hbc' }), d = new UserCollection([u, u2]);
+UserManager.getInstance().setUsers(d).setCurrentUser(u);
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
+(new UserInfosView({ el: $('#user-infos') })).render();

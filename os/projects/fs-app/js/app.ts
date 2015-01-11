@@ -28,5 +28,14 @@ FilesTree.getInstance()
     .setRoot(root)
     .chdir('home/foo');
 
+var u = new UserModel({ uid: 1, name: 'root' }),
+    u2 = new UserModel({ uid: 2, name: 'hbc' }),
+    d = new UserCollection([u, u2]);
+
+UserManager.getInstance()
+    .setUsers(d)
+    .setCurrentUser(u);
+
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
+(new UserInfosView({ el: $('#user-infos') })).render();
