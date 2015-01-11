@@ -380,6 +380,112 @@ var UserInfosView = (function (_super) {
     };
     return UserInfosView;
 })(Backbone.View);
+/// <reference path="../_ref.d.ts" />
+var PromptView = (function (_super) {
+    __extends(PromptView, _super);
+    function PromptView(opts) {
+        _super.call(this, opts);
+        this.lineTmpl = _.template('<p><%= line %></p>');
+        this.$screen = $('.prompt-screen', this.$el);
+        this.$input = $('.prompt-input', this.$el);
+        this.shell = Shell.getInstance().setPromptView(this);
+    }
+    PromptView.prototype.events = function () {
+        return {
+            'keypress .prompt-input': 'checkInput'
+        };
+    };
+    PromptView.prototype.writeToScreen = function (line) {
+        this.$screen.append(this.lineTmpl({ line: line }));
+        this.$screen.scrollTop(this.$screen.prop('scrollHeight'));
+        return this;
+    };
+    PromptView.prototype.checkInput = function (e) {
+        if (e.which !== 13) {
+            return;
+        }
+        var cmd = shlex(this.$input.val());
+        this.shell.execute(cmd);
+        this.$input.val('');
+        return false;
+    };
+    return PromptView;
+})(Backbone.View);
+/// <reference path="../_ref.d.ts" />
+var Shell = (function () {
+    function Shell() {
+    }
+    Shell.getInstance = function () {
+        if (!Shell.instance) {
+            Shell.instance = new Shell();
+        }
+        return Shell.instance;
+    };
+    Shell.prototype.setPromptView = function (view) {
+        this.promptView = view;
+        return this;
+    };
+    Shell.prototype.execute = function (cmd) {
+        this.promptView.writeToScreen(cmd.join(' '));
+        return this;
+    };
+    return Shell;
+})();
+/// <reference path="../_ref.d.ts" />
+// @see https://gist.github.com/OllieTerrance/6280851
+var shlex = function (str) {
+    var args = str.split(" ");
+    var out = [];
+    var lookForClose = -1;
+    var quoteOpen = false;
+    for (var x in args) {
+        if (args.hasOwnProperty(x)) {
+            var arg = args[x];
+            var escSeq = false;
+            for (var y in arg) {
+                if (escSeq) {
+                    escSeq = false;
+                }
+                else if (arg[y] === "\\") {
+                    escSeq = true;
+                }
+                else if (arg[y] === "\"") {
+                    quoteOpen = !quoteOpen;
+                }
+            }
+            if (!quoteOpen && lookForClose === -1) {
+                out.push(arg);
+            }
+            else if (quoteOpen && lookForClose === -1) {
+                lookForClose = x;
+            }
+            else if (!quoteOpen && lookForClose >= 0) {
+                var block = args.slice(lookForClose, parseInt(x) + 1).join(" ");
+                var escSeq = false;
+                var quotes = [];
+                for (var y in block) {
+                    if (escSeq) {
+                        escSeq = false;
+                    }
+                    else if (block[y] === "\\") {
+                        escSeq = true;
+                    }
+                    else if (block[y] === "\"") {
+                        quotes.push(y);
+                    }
+                }
+                var parts = [];
+                parts.push(block.substr(0, quotes[0]));
+                parts.push(block.substr(parseInt(quotes[0]) + 1, quotes[1] - (parseInt(quotes[0]) + 1)));
+                parts.push(block.substr(parseInt(quotes[1]) + 1));
+                block = parts.join("");
+                out.push(block);
+                lookForClose = -1;
+            }
+        }
+    }
+    return quoteOpen ? false : out;
+};
 /// <reference path="./_ref.d.ts" />
 var root = new FileEntryModel({
     'name': 'home',
@@ -406,3 +512,5 @@ UserManager.getInstance().setUsers(d).setCurrentUser(u);
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
 (new UserInfosView({ el: $('#user-infos') })).render();
+var p = new PromptView({ el: $('#command-prompt') });
+p.writeToScreen('foobar');
