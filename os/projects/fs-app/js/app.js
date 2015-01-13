@@ -446,12 +446,26 @@ var UserManager = (function (_super) {
     function UserManager() {
         // XXX Work around for extending from a object.
         _.extend(this, Backbone.Events);
+        // Bootstrap users.
+        this.users = new UserCollection();
+        this.setCurrentUser(this.createUser('root'));
     }
     UserManager.getInstance = function () {
         if (!UserManager.instance) {
             UserManager.instance = new UserManager();
         }
         return UserManager.instance;
+    };
+    // Create an user.
+    UserManager.prototype.createUser = function (name) {
+        UserManager.uidCounter += 1;
+        var user = new UserModel({
+            name: name,
+            uid: UserManager.uidCounter
+        });
+        this.users.push(user);
+        this.trigger('users:changed');
+        return user;
     };
     // Get current user.
     UserManager.prototype.getCurrentUser = function () {
@@ -466,7 +480,6 @@ var UserManager = (function (_super) {
     // Set users.
     UserManager.prototype.setUsers = function (users) {
         this.users = users;
-        this.trigger('users:changed');
         return this;
     };
     // Find an user by uid.
@@ -482,6 +495,7 @@ var UserManager = (function (_super) {
         return this.users.length;
     };
     UserManager.instance = null;
+    UserManager.uidCounter = 0;
     return UserManager;
 })(Backbone.Events);
 /// <reference path="../_ref.d.ts" />
@@ -503,6 +517,11 @@ var UserInfosView = (function (_super) {
     };
     return UserInfosView;
 })(Backbone.View);
+/// <reference path="../_ref.d.ts" />
+var sys_login = function (user) {
+    UserManager.getInstance().setCurrentUser(user);
+    return 0;
+};
 /// <reference path="../_ref.d.ts" />
 var PromptView = (function (_super) {
     __extends(PromptView, _super);
@@ -587,8 +606,20 @@ var Shell = (function () {
         }
         return this;
     };
-    Shell.prototype.install = function (name, cmd) {
-        this.commands[name] = cmd;
+    Shell.prototype.install = function (name, cmd, checker) {
+        var command = cmd;
+        console.log(checker);
+        if (checker) {
+            command = function (env, args) {
+                var checkerRv = checker();
+                if (!checkerRv.isOk) {
+                    env.writeStderr(checkerRv.reason);
+                    return 1;
+                }
+                return cmd(env, args);
+            };
+        }
+        this.commands[name] = command;
         return this;
     };
     Shell.prototype.write = function (output) {
@@ -659,6 +690,17 @@ var shlex = function (str) {
 };
 /// <reference path="./_ref.d.ts" />
 var SHELL_EMPTY_FD = -1, SHELL_CURRENT_FD = SHELL_EMPTY_FD;
+var SHELL_EMPTY_USER = null, SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+var loginRequired = function () {
+    var rv = {
+        isOk: SHELL_CURRENT_USER !== SHELL_EMPTY_USER,
+        reason: ''
+    };
+    if (!rv.isOk) {
+        rv.reason = 'login required.';
+    }
+    return rv;
+};
 Shell.getInstance().install('cd', function (env, args) {
     if (args.length <= 0) {
         env.writeStderr('help: cd SUB_DIR');
@@ -681,7 +723,7 @@ Shell.getInstance().install('cd', function (env, args) {
     }
     sys_chdir(subDir);
     return 0;
-}).install('create', function (env, args) {
+}, loginRequired).install('create', function (env, args) {
     if (args.length <= 0) {
         env.writeStderr('help: create FILE_NAME');
         return 1;
@@ -695,7 +737,7 @@ Shell.getInstance().install('cd', function (env, args) {
     }
     SHELL_CURRENT_FD = sys_open(created);
     return 0;
-}).install('mkdir', function (env, args) {
+}, loginRequired).install('mkdir', function (env, args) {
     if (args.length <= 0) {
         env.writeStderr('help: mkdir DIR_NAME');
         return 1;
@@ -708,7 +750,7 @@ Shell.getInstance().install('cd', function (env, args) {
         return 1;
     }
     return 0;
-}).install('open', function (env, args) {
+}, loginRequired).install('open', function (env, args) {
     if (args.length <= 0) {
         env.writeStderr('help: open FILE_NAME');
         return 1;
@@ -721,21 +763,21 @@ Shell.getInstance().install('cd', function (env, args) {
     SHELL_CURRENT_FD = sys_open(file);
     env.writeStderr('open: file opened: ' + SHELL_CURRENT_FD);
     return 0;
-}).install('close', function (env, args) {
+}, loginRequired).install('close', function (env, args) {
     if (SHELL_CURRENT_FD != SHELL_EMPTY_FD) {
         sys_close(SHELL_CURRENT_FD);
         SHELL_CURRENT_FD = SHELL_EMPTY_FD;
         env.writeStderr('close: file closed');
     }
     return 0;
-}).install('read', function (env, args) {
+}, loginRequired).install('read', function (env, args) {
     if (SHELL_CURRENT_FD === SHELL_EMPTY_FD) {
         env.writeStderr('read: open a file first');
         return 1;
     }
     env.writeStdout('read:' + sys_read(SHELL_CURRENT_FD));
     return 0;
-}).install('write', function (env, args) {
+}, loginRequired).install('write', function (env, args) {
     if (SHELL_CURRENT_FD === SHELL_EMPTY_FD) {
         env.writeStderr('write: open a file first');
         return 1;
@@ -747,7 +789,7 @@ Shell.getInstance().install('cd', function (env, args) {
     sys_write(SHELL_CURRENT_FD, args[1]);
     env.writeStdout('write: wrote');
     return 0;
-}).install('rm', function (env, args) {
+}, loginRequired).install('rm', function (env, args) {
     if (args.length < 1) {
         env.writeStderr('help: rm NAME');
         return 1;
@@ -766,7 +808,26 @@ Shell.getInstance().install('cd', function (env, args) {
         return 1;
     }
     return 0;
-});
+}, loginRequired).install('login', function (env, args) {
+    if (args.length < 1) {
+        env.writeStderr('help: login USERNAME');
+        return 1;
+    }
+    var user = UserManager.getInstance().findUserByName(args[0]);
+    if (!user) {
+        env.writeStderr('login: cannot find user: ' + args[0]);
+        return 1;
+    }
+    SHELL_CURRENT_USER = user;
+    env.writeStderr('login: login successfully');
+    return 0;
+}).install('logout', function (env, args) {
+    if (SHELL_CURRENT_USER != SHELL_EMPTY_USER) {
+        SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+        env.writeStderr('logout: logout successfully');
+    }
+    return 0;
+}, loginRequired);
 /// <reference path="./_ref.d.ts" />
 var root = new FileEntryModel({
     'name': 'home',
@@ -788,9 +849,7 @@ root.addSubEntry(s);
 s.addSubEntry(b);
 s.addSubEntry(c);
 FilesTree.getInstance().setRoot(root).chdir('home/foo');
-var u = new UserModel({ uid: 1, name: 'root' }), u2 = new UserModel({ uid: 2, name: 'hbc' }), d = new UserCollection([u, u2]);
-UserManager.getInstance().setUsers(d).setCurrentUser(u);
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
 (new UserInfosView({ el: $('#user-infos') })).render();
-new PromptView({ el: $('#command-prompt') });
+(new PromptView({ el: $('#command-prompt') })).render();

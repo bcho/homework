@@ -3,6 +3,22 @@
 var SHELL_EMPTY_FD = -1,
     SHELL_CURRENT_FD = SHELL_EMPTY_FD;
 
+var SHELL_EMPTY_USER = null,
+    SHELL_CURRENT_USER: UserModel = SHELL_EMPTY_USER;
+
+var loginRequired = () => {
+    var rv = {
+        isOk: SHELL_CURRENT_USER !== SHELL_EMPTY_USER,
+        reason: ''
+    };
+
+    if (!rv.isOk) {
+        rv.reason = 'login required.';
+    }
+
+    return rv;
+};
+
 Shell.getInstance()
 
     // Change the working dir.
@@ -37,7 +53,7 @@ Shell.getInstance()
         sys_chdir(subDir);
 
         return 0;
-    })
+    }, loginRequired)
 
     // Create a file.
     //
@@ -67,7 +83,7 @@ Shell.getInstance()
         SHELL_CURRENT_FD = sys_open(created);
 
         return 0;
-    })
+    }, loginRequired)
     
     // Create a directory.
     .install('mkdir', (env: Env, args: string[]): number => {
@@ -93,7 +109,7 @@ Shell.getInstance()
         }
 
         return 0;
-    })
+    }, loginRequired)
 
     // Open a file.
     //
@@ -118,7 +134,7 @@ Shell.getInstance()
         env.writeStderr('open: file opened: ' + SHELL_CURRENT_FD);
 
         return 0;
-    })
+    }, loginRequired)
     
     // Close opening file.
     .install('close', (env: Env, args: string[]): number => {
@@ -129,7 +145,7 @@ Shell.getInstance()
         }
 
         return 0;
-    })
+    }, loginRequired)
 
     // Read from opening file.
     .install('read', (env: Env, args: string[]): number => {
@@ -141,7 +157,7 @@ Shell.getInstance()
 
         env.writeStdout('read:' + sys_read(SHELL_CURRENT_FD));
         return 0;
-    })
+    }, loginRequired)
 
     // Write to opening file.
     .install('write', (env: Env, args: string[]): number => {
@@ -161,7 +177,7 @@ Shell.getInstance()
         env.writeStdout('write: wrote');
 
         return 0;
-    })
+    }, loginRequired)
 
     // Delete an entry.
     .install('rm', (env: Env, args: string[]): number => {
@@ -187,4 +203,35 @@ Shell.getInstance()
         }
 
         return 0;
-    });
+    }, loginRequired)
+
+    // Login an user.
+    .install('login', (env: Env, args: string[]): number => {
+        if (args.length < 1) {
+            env.writeStderr('help: login USERNAME');
+
+            return 1;
+        }
+        
+        var user = UserManager.getInstance().findUserByName(args[0]);
+        if (!user) {
+            env.writeStderr('login: cannot find user: ' + args[0]);
+
+            return 1;
+        }
+
+
+        SHELL_CURRENT_USER = user;
+        env.writeStderr('login: login successfully');
+        return 0;
+    })
+
+    // Logout.
+    .install('logout', (env: Env, args: string[]): number => {
+        if (SHELL_CURRENT_USER != SHELL_EMPTY_USER) {
+            SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+            env.writeStderr('logout: logout successfully');
+        }
+        
+        return 0;
+    }, loginRequired);

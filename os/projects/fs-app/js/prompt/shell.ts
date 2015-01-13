@@ -5,6 +5,15 @@ interface CommandInterface {
     (env: Env, args: string[]): number
 }
 
+interface OkToRun {
+    isOk: boolean
+    reason: string
+}
+
+interface BeforeCommand {
+    (opts?: any): OkToRun
+}
+
 
 interface Env {
     
@@ -99,8 +108,29 @@ class Shell {
         return this;
     }
 
-    public install(name: string, cmd: CommandInterface): Shell {
-        this.commands[name] = cmd;
+    public install(name: string,
+                   cmd: CommandInterface,
+                   checker?: BeforeCommand
+                  ): Shell
+    {
+        var command = cmd;
+
+        console.log(checker);
+        if (checker) {
+            command = (env: Env, args: string[]) => {
+                var checkerRv = checker();
+
+                if (! checkerRv.isOk) {
+                    env.writeStderr(checkerRv.reason);
+
+                    return 1;
+                }
+
+                return cmd(env, args);
+            };
+        }
+
+        this.commands[name] = command;
 
         return this;
     }

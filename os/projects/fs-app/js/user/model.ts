@@ -38,6 +38,7 @@ class UserCollection extends Backbone.Collection<UserModel> implements
 class UserManager extends Backbone.Events {
 
     private static instance: UserManager = null;
+    private static uidCounter: number = 0;
 
     protected currentUser: UserModel;
     protected users: UserCollection;
@@ -53,6 +54,25 @@ class UserManager extends Backbone.Events {
     constructor() {
         // XXX Work around for extending from a object.
         _.extend(this, Backbone.Events);
+
+        // Bootstrap users.
+        this.users = new UserCollection();
+        this.setCurrentUser(this.createUser('root'));
+    }
+
+    // Create an user.
+    createUser(name: string): UserModel {
+        UserManager.uidCounter += 1;
+
+        var user = new UserModel({
+            name: name,
+            uid: UserManager.uidCounter
+        });
+
+        this.users.push(user);
+        this.trigger('users:changed');
+
+        return user;
     }
 
     // Get current user.
@@ -70,8 +90,6 @@ class UserManager extends Backbone.Events {
     // Set users.
     setUsers(users: UserCollection): UserManager {
         this.users = users;
-
-        this.trigger('users:changed');
 
         return this;
     }
