@@ -7,3 +7,13 @@ var pathNotFoundException = (path: string) => {
 var invalidEntryTypeException = () => {
     throw new Error('Invalid entry type.');
 }
+
+var ioFailedException = (msg?: string) => {
+    msg = msg || 'IO failed';
+
+    throw new Error(msg);
+}
+
+var duplicatedFilesException = (name: string) => {
+    throw new Error('Duplicated files: ' + name);
+}

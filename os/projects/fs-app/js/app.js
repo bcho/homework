@@ -6,6 +6,13 @@ var pathNotFoundException = function (path) {
 var invalidEntryTypeException = function () {
     throw new Error('Invalid entry type.');
 };
+var ioFailedException = function (msg) {
+    msg = msg || 'IO failed';
+    throw new Error(msg);
+};
+var duplicatedFilesException = function (name) {
+    throw new Error('Duplicated files: ' + name);
+};
 var html;
 (function (html) {
     html.filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">", "    <%= name %>", "</li>", ""].join("\n");
@@ -47,6 +54,32 @@ var FileEntryModel = (function (_super) {
             parentEntry: null,
             subEntries: []
         };
+    };
+    // TODO implement it.
+    FileEntryModel.prototype.read = function () {
+        return '';
+    };
+    FileEntryModel.prototype.write = function (buffer) {
+        FilesTree.getInstance().flush();
+        return 0;
+    };
+    FileEntryModel.create = function (parent, name, entryType, owner, ownerPerm, otherPerm) {
+        var file = new FileEntryModel({
+            name: name,
+            entryType: entryType,
+            oid: owner.getUid(),
+            ownerPerm: ownerPerm,
+            otherPerm: otherPerm,
+            ctime: new Date()
+        });
+        if (parent) {
+            if (parent.getSubEntryByName(name) != null) {
+                duplicatedFilesException(name);
+            }
+            parent.addSubEntry(file);
+        }
+        FilesTree.getInstance().flush();
+        return file;
     };
     FileEntryModel.prototype.getType = function () {
         return this.get('entryType');
@@ -159,6 +192,11 @@ var FilesTree = (function (_super) {
         };
         return finder(path.split('/').slice(1), this.rootEntry);
     };
+    // Flush disk.
+    FilesTree.prototype.flush = function () {
+        this.store();
+        this.trigger('fs:flushed');
+    };
     // Dump into files block.
     FilesTree.prototype.store = function () {
         return '';
@@ -200,11 +238,16 @@ var FilesTreeView = (function (_super) {
         this.subTreeTmpl = _.template(html.filesTreeSubtree);
         this.ft = FilesTree.getInstance();
         this.listenTo(this.ft, 'cwd:changed', this.render);
+        this.listenTo(this.ft, 'fs:flushed', this.flush);
     }
     FilesTreeView.prototype.events = function () {
         return {
             'click a[data-path]': 'chdir'
         };
+    };
+    FilesTreeView.prototype.flush = function () {
+        this.render();
+        this.delegateEvents();
     };
     FilesTreeView.prototype.render = function () {
         var _this = this;
@@ -246,11 +289,16 @@ var FilesDirectoryView = (function (_super) {
         _super.call(this, opts);
         this.ft = FilesTree.getInstance();
         this.listenTo(this.ft, 'cwd:changed', this.render);
+        this.listenTo(this.ft, 'fs:flushed', this.flush);
     }
     FilesDirectoryView.prototype.events = function () {
         return {
             'click a[data-path]': 'chdir'
         };
+    };
+    FilesDirectoryView.prototype.flush = function () {
+        this.render();
+        this.delegateEvents();
     };
     FilesDirectoryView.prototype.render = function () {
         var currentDir = this.ft.getCurrentDir();
@@ -286,33 +334,58 @@ var FilesDirectoryView = (function (_super) {
     return FilesDirectoryView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
+// TODO record mode (read or write).
+var OPENED_FILES = [
+    null,
+    null,
+    null,
+    null,
+], OPENED_FILES_STARTS_AT = 4; // XXX oops
 // Change working dir.
 var sys_chdir = function (entry) {
     FilesTree.getInstance().chdirByEntry(entry);
     return 0;
 };
 // Open a file and return file descriptor.
+//
+// TODO record mode.
 var sys_open = function (entry, mode) {
-    return 0;
+    // TODO check permission
+    for (var i = OPENED_FILES_STARTS_AT; i < OPENED_FILES.length; i++) {
+        if (OPENED_FILES[i] === null) {
+            OPENED_FILES[i] = entry;
+            return i;
+        }
+    }
+    OPENED_FILES.push(entry);
+    return OPENED_FILES.length - 1;
 };
 // Close a file descriptior.
 var sys_close = function (fd) {
+    OPENED_FILES[fd] = null;
     return 0;
 };
 // Read from file descriptor.
 var sys_read = function (fd) {
-    return '';
+    if (!OPENED_FILES[fd]) {
+        ioFailedException('cannot read from: ' + fd);
+    }
+    return OPENED_FILES[fd].read();
 };
 // Write to file descriptor.
 var sys_write = function (fd, content) {
-    return 0;
+    if (!OPENED_FILES[fd]) {
+        ioFailedException('cannot write to: ' + fd);
+    }
+    return OPENED_FILES[fd].write(content);
 };
 // Create an entry.
-var sys_create = function (parent, name, ownerPerm, otherPerm) {
-    return 0;
+var sys_create = function (parent, name, entryType, owner, ownerPerm, otherPerm) {
+    return FileEntryModel.create(parent, name, entryType, owner, ownerPerm, otherPerm);
 };
 // Delete an entry.
 var sys_delete = function (entry) {
+    // TODO implement it.
     return 0;
 };
 /// <reference path="../_ref.d.ts" />
@@ -571,9 +644,11 @@ var shlex = function (str) {
     return quoteOpen ? false : out;
 };
 /// <reference path="./_ref.d.ts" />
+var SHELL_EMPTY_FD = -1, SHELL_CURRENT_FD = SHELL_EMPTY_FD;
 Shell.getInstance().install('cd', function (env, args) {
     if (args.length <= 0) {
-        return;
+        env.writeStderr('help: cd SUB_DIR');
+        return 1;
     }
     var path = args[0], cwd = env.getCWD(), subDir;
     // XXX handle some special cases.
@@ -591,6 +666,79 @@ Shell.getInstance().install('cd', function (env, args) {
         return 1;
     }
     sys_chdir(subDir);
+    return 0;
+}).install('create', function (env, args) {
+    if (args.length <= 0) {
+        env.writeStderr('help: create FILE_NAME');
+        return 1;
+    }
+    try {
+        var created = sys_create(env.getCWD(), args[0], FileEntryModel.TypeFile, env.getUser(), 0, 0);
+    }
+    catch (e) {
+        env.writeStderr('create: ' + e.message);
+        return 1;
+    }
+    SHELL_CURRENT_FD = sys_open(created);
+    return 0;
+}).install('mkdir', function (env, args) {
+    if (args.length <= 0) {
+        env.writeStderr('help: mkdir DIR_NAME');
+        return 1;
+    }
+    try {
+        sys_create(env.getCWD(), args[0], FileEntryModel.TypeDir, env.getUser(), 0, 0);
+    }
+    catch (e) {
+        env.writeStderr('mkdir: ' + e.message);
+        return 1;
+    }
+    return 0;
+}).install('open', function (env, args) {
+    if (args.length <= 0) {
+        env.writeStderr('help: open FILE_NAME');
+        return 1;
+    }
+    var cwd = env.getCWD(), file = cwd.getSubEntryByName(args[0]);
+    if (!file || !file.isFile()) {
+        env.writeStderr('open: unable to open ' + args[0]);
+        return 1;
+    }
+    SHELL_CURRENT_FD = sys_open(file);
+    env.writeStderr('open: file opened: ' + SHELL_CURRENT_FD);
+    return 0;
+}).install('close', function (env, args) {
+    if (SHELL_CURRENT_FD != SHELL_EMPTY_FD) {
+        sys_close(SHELL_CURRENT_FD);
+        SHELL_CURRENT_FD = SHELL_EMPTY_FD;
+        env.writeStderr('close: file closed');
+    }
+    return 0;
+}).install('read', function (env, args) {
+    if (SHELL_CURRENT_FD === SHELL_EMPTY_FD) {
+        env.writeStderr('read: open a file first');
+        return 1;
+    }
+    env.writeStdout('read:' + sys_read(SHELL_CURRENT_FD));
+    return 0;
+}).install('write', function (env, args) {
+    if (SHELL_CURRENT_FD === SHELL_EMPTY_FD) {
+        env.writeStderr('write: open a file first');
+        return 1;
+    }
+    if (args.length < 1) {
+        env.writeStderr('help: write CONTENT');
+        return 1;
+    }
+    sys_write(SHELL_CURRENT_FD, args[1]);
+    env.writeStdout('write: wrote');
+    return 0;
+}).install('rm', function (env, args) {
+    if (args.length < 1) {
+        env.writeStderr('help: rm NAME');
+        return 1;
+    }
+    // sys_delete();
     return 0;
 });
 /// <reference path="./_ref.d.ts" />

@@ -29,6 +29,39 @@ class FileEntryModel extends Backbone.Model {
         }
     }
 
+    // TODO implement it.
+    read(): string { return ''; }
+    write(buffer: string): number {
+        FilesTree.getInstance().flush();
+
+        return 0;
+    }
+
+    static create(parent: FileEntryModel, name: string, entryType: number,
+                  owner: UserModel,
+                  ownerPerm: number, otherPerm: number): FileEntryModel
+    {
+        var file = new FileEntryModel({
+            name: name,
+            entryType: entryType,
+            oid: owner.getUid(),
+            ownerPerm: ownerPerm,
+            otherPerm: otherPerm,
+            ctime: new Date()
+        });
+
+        if (parent) {
+            if (parent.getSubEntryByName(name) != null) {
+                duplicatedFilesException(name);
+            }
+
+            parent.addSubEntry(file);
+        }
+
+        FilesTree.getInstance().flush();
+        return file;
+    }
+
     getType(): number { return this.get('entryType'); }
     isDir(): boolean { return this.getType() === FileEntryModel.TypeDir; }
     isFile(): boolean { return this.getType() === FileEntryModel.TypeFile; }
@@ -163,6 +196,13 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
         };
 
         return finder(path.split('/').slice(1), this.rootEntry);
+    }
+
+    // Flush disk.
+    flush(): void {
+        this.store();
+
+        this.trigger('fs:flushed');
     }
 
     // Dump into files block.

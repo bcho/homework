@@ -15,12 +15,18 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
         this.ft = FilesTree.getInstance();
 
         this.listenTo(this.ft, 'cwd:changed', this.render);
+        this.listenTo(this.ft, 'fs:flushed', this.flush);
     }
 
     events(): any {
         return {
             'click a[data-path]': 'chdir'
         };
+    }
+
+    flush(): void {
+        this.render();
+        this.delegateEvents();
     }
 
     render(): FilesTreeView {
@@ -84,12 +90,18 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
         this.ft = FilesTree.getInstance();
 
         this.listenTo(this.ft, 'cwd:changed', this.render);
+        this.listenTo(this.ft, 'fs:flushed', this.flush);
     }
 
     events(): any {
         return {
             'click a[data-path]': 'chdir'
         };
+    }
+
+    flush(): void {
+        this.render();
+        this.delegateEvents();
     }
 
     render(): FilesDirectoryView {
