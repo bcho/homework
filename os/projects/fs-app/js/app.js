@@ -38,9 +38,8 @@ var FileEntryModel = (function (_super) {
     }
     FileEntryModel.prototype.defaults = function () {
         return {
-            // Position in disk.
-            startsAt: 0,
-            endsAt: 0,
+            // File content.
+            content: '',
             // Ownership and permission.
             oid: 0,
             ownerPerm: 0,
@@ -55,13 +54,16 @@ var FileEntryModel = (function (_super) {
             subEntries: []
         };
     };
-    // TODO implement it.
     FileEntryModel.prototype.read = function () {
-        return '';
+        return this.get('content');
     };
     FileEntryModel.prototype.write = function (buffer) {
+        this.set({
+            'content': buffer,
+            'mtime': new Date
+        });
         FilesTree.getInstance().flush();
-        return 0;
+        return buffer.length;
     };
     FileEntryModel.create = function (parent, name, entryType, owner, ownerPerm, otherPerm) {
         var file = new FileEntryModel({
@@ -144,6 +146,38 @@ var FileEntryModel = (function (_super) {
         var encoded = _super.prototype.toJSON.call(this, options);
         encoded['path'] = this.getPath();
         return encoded;
+    };
+    FileEntryModel.prototype.storeAsObject = function () {
+        if (this.isFile()) {
+            return {
+                content: this.get('content'),
+                oid: this.get('oid'),
+                ownerPerm: this.get('ownerPerm'),
+                otherPerm: this.get('otherPerm'),
+                entryType: this.get('entryType'),
+                ctime: this.get('ctime'),
+                mtime: this.get('mtime')
+            };
+        }
+        else if (this.isDir()) {
+            var subEntries = _.map(this.getSubEntries(), function (e) {
+                return e.storeAsObject();
+            });
+            return {
+                oid: this.get('oid'),
+                ownerPerm: this.get('ownerPerm'),
+                otherPerm: this.get('otherPerm'),
+                entryType: this.get('entryType'),
+                subEntries: subEntries
+            };
+        }
+    };
+    FileEntryModel.prototype.store = function () {
+        return JSON.stringify(this.storeAsObject());
+    };
+    // not implemented.
+    FileEntryModel.prototype.restore = function (buffer) {
+        return null;
     };
     FileEntryModel.TypeEmpty = 0;
     FileEntryModel.TypeFile = 1;
@@ -608,7 +642,6 @@ var Shell = (function () {
     };
     Shell.prototype.install = function (name, cmd, checker) {
         var command = cmd;
-        console.log(checker);
         if (checker) {
             command = function (env, args) {
                 var checkerRv = checker();
@@ -786,7 +819,7 @@ Shell.getInstance().install('cd', function (env, args) {
         env.writeStderr('help: write CONTENT');
         return 1;
     }
-    sys_write(SHELL_CURRENT_FD, args[1]);
+    sys_write(SHELL_CURRENT_FD, args[0]);
     env.writeStdout('write: wrote');
     return 0;
 }, loginRequired).install('rm', function (env, args) {
@@ -848,6 +881,7 @@ var c = new FileEntryModel({
 root.addSubEntry(s);
 s.addSubEntry(b);
 s.addSubEntry(c);
+console.log(root.store());
 FilesTree.getInstance().setRoot(root).chdir('home/foo');
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();

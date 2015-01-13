@@ -24,6 +24,9 @@ root.addSubEntry(s);
 s.addSubEntry(b);
 s.addSubEntry(c);
 
+console.log(root.store());
+
+
 FilesTree.getInstance()
     .setRoot(root)
     .chdir('home/foo');

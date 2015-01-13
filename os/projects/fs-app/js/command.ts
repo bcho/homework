@@ -173,7 +173,7 @@ Shell.getInstance()
             return 1;
         }
 
-        sys_write(SHELL_CURRENT_FD, args[1]);
+        sys_write(SHELL_CURRENT_FD, args[0]);
         env.writeStdout('write: wrote');
 
         return 0;

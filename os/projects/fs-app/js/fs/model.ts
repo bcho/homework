@@ -1,6 +1,6 @@
 /// <reference path="../_ref.d.ts" />
 
-class FileEntryModel extends Backbone.Model {
+class FileEntryModel extends Backbone.Model implements SerializableInterface {
 
     static TypeEmpty = 0;
     static TypeFile = 1;
@@ -8,9 +8,8 @@ class FileEntryModel extends Backbone.Model {
 
     defaults() {
         return {
-            // Position in disk.
-            startsAt: 0,
-            endsAt: 0,
+            // File content.
+            content: '',
 
             // Ownership and permission.
             oid: 0,
@@ -29,12 +28,16 @@ class FileEntryModel extends Backbone.Model {
         }
     }
 
-    // TODO implement it.
-    read(): string { return ''; }
+    read(): string { return this.get('content'); }
     write(buffer: string): number {
+        this.set({
+            'content': buffer,
+            'mtime': new Date
+        });
+
         FilesTree.getInstance().flush();
 
-        return 0;
+        return buffer.length;
     }
 
     static create(parent: FileEntryModel, name: string, entryType: number,
@@ -140,6 +143,42 @@ class FileEntryModel extends Backbone.Model {
 
         return encoded;
     }
+
+    storeAsObject(): any {
+        if (this.isFile()) {
+            return {
+                content: this.get('content'),
+                oid: this.get('oid'),
+                ownerPerm: this.get('ownerPerm'),
+                otherPerm: this.get('otherPerm'),
+                entryType: this.get('entryType'),
+                ctime: this.get('ctime'),
+                mtime: this.get('mtime')
+            };
+        } else if (this.isDir()) {
+            var subEntries = _.map(this.getSubEntries(), (e: FileEntryModel) => {
+                return e.storeAsObject();
+            });
+
+            return {
+                oid: this.get('oid'),
+                ownerPerm: this.get('ownerPerm'),
+                otherPerm: this.get('otherPerm'),
+                entryType: this.get('entryType'),
+                subEntries: subEntries
+            };
+        }
+    }
+
+    store(): string {
+        return JSON.stringify(this.storeAsObject());
+    }
+
+    // not implemented.
+    restore(buffer: string): FileEntryModel {
+        return null;
+    }
+
 }
 
 class FilesTree extends Backbone.Events implements SerializableInterface {

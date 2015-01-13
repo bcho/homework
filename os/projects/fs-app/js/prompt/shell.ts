@@ -115,7 +115,6 @@ class Shell {
     {
         var command = cmd;
 
-        console.log(checker);
         if (checker) {
             command = (env: Env, args: string[]) => {
                 var checkerRv = checker();
