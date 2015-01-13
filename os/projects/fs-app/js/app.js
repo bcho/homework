@@ -132,6 +132,14 @@ var FileEntryModel = (function (_super) {
     FileEntryModel.prototype.getParentEntry = function () {
         return this.get('parentEntry');
     };
+    FileEntryModel.prototype.unlink = function (subEntry) {
+        var entries = _(this.getSubEntries()).filter(function (e) {
+            return e !== subEntry;
+        });
+        this.set('subEntries', entries);
+        FilesTree.getInstance().flush();
+        return this;
+    };
     FileEntryModel.prototype.toJSON = function (options) {
         var encoded = _super.prototype.toJSON.call(this, options);
         encoded['path'] = this.getPath();
@@ -385,7 +393,13 @@ var sys_create = function (parent, name, entryType, owner, ownerPerm, otherPerm)
 };
 // Delete an entry.
 var sys_delete = function (entry) {
-    // TODO implement it.
+    var parentEntry = entry.getParentEntry();
+    if (parentEntry) {
+        parentEntry.unlink(entry);
+    }
+    else {
+        ioFailedException('cannot unlinked root'); // XXX
+    }
     return 0;
 };
 /// <reference path="../_ref.d.ts" />
@@ -738,7 +752,19 @@ Shell.getInstance().install('cd', function (env, args) {
         env.writeStderr('help: rm NAME');
         return 1;
     }
-    // sys_delete();
+    var entry = env.getCWD().getSubEntryByName(args[0]);
+    if (!entry) {
+        env.writeStderr('rm: unable to remove ' + args[0]);
+        return 1;
+    }
+    try {
+        sys_delete(entry);
+        env.writeStderr('rm: removed');
+    }
+    catch (e) {
+        env.writeStderr('rm: failed ' + e.message);
+        return 1;
+    }
     return 0;
 });
 /// <reference path="./_ref.d.ts" />

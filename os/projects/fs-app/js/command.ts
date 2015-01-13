@@ -171,6 +171,20 @@ Shell.getInstance()
             return 1;
         }
 
-        // sys_delete();
+        var entry = env.getCWD().getSubEntryByName(args[0]);
+        if (!entry) {
+            env.writeStderr('rm: unable to remove ' + args[0]);
+            return 1;
+        }
+
+        try {
+            sys_delete(entry);
+            
+            env.writeStderr('rm: removed');
+        } catch (e) {
+            env.writeStderr('rm: failed ' + e.message);
+            return 1;
+        }
+
         return 0;
     });

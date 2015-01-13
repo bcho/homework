@@ -122,6 +122,17 @@ class FileEntryModel extends Backbone.Model {
 
     getParentEntry(): FileEntryModel { return this.get('parentEntry'); }
 
+    unlink(subEntry: FileEntryModel): FileEntryModel {
+        var entries = _(this.getSubEntries()).filter((e: FileEntryModel) => {
+            return e !== subEntry;
+        });
+
+        this.set('subEntries', entries);
+        FilesTree.getInstance().flush();
+
+        return this;
+    }
+
     toJSON(options?: any): any {
         var encoded = super.toJSON(options);
 

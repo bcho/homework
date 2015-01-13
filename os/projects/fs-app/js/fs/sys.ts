@@ -72,6 +72,13 @@ var sys_create = (parent: FileEntryModel,
 
 // Delete an entry.
 var sys_delete = (entry: FileEntryModel): number => {
-    // TODO implement it.
+    var parentEntry = entry.getParentEntry();
+
+    if (parentEntry) {
+        parentEntry.unlink(entry);
+    } else {
+        ioFailedException('cannot unlinked root');   // XXX
+    }
+
     return 0;
 }
