@@ -8,7 +8,8 @@ class FileEntryModel extends Backbone.Model implements SerializableInterface {
 
     defaults() {
         return {
-            // File content.
+            // File content & disk location.
+            startsAt: 0,
             content: '',
 
             // Ownership and permission.
@@ -157,7 +158,10 @@ class FileEntryModel extends Backbone.Model implements SerializableInterface {
             };
         } else if (this.isDir()) {
             var subEntries = _.map(this.getSubEntries(), (e: FileEntryModel) => {
-                return e.storeAsObject();
+                return {
+                    name: e.get('name'),
+                    startsAt: e.get('startsAt')
+                };
             });
 
             return {
@@ -171,7 +175,7 @@ class FileEntryModel extends Backbone.Model implements SerializableInterface {
     }
 
     store(): string {
-        return JSON.stringify(this.storeAsObject());
+        return JSON.stringify(this.storeAsObject()).trim();
     }
 
     // not implemented.
@@ -223,6 +227,8 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
         this.rootEntry = root;
         this.trigger('root:changed');
 
+        this.store();
+
         return this;
     }
 
@@ -257,7 +263,7 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
 
     // Dump into files block.
     store(): string {
-        return '';
+        return Disk.getInstance().store();
     }
 
     // Restore from files block.
@@ -267,28 +273,115 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
 }
 
 
-class Disk implements SerializableInterface {
+class Disk extends Backbone.Events implements SerializableInterface {
 
     private static instance: Disk = null;
+    private static UsableBlocks = 256;
+    private static BlockWidth = 64;
 
-    protected users: UserCollection;
+    protected users: UserManager;
     protected files: FilesTree;
+    protected used: boolean[];
+    protected blocks: string[];
 
     static getInstance(): Disk {
-        if (Disk.instance) {
+        if (!Disk.instance) {
             Disk.instance = new Disk();
         }
 
         return Disk.instance;
     }
 
+    constructor() {
+        // XXX Work around for extending from a object.
+        _.extend(this, Backbone.Events);
+
+        this.users = UserManager.getInstance();
+        this.files = FilesTree.getInstance();
+
+        this.reset();
+    }
+
+    getBlocksMap(): boolean[] { return this.used.slice(); }
+
     // Dump disk.
     store(): string {
-        return '';
+        this.reset();
+        this.storeFileEntries();
+
+        this.trigger('disk:changed');
+
+        return this.blocks.join('');
     }
 
     // Restore disk.
     restore(disk: string): Disk {
+        // TODO
         return this;
+    }
+
+    protected allocate(size: number): number {
+        var taken = 0;
+
+        for (var i = 0; i < Disk.UsableBlocks; i++) {
+            if (this.used[i]) {
+                continue;
+            }
+
+            for (var j = i, taken = size; taken > 0 && ! this.used[j];) {
+                j = j + 1;
+                taken -= Disk.BlockWidth;
+            }
+
+            // Allocated.
+            if (taken <= 0) {
+                for (; j >= i; j--) {
+                    this.used[j] = true;
+                }
+
+                return i * Disk.BlockWidth;
+            }
+        }
+
+        return -1;
+    }
+
+    protected reset(): void {
+        this.used = [];
+        this.blocks = [];
+
+        for (var i = 0; i < Disk.UsableBlocks; i++) {
+            this.used.push(false);
+            for (var j = 0; j < Disk.BlockWidth; j++) {
+                this.blocks.push(' ');
+            }
+        }
+    }
+
+    protected storeFileEntries(): void {
+        var root = this.files.getRoot();
+
+        var dump = (node: FileEntryModel) => {
+            if (node.isDir()) {
+                var subEntryPos = [];
+
+                _.each(node.getSubEntries(), (e: FileEntryModel) => {
+                    subEntryPos.push(dump(e));
+                });
+            }
+
+            var dumped = node.store();
+            var startsAt = this.allocate(dumped.length);
+
+            node.set('startsAt', startsAt);
+
+            for (var i = 0; i < dumped.length; i++) {
+                this.blocks[startsAt + i] = dumped[i];
+            }
+
+            return startsAt;
+        }
+
+        dump(this.files.getRoot());
     }
 }

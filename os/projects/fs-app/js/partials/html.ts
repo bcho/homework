@@ -1,5 +1,7 @@
 module html {
- export var filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">","    <%= name %>","</li>",""].join("\n");
+ export var diskUsageUnused = ["<li></li>",""].join("\n");
+export var diskUsageUsed = ["<li class=\"used\"></li>",""].join("\n");
+export var filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">","    <%= name %>","</li>",""].join("\n");
 export var filesDirectoryBreadcrumb = ["<li>","    <a data-path=\"<%= path %>\"><%= name %></a>","</li>",""].join("\n");
 export var filesDirectoryDir = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">","    <a data-path=\"<%= path %>\">","        <header class=\"file-icon\">","            <i class=\"fa fa-folder-o\"></i>","        </header>","        <section class=\"file-meta\">","            <h3><%= name %></h3>","        </section>","    </a>","</div>",""].join("\n");
 export var filesDirectoryFile = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">","    <header class=\"file-icon\">","        <i class=\"fa fa-file-word-o\"></i>","    </header>","    <section class=\"file-meta\">","        <h3><%= name %></h3>","    </section>","</div>",""].join("\n");

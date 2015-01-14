@@ -15,6 +15,8 @@ var duplicatedFilesException = function (name) {
 };
 var html;
 (function (html) {
+    html.diskUsageUnused = ["<li></li>", ""].join("\n");
+    html.diskUsageUsed = ["<li class=\"used\"></li>", ""].join("\n");
     html.filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">", "    <%= name %>", "</li>", ""].join("\n");
     html.filesDirectoryBreadcrumb = ["<li>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
     html.filesDirectoryDir = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">", "    <a data-path=\"<%= path %>\">", "        <header class=\"file-icon\">", "            <i class=\"fa fa-folder-o\"></i>", "        </header>", "        <section class=\"file-meta\">", "            <h3><%= name %></h3>", "        </section>", "    </a>", "</div>", ""].join("\n");
@@ -38,7 +40,8 @@ var FileEntryModel = (function (_super) {
     }
     FileEntryModel.prototype.defaults = function () {
         return {
-            // File content.
+            // File content & disk location.
+            startsAt: 0,
             content: '',
             // Ownership and permission.
             oid: 0,
@@ -161,7 +164,10 @@ var FileEntryModel = (function (_super) {
         }
         else if (this.isDir()) {
             var subEntries = _.map(this.getSubEntries(), function (e) {
-                return e.storeAsObject();
+                return {
+                    name: e.get('name'),
+                    startsAt: e.get('startsAt')
+                };
             });
             return {
                 oid: this.get('oid'),
@@ -173,7 +179,7 @@ var FileEntryModel = (function (_super) {
         }
     };
     FileEntryModel.prototype.store = function () {
-        return JSON.stringify(this.storeAsObject());
+        return JSON.stringify(this.storeAsObject()).trim();
     };
     // not implemented.
     FileEntryModel.prototype.restore = function (buffer) {
@@ -213,6 +219,7 @@ var FilesTree = (function (_super) {
     FilesTree.prototype.setRoot = function (root) {
         this.rootEntry = root;
         this.trigger('root:changed');
+        this.store();
         return this;
     };
     // Get root entry.
@@ -241,7 +248,7 @@ var FilesTree = (function (_super) {
     };
     // Dump into files block.
     FilesTree.prototype.store = function () {
-        return '';
+        return Disk.getInstance().store();
     };
     // Restore from files block.
     FilesTree.prototype.restore = function (fileBlock) {
@@ -250,26 +257,91 @@ var FilesTree = (function (_super) {
     FilesTree.instance = null;
     return FilesTree;
 })(Backbone.Events);
-var Disk = (function () {
+var Disk = (function (_super) {
+    __extends(Disk, _super);
     function Disk() {
+        // XXX Work around for extending from a object.
+        _.extend(this, Backbone.Events);
+        this.users = UserManager.getInstance();
+        this.files = FilesTree.getInstance();
+        this.reset();
     }
     Disk.getInstance = function () {
-        if (Disk.instance) {
+        if (!Disk.instance) {
             Disk.instance = new Disk();
         }
         return Disk.instance;
     };
+    Disk.prototype.getBlocksMap = function () {
+        return this.used.slice();
+    };
     // Dump disk.
     Disk.prototype.store = function () {
-        return '';
+        this.reset();
+        this.storeFileEntries();
+        this.trigger('disk:changed');
+        return this.blocks.join('');
     };
     // Restore disk.
     Disk.prototype.restore = function (disk) {
+        // TODO
         return this;
     };
+    Disk.prototype.allocate = function (size) {
+        var taken = 0;
+        for (var i = 0; i < Disk.UsableBlocks; i++) {
+            if (this.used[i]) {
+                continue;
+            }
+            for (var j = i, taken = size; taken > 0 && !this.used[j];) {
+                j = j + 1;
+                taken -= Disk.BlockWidth;
+            }
+            // Allocated.
+            if (taken <= 0) {
+                for (; j >= i; j--) {
+                    this.used[j] = true;
+                }
+                return i * Disk.BlockWidth;
+            }
+        }
+        return -1;
+    };
+    Disk.prototype.reset = function () {
+        this.used = [];
+        this.blocks = [];
+        for (var i = 0; i < Disk.UsableBlocks; i++) {
+            this.used.push(false);
+            for (var j = 0; j < Disk.BlockWidth; j++) {
+                this.blocks.push(' ');
+            }
+        }
+    };
+    Disk.prototype.storeFileEntries = function () {
+        var _this = this;
+        var root = this.files.getRoot();
+        var dump = function (node) {
+            if (node.isDir()) {
+                var subEntryPos = [];
+                _.each(node.getSubEntries(), function (e) {
+                    subEntryPos.push(dump(e));
+                });
+            }
+            var dumped = node.store();
+            var startsAt = _this.allocate(dumped.length);
+            node.set('startsAt', startsAt);
+            for (var i = 0; i < dumped.length; i++) {
+                _this.blocks[startsAt + i] = dumped[i];
+            }
+            return startsAt;
+        };
+        dump(this.files.getRoot());
+    };
     Disk.instance = null;
+    Disk.UsableBlocks = 256;
+    Disk.BlockWidth = 64;
     return Disk;
-})();
+})(Backbone.Events);
 /// <reference path="../_ref.d.ts" />
 var FilesTreeView = (function (_super) {
     __extends(FilesTreeView, _super);
@@ -374,6 +446,25 @@ var FilesDirectoryView = (function (_super) {
         return false;
     };
     return FilesDirectoryView;
+})(Backbone.View);
+var DiskUsageView = (function (_super) {
+    __extends(DiskUsageView, _super);
+    function DiskUsageView(opts) {
+        _super.call(this, opts);
+        this.usedBlockTmpl = _.template(html.diskUsageUsed);
+        this.unusedBlockTmpl = _.template(html.diskUsageUnused);
+        this.disk = Disk.getInstance();
+        this.listenTo(this.disk, 'disk:changed', this.render);
+    }
+    DiskUsageView.prototype.render = function () {
+        var _this = this;
+        var blocks = _.map(this.disk.getBlocksMap(), function (node) {
+            return node ? _this.usedBlockTmpl(node) : _this.unusedBlockTmpl(node);
+        });
+        $('.disk-nodes', this.$el).html(blocks.join(''));
+        return this;
+    };
+    return DiskUsageView;
 })(Backbone.View);
 /// <reference path="../_ref.d.ts" />
 // TODO record mode (read or write).
@@ -866,24 +957,9 @@ var root = new FileEntryModel({
     'name': 'home',
     'entryType': FileEntryModel.TypeDir
 });
-var s = new FileEntryModel({
-    'name': 'foo',
-    'entryType': FileEntryModel.TypeDir
-});
-var b = new FileEntryModel({
-    'name': 'bar',
-    'entryType': FileEntryModel.TypeFile
-});
-var c = new FileEntryModel({
-    'name': 'baz',
-    'entryType': FileEntryModel.TypeDir
-});
-root.addSubEntry(s);
-s.addSubEntry(b);
-s.addSubEntry(c);
-console.log(root.store());
-FilesTree.getInstance().setRoot(root).chdir('home/foo');
+FilesTree.getInstance().setRoot(root).chdir('home');
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
+(new DiskUsageView({ el: $('#disk-infos') })).render();
 (new UserInfosView({ el: $('#user-infos') })).render();
 (new PromptView({ el: $('#command-prompt') })).render();

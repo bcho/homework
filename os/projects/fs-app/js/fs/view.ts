@@ -153,3 +153,30 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
     }
 
 }
+
+class DiskUsageView extends Backbone.View<Backbone.Model> {
+    
+    $el: JQuery;
+
+    protected disk: Disk;
+    protected usedBlockTmpl = _.template(html.diskUsageUsed);
+    protected unusedBlockTmpl = _.template(html.diskUsageUnused);
+    
+    constructor(opts?: any) {
+        super(opts);
+
+        this.disk = Disk.getInstance();
+
+        this.listenTo(this.disk, 'disk:changed', this.render);
+    }
+
+    render(): DiskUsageView {
+        var blocks = _.map(this.disk.getBlocksMap(), (node: boolean) => {
+            return node ? this.usedBlockTmpl(node) : this.unusedBlockTmpl(node);
+        });
+
+        $('.disk-nodes', this.$el).html(blocks.join(''));
+
+        return this;
+    }
+}
