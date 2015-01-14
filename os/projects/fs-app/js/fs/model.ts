@@ -20,8 +20,8 @@ class FileEntryModel extends Backbone.Model implements SerializableInterface {
             // Type & stat.
             name: '',
             entryType: FileEntryModel.TypeEmpty,
-            ctime: 0,
-            mtime: 0,
+            ctime: new Date,
+            mtime: new Date,
 
             // Parent & Sub entries.
             parentEntry: null,

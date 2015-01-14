@@ -33,12 +33,23 @@ class FilesTreeView extends Backbone.View<Backbone.Model> {
         var currentDir = this.ft.getCurrentDir(),
             entries = currentDir.getEntriesTo();
 
+        var info = (cur: FileEntryModel) => {
+            return [
+                'Owner: '  + cur.get('oid'),
+                'Created at: ' + cur.get('ctime'),
+                'Edited at: ' + cur.get('mtime')
+            ].join("\n");
+        }
+
         var entryTemplate = (cur: FileEntryModel) => {
+            var payload = cur.toJSON();
+            payload['infos'] = info(cur);
+
             if (cur.isDir()) {
-                return this.dirTmpl(cur.toJSON());
+                return this.dirTmpl(payload);
             }
 
-            return this.fileTmpl(cur.toJSON());
+            return this.fileTmpl(payload);
         }
 
         var treeBuilder = (entries: FileEntryModel[]) => {
@@ -135,12 +146,24 @@ class FilesDirectoryView extends Backbone.View<Backbone.Model> {
         var dirTmpl = _.template(html.filesDirectoryDir),
             fileTmpl = _.template(html.filesDirectoryFile);
 
-        var icons = _.map(entries, (e: FileEntryModel) => {
-            if (e.isDir()) {
-                return dirTmpl(e.toJSON());
+        var info = (cur: FileEntryModel) => {
+            var owner = UserManager.getInstance().findUserByUid(cur.get('oid'));
+            return [
+                'Owner: '  + owner.get('name'),
+                'Created at: ' + cur.get('ctime'),
+                'Edited at: ' + cur.get('mtime')
+            ].join("\n");
+        }
+
+        var icons = _.map(entries, (cur: FileEntryModel) => {
+            var payload = cur.toJSON();
+            payload['infos'] = info(cur);
+
+            if (cur.isDir()) {
+                return dirTmpl(payload);
             }
 
-            return fileTmpl(e.toJSON());
+            return fileTmpl(payload);
         });
 
         $('.chart-stage', this.$el).html(icons.join("\n"));

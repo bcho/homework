@@ -19,8 +19,8 @@ var html;
     html.diskUsageUsed = ["<li class=\"used\"></li>", ""].join("\n");
     html.filesDirectoryBreadcrumbActive = ["<li class=\"active\" data-path=\"<%= path %>\">", "    <%= name %>", "</li>", ""].join("\n");
     html.filesDirectoryBreadcrumb = ["<li>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
-    html.filesDirectoryDir = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">", "    <a data-path=\"<%= path %>\">", "        <header class=\"file-icon\">", "            <i class=\"fa fa-folder-o\"></i>", "        </header>", "        <section class=\"file-meta\">", "            <h3><%= name %></h3>", "        </section>", "    </a>", "</div>", ""].join("\n");
-    html.filesDirectoryFile = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\">", "    <header class=\"file-icon\">", "        <i class=\"fa fa-file-word-o\"></i>", "    </header>", "    <section class=\"file-meta\">", "        <h3><%= name %></h3>", "    </section>", "</div>", ""].join("\n");
+    html.filesDirectoryDir = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\" title=\"<%= infos %>\">", "    <a data-path=\"<%= path %>\">", "        <header class=\"file-icon\">", "            <i class=\"fa fa-folder-o\"></i>", "        </header>", "        <section class=\"file-meta\">", "            <h3><%= name %></h3>", "        </section>", "    </a>", "</div>", ""].join("\n");
+    html.filesDirectoryFile = ["<div class=\"file col-sm-2\" data-name=\"<%= name %>\" title=\"<%= infos %>\">", "    <header class=\"file-icon\">", "        <i class=\"fa fa-file-word-o\"></i>", "    </header>", "    <section class=\"file-meta\">", "        <h3><%= name %></h3>", "    </section>", "</div>", ""].join("\n");
     html.filesTreeDir = ["<li>", "    <i class=\"fa fa-folder-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeFile = ["<li data-path=\"<%= path %>\">", "    <i class=\"fa fa-file-word-o\"></i>", "    <%= name %>", "</li>", ""].join("\n");
     html.filesTreeSubtree = ["<li>", "    <i class=\"fa fa-folder-open-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", "<li class=\"files-tree-sub\">", "    <ul class=\"files-tree\">", "        <%= sub_tree %>", "    </ul>", "</li>", ""].join("\n");
@@ -50,8 +50,8 @@ var FileEntryModel = (function (_super) {
             // Type & stat.
             name: '',
             entryType: FileEntryModel.TypeEmpty,
-            ctime: 0,
-            mtime: 0,
+            ctime: new Date,
+            mtime: new Date,
             // Parent & Sub entries.
             parentEntry: null,
             subEntries: []
@@ -369,11 +369,20 @@ var FilesTreeView = (function (_super) {
     FilesTreeView.prototype.render = function () {
         var _this = this;
         var currentDir = this.ft.getCurrentDir(), entries = currentDir.getEntriesTo();
+        var info = function (cur) {
+            return [
+                'Owner: ' + cur.get('oid'),
+                'Created at: ' + cur.get('ctime'),
+                'Edited at: ' + cur.get('mtime')
+            ].join("\n");
+        };
         var entryTemplate = function (cur) {
+            var payload = cur.toJSON();
+            payload['infos'] = info(cur);
             if (cur.isDir()) {
-                return _this.dirTmpl(cur.toJSON());
+                return _this.dirTmpl(payload);
             }
-            return _this.fileTmpl(cur.toJSON());
+            return _this.fileTmpl(payload);
         };
         var treeBuilder = function (entries) {
             if (entries.length === 0) {
@@ -436,11 +445,21 @@ var FilesDirectoryView = (function (_super) {
     FilesDirectoryView.prototype.renderSubEntries = function (currentDir) {
         var entries = currentDir.getSubEntries();
         var dirTmpl = _.template(html.filesDirectoryDir), fileTmpl = _.template(html.filesDirectoryFile);
-        var icons = _.map(entries, function (e) {
-            if (e.isDir()) {
-                return dirTmpl(e.toJSON());
+        var info = function (cur) {
+            var owner = UserManager.getInstance().findUserByUid(cur.get('oid'));
+            return [
+                'Owner: ' + owner.get('name'),
+                'Created at: ' + cur.get('ctime'),
+                'Edited at: ' + cur.get('mtime')
+            ].join("\n");
+        };
+        var icons = _.map(entries, function (cur) {
+            var payload = cur.toJSON();
+            payload['infos'] = info(cur);
+            if (cur.isDir()) {
+                return dirTmpl(payload);
             }
-            return fileTmpl(e.toJSON());
+            return fileTmpl(payload);
         });
         $('.chart-stage', this.$el).html(icons.join("\n"));
     };
@@ -914,7 +933,7 @@ Shell.getInstance().install('cd', function (env, args) {
         env.writeStderr('help: write CONTENT');
         return 1;
     }
-    sys_write(SHELL_CURRENT_FD, args[0]);
+    sys_write(SHELL_CURRENT_FD, args.join(' '));
     env.writeStdout('write: wrote');
     return 0;
 }, loginRequired).install('rm', function (env, args) {
