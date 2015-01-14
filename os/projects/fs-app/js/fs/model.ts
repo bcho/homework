@@ -256,9 +256,12 @@ class FilesTree extends Backbone.Events implements SerializableInterface {
 
     // Flush disk.
     flush(): void {
-        this.store();
+        // XXX
+        if (this.rootEntry) {
+            this.store();
 
-        this.trigger('fs:flushed');
+            this.trigger('fs:flushed');
+        }
     }
 
     // Dump into files block.

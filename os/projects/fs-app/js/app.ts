@@ -1,12 +1,22 @@
 /// <reference path="./_ref.d.ts" />
 
-var root = new FileEntryModel({
-    'name': 'home',
-    'entryType': FileEntryModel.TypeDir
-});
+var root = UserManager.getInstance().findUserByUid(1);
+
+// Login as root.
+sys_login(root);
+
+// Init fs tree.
+var rootDir = sys_create(
+    null,
+    'home',
+    FileEntryModel.TypeDir,
+    root,
+    0,
+    0
+);
 
 FilesTree.getInstance()
-    .setRoot(root)
+    .setRoot(rootDir)
     .chdir('home');
 
 

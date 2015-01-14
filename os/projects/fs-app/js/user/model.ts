@@ -57,7 +57,7 @@ class UserManager extends Backbone.Events {
 
         // Bootstrap users.
         this.users = new UserCollection();
-        this.setCurrentUser(this.createUser('root'));
+        this.createUser('root');
     }
 
     // Create an user.

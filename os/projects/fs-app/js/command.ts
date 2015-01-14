@@ -3,12 +3,13 @@
 var SHELL_EMPTY_FD = -1,
     SHELL_CURRENT_FD = SHELL_EMPTY_FD;
 
-var SHELL_EMPTY_USER = null,
-    SHELL_CURRENT_USER: UserModel = SHELL_EMPTY_USER;
+var isUserLogined = () => {
+    return UserManager.getInstance().getCurrentUser() !== null;
+}
 
 var loginRequired = () => {
     var rv = {
-        isOk: SHELL_CURRENT_USER !== SHELL_EMPTY_USER,
+        isOk: isUserLogined(),
         reason: ''
     };
 
@@ -221,15 +222,15 @@ Shell.getInstance()
         }
 
 
-        SHELL_CURRENT_USER = user;
+        sys_login(user);
         env.writeStderr('login: login successfully');
         return 0;
     })
 
     // Logout.
     .install('logout', (env: Env, args: string[]): number => {
-        if (SHELL_CURRENT_USER != SHELL_EMPTY_USER) {
-            SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+        if (isUserLogined()) {
+            UserManager.getInstance().setCurrentUser(null);
             env.writeStderr('logout: logout successfully');
         }
         

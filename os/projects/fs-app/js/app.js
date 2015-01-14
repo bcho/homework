@@ -243,8 +243,11 @@ var FilesTree = (function (_super) {
     };
     // Flush disk.
     FilesTree.prototype.flush = function () {
-        this.store();
-        this.trigger('fs:flushed');
+        // XXX
+        if (this.rootEntry) {
+            this.store();
+            this.trigger('fs:flushed');
+        }
     };
     // Dump into files block.
     FilesTree.prototype.store = function () {
@@ -573,7 +576,7 @@ var UserManager = (function (_super) {
         _.extend(this, Backbone.Events);
         // Bootstrap users.
         this.users = new UserCollection();
-        this.setCurrentUser(this.createUser('root'));
+        this.createUser('root');
     }
     UserManager.getInstance = function () {
         if (!UserManager.instance) {
@@ -814,10 +817,12 @@ var shlex = function (str) {
 };
 /// <reference path="./_ref.d.ts" />
 var SHELL_EMPTY_FD = -1, SHELL_CURRENT_FD = SHELL_EMPTY_FD;
-var SHELL_EMPTY_USER = null, SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+var isUserLogined = function () {
+    return UserManager.getInstance().getCurrentUser() !== null;
+};
 var loginRequired = function () {
     var rv = {
-        isOk: SHELL_CURRENT_USER !== SHELL_EMPTY_USER,
+        isOk: isUserLogined(),
         reason: ''
     };
     if (!rv.isOk) {
@@ -942,22 +947,23 @@ Shell.getInstance().install('cd', function (env, args) {
         env.writeStderr('login: cannot find user: ' + args[0]);
         return 1;
     }
-    SHELL_CURRENT_USER = user;
+    sys_login(user);
     env.writeStderr('login: login successfully');
     return 0;
 }).install('logout', function (env, args) {
-    if (SHELL_CURRENT_USER != SHELL_EMPTY_USER) {
-        SHELL_CURRENT_USER = SHELL_EMPTY_USER;
+    if (isUserLogined()) {
+        UserManager.getInstance().setCurrentUser(null);
         env.writeStderr('logout: logout successfully');
     }
     return 0;
 }, loginRequired);
 /// <reference path="./_ref.d.ts" />
-var root = new FileEntryModel({
-    'name': 'home',
-    'entryType': FileEntryModel.TypeDir
-});
-FilesTree.getInstance().setRoot(root).chdir('home');
+var root = UserManager.getInstance().findUserByUid(1);
+// Login as root.
+sys_login(root);
+// Init fs tree.
+var rootDir = sys_create(null, 'home', FileEntryModel.TypeDir, root, 0, 0);
+FilesTree.getInstance().setRoot(rootDir).chdir('home');
 (new FilesTreeView({ el: $('#files-tree') })).render();
 (new FilesDirectoryView({ el: $('#files-directory') })).render();
 (new DiskUsageView({ el: $('#disk-infos') })).render();
