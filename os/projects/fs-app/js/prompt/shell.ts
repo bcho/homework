@@ -93,13 +93,6 @@ class Shell {
         if (! _.has(this.commands, name)) {
             this.writeErr('Unknown command: ' + name);
         } else {
-            var currentUser = UserManager.getInstance().getCurrentUser();
-
-            if (! currentUser) {
-                this.writeErr('Please login first.');
-                return;
-            }
-
             var env = new ShellEnv(this);
 
             this.commands[name](env, args);

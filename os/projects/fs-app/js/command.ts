@@ -195,11 +195,9 @@ Shell.getInstance()
         }
 
         try {
-            sys_delete(entry);
-            
-            env.writeStderr('rm: removed');
+            sys_delete(env.getUser(), entry);
         } catch (e) {
-            env.writeStderr('rm: failed ' + e.message);
+            env.writeStderr('rm: ' + e.message);
             return 1;
         }
 

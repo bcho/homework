@@ -1,6 +1,7 @@
 /// <reference path="./_ref.d.ts" />
 
-var root = UserManager.getInstance().findUserByUid(1);
+var root = UserManager.getInstance().createUser('root'),
+    hbc = UserManager.getInstance().createUser('hbc');
 
 // Login as root.
 sys_login(root);

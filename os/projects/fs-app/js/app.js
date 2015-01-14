@@ -24,7 +24,7 @@ var html;
     html.filesTreeDir = ["<li>", "    <i class=\"fa fa-folder-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", ""].join("\n");
     html.filesTreeFile = ["<li data-path=\"<%= path %>\">", "    <i class=\"fa fa-file-word-o\"></i>", "    <%= name %>", "</li>", ""].join("\n");
     html.filesTreeSubtree = ["<li>", "    <i class=\"fa fa-folder-open-o\"></i>", "    <a data-path=\"<%= path %>\"><%= name %></a>", "</li>", "<li class=\"files-tree-sub\">", "    <ul class=\"files-tree\">", "        <%= sub_tree %>", "    </ul>", "</li>", ""].join("\n");
-    html.userInfosMe = ["<p>当前用户：<span class=\"badge\"><%= currentUser.name %></span></p>", "<p>用户总数：<span class=\"badge\"><%= count %></span></p>", ""].join("\n");
+    html.userInfosMe = ["<p>当前用户：<span class=\"badge\"><%= currentUserName %></span></p>", "<p>用户总数：<span class=\"badge\"><%= count %></span></p>", ""].join("\n");
 })(html || (html = {}));
 /// <reference path="../_ref.d.ts" />
 var __extends = this.__extends || function (d, b) {
@@ -520,13 +520,17 @@ var sys_create = function (parent, name, entryType, owner, ownerPerm, otherPerm)
     return FileEntryModel.create(parent, name, entryType, owner, ownerPerm, otherPerm);
 };
 // Delete an entry.
-var sys_delete = function (entry) {
+var sys_delete = function (user, entry) {
     var parentEntry = entry.getParentEntry();
+    // TODO: more permission check.
+    if (user.getUid() != entry.get('oid')) {
+        ioFailedException('cannot remove files');
+    }
     if (parentEntry) {
         parentEntry.unlink(entry);
     }
     else {
-        ioFailedException('cannot unlinked root'); // XXX
+        ioFailedException('cannot unlink root'); // XXX
     }
     return 0;
 };
@@ -576,7 +580,6 @@ var UserManager = (function (_super) {
         _.extend(this, Backbone.Events);
         // Bootstrap users.
         this.users = new UserCollection();
-        this.createUser('root');
     }
     UserManager.getInstance = function () {
         if (!UserManager.instance) {
@@ -633,12 +636,13 @@ var UserInfosView = (function (_super) {
         _super.call(this, opts);
         this.meTmpl = _.template(html.userInfosMe);
         this.userManager = UserManager.getInstance();
-        this.listenTo(this.userManager, 'currentUser:changed', this.render);
+        this.listenTo(this.userManager, 'current_user:changed', this.render);
         this.listenTo(this.userManager, 'users:changed', this.render);
     }
     UserInfosView.prototype.render = function () {
+        var currentUser = this.userManager.getCurrentUser();
         $('#user-me', this.$el).html(this.meTmpl({
-            currentUser: this.userManager.getCurrentUser().toJSON(),
+            currentUserName: currentUser ? currentUser.get('name') : '',
             count: this.userManager.getUsersCount()
         }));
         return this;
@@ -724,11 +728,6 @@ var Shell = (function () {
             this.writeErr('Unknown command: ' + name);
         }
         else {
-            var currentUser = UserManager.getInstance().getCurrentUser();
-            if (!currentUser) {
-                this.writeErr('Please login first.');
-                return;
-            }
             var env = new ShellEnv(this);
             this.commands[name](env, args);
         }
@@ -929,11 +928,10 @@ Shell.getInstance().install('cd', function (env, args) {
         return 1;
     }
     try {
-        sys_delete(entry);
-        env.writeStderr('rm: removed');
+        sys_delete(env.getUser(), entry);
     }
     catch (e) {
-        env.writeStderr('rm: failed ' + e.message);
+        env.writeStderr('rm: ' + e.message);
         return 1;
     }
     return 0;
@@ -958,7 +956,7 @@ Shell.getInstance().install('cd', function (env, args) {
     return 0;
 }, loginRequired);
 /// <reference path="./_ref.d.ts" />
-var root = UserManager.getInstance().findUserByUid(1);
+var root = UserManager.getInstance().createUser('root'), hbc = UserManager.getInstance().createUser('hbc');
 // Login as root.
 sys_login(root);
 // Init fs tree.

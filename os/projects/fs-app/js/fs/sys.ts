@@ -71,13 +71,18 @@ var sys_create = (parent: FileEntryModel,
 }
 
 // Delete an entry.
-var sys_delete = (entry: FileEntryModel): number => {
+var sys_delete = (user: UserModel, entry: FileEntryModel): number => {
     var parentEntry = entry.getParentEntry();
+
+    // TODO: more permission check.
+    if (user.getUid() != entry.get('oid')) {
+        ioFailedException('cannot remove files');
+    }
 
     if (parentEntry) {
         parentEntry.unlink(entry);
     } else {
-        ioFailedException('cannot unlinked root');   // XXX
+        ioFailedException('cannot unlink root');   // XXX
     }
 
     return 0;

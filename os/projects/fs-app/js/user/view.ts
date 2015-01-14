@@ -12,13 +12,15 @@ class UserInfosView extends Backbone.View<Backbone.Model> {
 
         this.userManager = UserManager.getInstance();
 
-        this.listenTo(this.userManager, 'currentUser:changed', this.render);
+        this.listenTo(this.userManager, 'current_user:changed', this.render);
         this.listenTo(this.userManager, 'users:changed', this.render);
     }
 
     render(): UserInfosView {
+        var currentUser = this.userManager.getCurrentUser();
+
         $('#user-me', this.$el).html(this.meTmpl({
-            currentUser: this.userManager.getCurrentUser().toJSON(),
+            currentUserName: currentUser ? currentUser.get('name') : '',
             count: this.userManager.getUsersCount()
         }));
 
