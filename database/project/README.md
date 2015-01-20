@@ -22,4 +22,4 @@
     * [x] new reader
     * [x] new book
     * [x] borrow page
-- [ ] report
+- [x] report
