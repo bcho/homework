@@ -9,6 +9,7 @@ namespace CSharp.Lab1
     public class Node
     {
         public int Data { get; set; }
+
         public Node Left { get; set; }
         public Node Right { get; set; }
 
@@ -144,46 +145,62 @@ namespace CSharp.Lab1
     public class CompleteTreeChildNodeAdder : AbstractChildNodeAdder
     {
         protected Node Root;
+        protected int Nodes;
 
         public CompleteTreeChildNodeAdder(Node root)
         {
             Root = root;
+            Nodes = 1;
         }
 
         public override AbstractChildNodeAdder AddChildNode(Node child)
         {
-            AddToFirstAvailableNode(Root, child);
+            Nodes += 1;
+            var parent = ParentNode(Nodes);
+            if (parent.Left == null)
+            {
+                parent.Left = child;
+            }
+            else if (parent.Right == null)
+            {
+                parent.Right = child;
+            }
 
             return this;
         }
 
-        protected Node AddToFirstAvailableNode(Node current, Node child)
+        protected Node ParentNode(int now)
         {
-            if (current == null)
+            int parentNo = now / 2;
+
+            return FindNodeAt(Root, parentNo);
+        }
+
+        protected Node FindNodeAt(Node n, int targetNo)
+        {
+            return FindNodeAt(n, targetNo, 1);
+        }
+
+        protected Node FindNodeAt(Node n, int targetNo, int currentNo)
+        {
+            if (n == null)
             {
                 return null;
             }
 
-            if (current.Left == null)
+            if (targetNo == currentNo)
             {
-                current.Left = child;
-                return current;
-            }
-            if (current.Right == null)
-            {
-                current.Right = child;
-                return current;
+                return n;
             }
 
-            Node addedTo;
-            
-            addedTo = AddToFirstAvailableNode(current.Left, child);
-            if (addedTo == null)
-            {
-                addedTo = AddToFirstAvailableNode(current.Right, child);
-            }
+            Node target;
 
-            return addedTo;
+            target = FindNodeAt(n.Left, targetNo, currentNo * 2);
+            if (target == null)
+            {
+                target = FindNodeAt(n.Right, targetNo, currentNo * 2 + 1);
+            }
+            return target;
         }
     }
 
@@ -342,19 +359,23 @@ namespace CSharp.Lab1
 
             adder.AddChildNode(5);
             Assert.Test(root.Left.Right.Data == 5);
+
+            adder.AddChildNode(6);
+            Assert.Test(root.Right.Left.Data == 6);
+
+            adder.AddChildNode(7);
+            Assert.Test(root.Right.Right.Data == 7);
         }
 
-        public static void Run()
+        public void Run()
         {
-            var test = new Test();
-
             (
-                new TestCase(test.TestInstaceNode) +
-                new TestCase(test.TestInOrderTraversalIterator) +
-                new TestCase(test.TestHeight) +
-                new TestCase(test.TestLeafs) +
-                new TestCase(test.TestSortTreeChildNodeAdder) +
-                new TestCase(test.TestCompleteTreeChildNodeAdder)
+                new TestCase(TestInstaceNode) +
+                new TestCase(TestInOrderTraversalIterator) +
+                new TestCase(TestHeight) +
+                new TestCase(TestLeafs) +
+                new TestCase(TestSortTreeChildNodeAdder) +
+                new TestCase(TestCompleteTreeChildNodeAdder)
             )();
 
             Console.WriteLine("所有测试通过...");
@@ -364,21 +385,88 @@ namespace CSharp.Lab1
     // 演示用例
     public class Demo
     {
-        public  static void Run()
-        {
-            var root = new Node(4);
-            var adder = new SortTreeChildNodeAdder(root);
-            adder.AddChildNode(2)
-                .AddChildNode(1)
-                .AddChildNode(3)
-                .AddChildNode(5)
-                .AddChildNode(6)
-                .AddChildNode(7);
+        protected const int Count = 100;
+        protected const int Lower = 1;
+        protected const int Upper = 100;
 
-            foreach (Node n in new InOrderTraversalIterator(root))
+        public void Run()
+        {
+            // (1) 使用随机数生成一定数量数据
+            var seq = MakeSequence();
+
+            // (2) 生成完全二叉树
+            var completeTree = MakeCompleteTree(seq);
+            Console.WriteLine("完全二叉树层数： {0}", completeTree.Height);
+
+            // (3) 生成二叉排序树
+            var binarySortTree = MakeBinarySortTree(seq);
+
+            // (5) 输出中序遍历结果
+            Console.WriteLine("中序遍历排序二叉树");
+            PrintTree(binarySortTree);
+
+            // (6) 计算叶子节点数
+            Console.WriteLine("排序二叉树叶子节点数：{0}", binarySortTree.Leafs);
+
+            // (7) 计算二叉树深度
+            Console.WriteLine("排序二叉树深度：{0}", binarySortTree.Height);
+        }
+
+        protected int[] MakeSequence(int size = Count,
+                int lo = Lower, int hi = Upper)
+        {
+            var seq = new int[size];
+            var random = new Random();
+            for (var i = 0; i < size; i++)
             {
-                Console.WriteLine(n.Data);
+                seq[i] = random.Next(lo, hi);
             }
+
+            return seq;
+        }
+
+        protected Node MakeBinarySortTree(int[] seq)
+        {
+            if (seq.Length < 1)
+            {
+                return null;
+            }
+
+            var root = new Node(seq[0]);
+            var adder = new SortTreeChildNodeAdder(root);
+            for (var i = 1; i < seq.Length; i++)
+            {
+                adder.AddChildNode(seq[i]);
+            }
+
+            return root;
+        }
+
+        protected Node MakeCompleteTree(int[] seq)
+        {
+            if (seq.Length < 1)
+            {
+                return null;
+            }
+
+            var root = new Node(seq[0]);
+            var adder = new CompleteTreeChildNodeAdder(root);
+            for (var i = 1; i < seq.Length; i++)
+            {
+                adder.AddChildNode(seq[i]);
+            }
+
+            return root;
+        }
+
+        protected void PrintTree(Node root)
+        {
+            var iter = new InOrderTraversalIterator(root);
+            foreach (Node node in iter)
+            {
+                Console.Write("{0} ", node.Data);
+            }
+            Console.WriteLine();
         }
     }
 
@@ -387,19 +475,19 @@ namespace CSharp.Lab1
     {
         public static void Main(string[] args)
         {
-            var runner = "demo";
+            var type = "demo";
             if (args.Length > 0)
             {
-                runner = args[args.Length - 1];
+                type = args[args.Length - 1];
             }
 
-            if (runner == "test")
+            if (type == "test")
             {
-                Test.Run();
+                (new Test()).Run();
             }
             else
             {
-                Demo.Run();
+                (new Demo()).Run();
             }
         }
     }
