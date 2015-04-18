@@ -7,7 +7,7 @@ COFFEE_FLAGS=--bare --compile
 build: clean compile-coffee
 
 
-compile-coffee: rsa.js rsa.test.js
+compile-coffee: rsa.js rsa.test.js app.js
 
 
 %.js: %.coffee

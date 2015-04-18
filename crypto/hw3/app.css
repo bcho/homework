@@ -35,6 +35,13 @@
   font-size: 18px;
 }
 
+.form-input button {
+  display: block;
+  margin-top: 25px;
+  width: 200px;
+  height: 30px;
+}
+
 .settings {
   flex: 2;
 }

@@ -10,26 +10,29 @@
         <div class="settings">
             <div class="form-row">
                 <div class="form-input">
-                    <label for="e">E</label>
-                    <input type="number" name="e" class="e">
+                    <label for="p">p</label>
+                    <input type="number" name="p" class="p" readonly>
+                </div>
+                <div class="form-input">
+                    <label for="q">q</label>
+                    <input type="number" name="q" class="q" readonly>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-input">
-                    <label for="p">P</label>
-                    <input type="number" name="p" class="p">
+                    <button class="generate">重新生成 p, q</button>
                 </div>
                 <div class="form-input">
-                    <label for="q">Q</label>
-                    <input type="number" name="q" class="q">
+                    <label for="e">e</label>
+                    <input type="number" name="e" class="e" readonly>
                 </div>
             </div>
         </div>
         <div class="readonly">
             <div class="form-row">
                 <div class="form-input">
-                    <label for="on">φn</label>
-                    <input type="number" name="on" class="on" readonly>
+                    <label for="zn">φn</label>
+                    <input type="number" name="zn" class="zn" readonly>
                 </div>
             </div>
             <div class="form-row">
@@ -55,4 +58,8 @@
         </div>
     </div>
 </body>
+<script src="node_modules/underscore/underscore.js"></script>
+<script src="node_modules/jquery/dist/jquery.js"></script>
+<script src="rsa.js"></script>
+<script src="app.js"></script>
 </html>

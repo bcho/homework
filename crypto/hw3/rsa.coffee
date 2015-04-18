@@ -68,7 +68,7 @@ class PublicKey
 # 加密密钥
 class PrivateKey
 
-  constructor: (@d, @publicKey) ->
+  constructor: (@d, @p, @q, @zn, @publicKey) ->
     @n = @publicKey.n
 
   encrypt: (m) ->
@@ -91,6 +91,6 @@ generatePrivateKey = ->
   d = _.modularInverse e, zn
 
   publicKey = new PublicKey n, e
-  privateKey = new PrivateKey d, publicKey
+  privateKey = new PrivateKey d, p, q, zn, publicKey
 
   privateKey
