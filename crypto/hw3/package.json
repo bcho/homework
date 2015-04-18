@@ -1,0 +1,24 @@
+{
+  "name": "hw3",
+  "version": "0.0.1",
+  "description": "A simple rsa implementation for educational propose only.",
+  "main": "rsa.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rsa",
+    "crypto"
+  ],
+  "author": "hbc <bcxxxxxx@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.9.2",
+    "mocha": "^2.2.1",
+    "node-webkit-builder": "^1.0.11",
+    "should": "^5.2.0"
+  }
+}
