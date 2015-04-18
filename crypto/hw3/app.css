@@ -1,0 +1,48 @@
+/* Stylesheets for RSA application. */
+
+* { box-sizing: border-box; } 
+
+/* ---------------------------------------------------------------------------
+ * Form Elements
+ * ---------------------------------------------------------------------------
+ */
+
+.form {
+  display: flex;
+  width: 1024px;
+  height: 100%;
+}
+
+.form-row {
+  display: flex;
+  position relative;
+}
+
+.form-input {
+  display: inline-block;
+  margin: 5px 15px;
+  flex: 1;
+}
+
+.form-input label {
+  display: block;
+  margin: 5px 0;
+}
+
+.form-input input {
+  width: 200px;
+  height: 30px;
+  font-size: 18px;
+}
+
+.settings {
+  flex: 2;
+}
+
+.readonly {
+  flex: 1;
+}
+
+.message {
+  flex: 1;
+}
