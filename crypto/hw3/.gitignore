@@ -1,1 +1,4 @@
-*.js
+rsa*.js
+app.js
+build/
+cache

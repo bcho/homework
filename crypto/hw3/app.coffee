@@ -9,6 +9,7 @@ $generateBtn = $ '.generate'
 
 
 privateKey = null
+clicking = false
 
 
 encrypt = ->
@@ -28,6 +29,8 @@ decrypt = ->
 
 
 $generateBtn.click (e) ->
+  return if clicking
+  clicking = true
   e.preventDefault()
 
   privateKey = generatePrivateKey()
@@ -38,6 +41,7 @@ $generateBtn.click (e) ->
   $zn.val privateKey.zn
   $e.val privateKey.publicKey.e
   encrypt()
+  clicking = false
 
 
 $pt.change encrypt

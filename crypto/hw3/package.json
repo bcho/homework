@@ -2,7 +2,7 @@
   "name": "hw3",
   "version": "0.0.1",
   "description": "A simple rsa implementation for educational propose only.",
-  "main": "rsa.js",
+  "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,5 +21,12 @@
     "mocha": "^2.2.1",
     "node-webkit-builder": "^1.0.11",
     "should": "^5.2.0"
+  },
+  "window": {
+    "title": "rsa",
+    "toolbar": false,
+    "frame": true,
+    "position": "mouse",
+    "width": 1024
   }
 }
