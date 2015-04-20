@@ -80,10 +80,14 @@ class PrivateKey
 
 # 生成一个加密密钥
 generatePrivateKey = ->
+  # 生成随机素数对 p, q
   p = _.randomPrime config.primes.min, config.primes.max
   q = _.randomPrime config.primes.min, config.primes.max
+
   n = p * q
   zn = (p - 1) * (q - 1)
+
+  # 构造加解密参数
   while true
     e = _.random 1, zn
     if (_.gcd e, zn) == 1
