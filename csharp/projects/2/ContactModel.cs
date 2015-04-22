@@ -22,6 +22,15 @@ namespace Contact.Model
             Role = role;
             Username = username;
         }
+
+        public bool IsRole(UserRole role)
+        {
+            if (Role == UserRole.Illegal || role == UserRole.Illegal)
+            {
+                return Role == role;
+            }
+            return Role >= role;
+        }
     }
 
     // Contact item.

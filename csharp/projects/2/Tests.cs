@@ -36,6 +36,31 @@ namespace Contact.Tests
             return this;
         }
 
+        public TestContactModelManager TestUserIsRole()
+        {
+            var manager = CreateManager();
+            var user = manager.CreateUser("test", User.UserRole.Admin);
+
+            Assert.Test(user.IsRole(User.UserRole.Admin));
+            Assert.Test(user.IsRole(User.UserRole.Writeable));
+            Assert.Test(user.IsRole(User.UserRole.Readable));
+            Assert.Test(! user.IsRole(User.UserRole.Illegal));
+
+            user.Role = User.UserRole.Readable;
+            Assert.Test(! user.IsRole(User.UserRole.Admin));
+            Assert.Test(! user.IsRole(User.UserRole.Writeable));
+            Assert.Test(user.IsRole(User.UserRole.Readable));
+            Assert.Test(! user.IsRole(User.UserRole.Illegal));
+
+            user.Role = User.UserRole.Illegal;
+            Assert.Test(! user.IsRole(User.UserRole.Admin));
+            Assert.Test(! user.IsRole(User.UserRole.Writeable));
+            Assert.Test(! user.IsRole(User.UserRole.Readable));
+            Assert.Test(user.IsRole(User.UserRole.Illegal));
+
+            return this;
+        }
+
         public TestContactModelManager TestAddUser()
         {
             var manager = CreateManager();
@@ -179,6 +204,19 @@ namespace Contact.Tests
             return this;
         }
 
+        protected TestContactModelManager TestUserPermission()
+        {
+            var manager = CreateManager();
+            var user = manager.CreateUser("test", User.UserRole.Admin);
+            var userPerm = CreateUserPermission(user);
+
+            // TODO test against other roles.
+            Assert.Test(userPerm.Can(UserPermission.LOGIN));
+            Assert.Test(userPerm.Can(UserPermission.ADD_COMMENT));
+
+            return this;
+        }
+
         protected ContactManager CreateManager(String file = null)
         {
             if (file == null)
@@ -189,6 +227,11 @@ namespace Contact.Tests
             return new ContactManager(file);
         }
 
+        protected UserPermission CreateUserPermission(User op)
+        {
+            return new UserPermission(op);
+        }
+
         public static void Test()
         {
             var test = new TestContactModelManager();
@@ -196,11 +239,13 @@ namespace Contact.Tests
             test.TestDumpAndRestore()
                 .TestCreateUser()
                 .TestAddUser()
+                .TestUserIsRole()
                 .TestCreateContact()
                 .TestAddContact()
                 .TestRemoveContact()
                 .TestFindContact()
-                .TestCreateComment();
+                .TestCreateComment()
+                .TestUserPermission();
         }
     }
     

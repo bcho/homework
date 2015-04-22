@@ -134,4 +134,43 @@ namespace Contact.Model.Manager
             return comment;
         }
     }
+
+    // Permission manager.
+    public class UserPermission
+    {
+        protected User Operator;
+        protected Dictionary<String, User.UserRole> Operations;
+
+        // 查看所有资料
+        public const String LOGIN = "login";
+        // 添加评价
+        public const String ADD_COMMENT = "add_comment";
+
+        public UserPermission(User op)
+        {
+            Operator = op;
+
+            DefineOperations();
+        }
+
+        public bool Can(String operation)
+        {
+            if (! Operations.ContainsKey(operation))
+            {
+                return false;
+            }
+
+            var requiredRole = Operations[operation];
+            return Operator.IsRole(requiredRole);
+        }
+
+        protected void DefineOperations()
+        {
+            Operations = new Dictionary<String, User.UserRole>
+            {
+                {LOGIN, User.UserRole.Readable},
+                {ADD_COMMENT, User.UserRole.Writeable}
+            };
+        }
+    }
 }
