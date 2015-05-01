@@ -4,7 +4,8 @@
 TARGET=exe
 FILES=ContactModel.cs \
       ContactModelManager.cs
-CONTACT_FILES=$(FILES)
+CONTACT_FILES=$(FILES) \
+	      CommandLine.cs
 TEST_FILES=$(FILES) \
 	   Assert.cs \
 	   Tests.cs
