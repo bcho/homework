@@ -1,6 +1,6 @@
 // Sniffer
 //
-// ./sniffer -interface=ean0 [offline.pcap]
+// ./sniffer -interface=ean0 -pcap=offline.pcap [filter]
 package main
 
 import (
@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
@@ -15,22 +16,33 @@ import (
 
 const (
 	NO_DEVICE          = ""
+	NO_OFFLINE_FILE    = ""
 	PACKET_SAMPLE_SIZE = 1600
 )
 
-var device string
+var (
+	device      string
+	offlineFile string
+)
 
 func init() {
 	flag.Usage = showUsage
 	flag.StringVar(&device, "interface", NO_DEVICE, "network device (en0)")
+	flag.StringVar(
+		&offlineFile,
+		"pcap",
+		NO_OFFLINE_FILE,
+		"pcap file",
+	)
 }
 
 func main() {
 	flag.Parse()
 
-	offlineFile := flag.Arg(0)
+	filter := strings.Join(flag.Args(), " ")
+	fmt.Println(filter)
 
-	if device == NO_DEVICE && offlineFile == "" {
+	if device == NO_DEVICE && offlineFile == NO_OFFLINE_FILE {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -56,6 +68,10 @@ func main() {
 		panic(err)
 	}
 
+	if err = handle.SetBPFFilter(filter); err != nil {
+		panic(err)
+	}
+
 	for {
 		packet, ci, err := handle.ReadPacketData()
 		if err == io.EOF {
@@ -69,7 +85,7 @@ func main() {
 }
 
 func showUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [file]\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s [filter]\n", os.Args[0])
 	flag.PrintDefaults()
 }
 
