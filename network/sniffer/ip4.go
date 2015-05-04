@@ -33,6 +33,8 @@ func (p IPProtocol) Decoder() decodeFunc {
 	switch p {
 	case IPProtocolICMP:
 		return decodeICMP
+	case IPProtocolTCP:
+		return decodeTCP
 	case IPProtocolUDP:
 		return decodeUDP
 	default:

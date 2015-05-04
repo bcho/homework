@@ -40,7 +40,6 @@ func main() {
 	flag.Parse()
 
 	filter := strings.Join(flag.Args(), " ")
-	fmt.Println(filter)
 
 	if device == NO_DEVICE && offlineFile == NO_OFFLINE_FILE {
 		flag.Usage()
@@ -68,6 +67,7 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Printf("Applying filter: %s\n", filter)
 	if err = handle.SetBPFFilter(filter); err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		handlePacket(packet, ci)
+		go handlePacket(packet, ci)
 	}
 }
 
