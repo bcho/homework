@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>通信录</title>
+    <link rel="stylesheet" href="bower_components/geo-bootstrap/swatch/bootstrap.min.css">
+    <style>
+        .contact-comment {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body class="container">
+    <div class="row contacts">
+        <div class="contact col-8 offset1">
+            <div class="contact-profile">
+                <form class="form-horizontal">
+                    <fieldset>
+                        <legend>hbc</legend>
+                        <div class="control-group">
+                            <label class="control-label" for="gender">Gender</label>
+                            <div class="controls">
+                                <input class="input-xlarge" name="name" type="text" value="Male">
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label" for="address">Address</label>
+                            <div class="controls">
+                                <textarea class="input-xlarge" name="address" rows="3">Earth, for now.</textarea>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <div class="controls">
+                                <button class="btn" type="submit">Update</button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+            <div class="contact-comments">
+                <h4>Comments</h4>
+                <div class="contact-comment offset1">
+                    <p>hello, world</p>
+                    <span>by admin 2015-09-13 08:00:00</span>
+                </div>
+                <div class="contact-comment-create offset1">
+                    <form>
+                        <div>
+                            <textarea class="input-xlarge" name="comment" rows="3"></textarea>
+                        </div>
+                        <button class="btn" type="submit">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
