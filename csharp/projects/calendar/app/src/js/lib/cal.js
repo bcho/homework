@@ -47,15 +47,18 @@ export default {
     // ]
     getCalendar: function(year, month) {
         let monthDays = this.getMonth(year, month),
-            calendar = [[], [], [], [], [], []];
+            calendar = [];
 
         let d = new Date(monthDays[0]),
             e = new Date(monthDays[monthDays.length - 1]),
             counter = 0;
         d.setDate(d.getDate() - d.getDay());
-        e.setDate(e.getDate() + (6 - d.getDay()));
+        e.setDate(e.getDate() + (6 - e.getDay()));
         while (d <= e) {
             let idx = parseInt(counter / 7, 10);
+            if (calendar.length == idx) {
+                calendar[idx] = [];
+            }
             calendar[idx].push(new Date(d));
             d.setDate(d.getDate() + 1);
             counter += 1;

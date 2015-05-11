@@ -24,6 +24,9 @@ describe('lib:calendar', function() {
             cal.length.should.be.exactly(6);
             cal[0][0].getDay().should.be.exactly(0);
             cal[5][6].getDay().should.be.exactly(6);
+
+            cal = Calendar.getCalendar(2015, 3);
+            cal.length.should.be.exactly(5);
         });
     });
 

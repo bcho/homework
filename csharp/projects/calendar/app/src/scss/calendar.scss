@@ -1,6 +1,7 @@
 $color-white: rgb(255, 255, 255);
 $color-black: rgb(0, 0, 0);
 $color-gray: rgb(200, 200, 200);
+$color-red: rgb(253, 137, 58);
 
 .calendar-control {
   display: block;
@@ -20,6 +21,22 @@ $color-gray: rgb(200, 200, 200);
   .year {
     color: $color-gray;
   }
+}
+
+.calendar-navigate {
+  float: right;
+}
+
+.calendar-navigate-btn {
+  display: inline-block;
+  margin: 5px 2px;
+  padding: 2px 5px;
+  font-size: 20px;
+  line-height: 1.5;
+  text-decoration: none;
+  color: $color-black;
+  border: 1px solid $color-gray;
+  border-radius: 2px;
 }
 
 .calendar-cells {
@@ -53,6 +70,19 @@ $color-gray: rgb(200, 200, 200);
   &:last-child {
     border-right: none;
   }
+
+  &.saturday,
+  &.sunday {
+    background-color: $color-red;
+  }
+}
+
+.calendar-cell .calendar-todo:last-child {
+  display: none;
+}
+
+.calendar-cell:hover .calendar-todo:last-child {
+  display: block;
 }
 
 .calendar-date {
@@ -62,14 +92,20 @@ $color-gray: rgb(200, 200, 200);
 .calendar-todo-dialog {
   z-index: 1000;
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: 50%;
+  left: 50%;
+  transform: translateY(-50%);
+  transform: translateX(-50%);
   width: 250px;
   height: 150px;
   padding: 15px 0 0;
   background-color: $color-white;
   border: 1px solid $color-gray;
   border-radius: 2px;
+
+  &.hide {
+    display: none;
+  }
 }
 
 .calendar-todo-dialog-header {

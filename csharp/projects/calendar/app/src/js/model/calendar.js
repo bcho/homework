@@ -1,5 +1,6 @@
 // Calendar.
 
+import ps from '../lib/ps';
 import Todo from './todo';
 
 export default class Calendar {
@@ -8,16 +9,21 @@ export default class Calendar {
         this.todos = {};
 
         for (let i = 0; i < todos.length; i++) {
-            this.addTodo(todos[i]);
+            this.addTodo(todos[i], true);
         }
     }
 
-    addTodo(todo) {
+    addTodo(todo, silent) {
         let dueDate = todo.dueDate.toISOString();
         if (! (dueDate in this.todos)) {
             this.todos[dueDate] = [];
         }
         this.todos[dueDate].push(todo);
+
+        silent = silent || false;
+        if (! silent) {
+            ps.pub('model:calendar:addTodo', todo);
+        }
 
         return this;
     }

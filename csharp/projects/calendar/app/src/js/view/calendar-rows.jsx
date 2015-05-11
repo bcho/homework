@@ -43,7 +43,7 @@ let CalendarRows = React.createClass({
                 {calendar.map(function(row, i) {
                     return <CalendarRow dates={row} key={i} />;
                 })}
-                    <tr class="calendar-row"></tr>
+                    <tr className="calendar-row"></tr>
                 </tbody>
             </table>
         );
