@@ -1,0 +1,82 @@
+$color-white: rgb(255, 255, 255);
+$color-black: rgb(0, 0, 0);
+$color-gray: rgb(200, 200, 200);
+
+.calendar-control {
+  display: block;
+  height: 50px;
+  background-color: $color-white;
+}
+
+.calendar-now-date {
+  margin: 0;
+  font-weight: normal;
+  font-size: 28px;
+
+  .month {
+    color: $color-black;
+  }
+
+  .year {
+    color: $color-gray;
+  }
+}
+
+.calendar-cells {
+  width: 100%;
+}
+
+.calendar-row {
+  width: 100%;
+
+  &:last-child {
+    .calendar-cell {
+      border: none;
+    }
+  }
+}
+
+.calendar-row-header {
+  border-bottom: 1px solid $color-gray;
+
+  .calendar-cell {
+    border-right: none;
+  }
+}
+
+.calendar-cell {
+  position: relative;
+  width: calc(100% / 7);
+  border-bottom: 1px solid $color-gray;
+  border-right: 1px solid $color-gray;
+
+  &:last-child {
+    border-right: none;
+  }
+}
+
+.calendar-date {
+  text-align: center;
+}
+
+.calendar-todo-dialog {
+  z-index: 1000;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 250px;
+  height: 150px;
+  padding: 15px 0 0;
+  background-color: $color-white;
+  border: 1px solid $color-gray;
+  border-radius: 2px;
+}
+
+.calendar-todo-dialog-header {
+  text-align: center;
+}
+
+.form-control {
+  width: 200px;
+  margin: 0 auto 15px;
+}

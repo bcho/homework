@@ -37,6 +37,33 @@ export default {
         return days;
     },
 
+    // [
+    //   [Date...],
+    //   [Date...],
+    //   [Date...],
+    //   [Date...],
+    //   [Date...],
+    //   [Date...]
+    // ]
+    getCalendar: function(year, month) {
+        let monthDays = this.getMonth(year, month),
+            calendar = [[], [], [], [], [], []];
+
+        let d = new Date(monthDays[0]),
+            e = new Date(monthDays[monthDays.length - 1]),
+            counter = 0;
+        d.setDate(d.getDate() - d.getDay());
+        e.setDate(e.getDate() + (6 - d.getDay()));
+        while (d <= e) {
+            let idx = parseInt(counter / 7, 10);
+            calendar[idx].push(new Date(d));
+            d.setDate(d.getDate() + 1);
+            counter += 1;
+        }
+
+        return calendar;
+    },
+
     isLeap: function(year) {
         return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
     }

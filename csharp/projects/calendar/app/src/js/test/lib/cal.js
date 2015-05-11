@@ -18,6 +18,15 @@ describe('lib:calendar', function() {
         });
     });
 
+    describe('getCalendar', function() {
+        it('should return correct calendar', function() {
+            let cal = Calendar.getCalendar(2015, 5);
+            cal.length.should.be.exactly(6);
+            cal[0][0].getDay().should.be.exactly(0);
+            cal[5][6].getDay().should.be.exactly(6);
+        });
+    });
+
     describe('getYear', function() {
         it('should return correct months', function() {
             for (var i = 1; i <= 12;i++) {

@@ -1,4 +1,8 @@
-import Calendar from './model/calendar';
+import React from 'react';
 
-console.log('hello world');
-console.log(Calendar.restore([]));
+import CalendarView from './view/calendar.jsx';
+
+React.render(
+    <CalendarView date={new Date()}/>,
+    document.querySelector('body')
+);
