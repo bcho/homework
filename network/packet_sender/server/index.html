@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Packets</title>
+</head>
+<body>
+    <div class="packets"></div>
+</body>
+<script src="/jquery.js"></script>
+<script>
+    (function() {
+        var readPakcets = function() {
+            $.ajax('/_packet').done(function(resp) {
+                console.log(resp);
+            });
+        };
+        window.setInterval(readPakcets, 1000);
+    })();
+</script>
+</html>
