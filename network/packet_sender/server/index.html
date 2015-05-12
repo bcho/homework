@@ -5,17 +5,37 @@
     <title>Packets</title>
 </head>
 <body>
-    <div class="packets"></div>
+    <div class="packets">
+    </div>
+    <script type="text/html" class="tmpl-packet">
+        <div class="packet">
+            <h3><%= content %></h3>
+            <p>Type: <%= type %> From: <%= from %></p>
+            <hr>
+        </div>
+    </script>
 </body>
-<script src="/jquery.js"></script>
+<script src="/static/jquery.js"></script>
+<script src="/static/underscore.js"></script>
 <script>
     (function() {
+        var tmpl = _.template($('.tmpl-packet').text()),
+            $packets = $('.packets');
+
         var readPakcets = function() {
             $.ajax('/_packet').done(function(resp) {
-                console.log(resp);
+                var packets = resp.map(function(packet) {
+                    if (packet.from) {
+                        packet.from = packet.from.IP + ':' + packet.from.Port;
+                    } else {
+                        packet.from = 'unknown';
+                    }
+                    return tmpl(packet);
+                });
+                $packets.html(packets.reverse().join(''));
             });
         };
-        window.setInterval(readPakcets, 1000);
+        window.setInterval(readPakcets, 500);
     })();
 </script>
 </html>

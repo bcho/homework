@@ -41,13 +41,7 @@ func httpHandler(port int, packetChan chan *packet, errChan chan error) {
 		w.Write(marshaled)
 	})
 
-	// TODO serve files
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
-	})
-	http.HandleFunc("/jquery.js", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/jquery.js")
-	})
+	http.Handle("/", http.FileServer(http.Dir(".")))
 
 	go (func() {
 		for {
