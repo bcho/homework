@@ -66,9 +66,58 @@ func isMatch_basic(s string, p string) bool {
 	return si >= len(s) && pi >= len(p)
 }
 
+func isMatch_dfs(s string, p string) bool {
+	hasStar := len(p) > 1 && p[1] == '*'
+
+	if s == "" {
+		if p == "" {
+			// both empty
+			return true
+		}
+
+		if hasStar && isMatch_dfs(s, p[2:]) {
+			// skip the star
+			return true
+		}
+
+		return false
+	}
+	if p == "" {
+		return false
+	}
+
+	if s[0] == p[0] || p[0] == '.' {
+		if hasStar {
+			if isMatch_dfs(s[1:], p) {
+				return true
+			}
+			if isMatch_dfs(s[1:], p[2:]) {
+				return true
+			}
+			if isMatch_dfs(s, p[2:]) {
+				// try skip the star
+				return true
+			}
+		} else {
+			if isMatch_dfs(s[1:], p[1:]) {
+				return true
+			}
+		}
+
+		return false
+	} else {
+		if hasStar {
+			return isMatch_dfs(s, p[2:])
+		}
+
+		return false
+	}
+}
+
 func main() {
 	fs := map[string]f{
 		"basic": isMatch_basic,
+		"dfs":   isMatch_dfs,
 	}
 
 	cases := []struct {
@@ -87,7 +136,11 @@ func main() {
 		{"aaa", "a*a", true},
 		{"aab", "c*a*b*", true},
 		{"aaa", "aaaa", false},
+		{"aaa", "ab*a*c*a", true},
 		{"mississippi", "mis*is*p*.", false},
+		{"a", "a*a", true},
+		{"bbbba", ".*a*a", true},
+		{"a", ".*..", false},
 	}
 	for name, f := range fs {
 		fmt.Println(name + ":")
