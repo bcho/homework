@@ -3,28 +3,30 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 )
 
 type f func(s string, words []string) []int
 
 // TLE
 func findSubstring_invert(s string, words []string) []int {
+	if len(words) < 1 {
+		return nil
+	}
+
+	sort.StringSlice(words).Sort()
+
 	sidx := map[int][]int{}
 	for idx := 0; idx < len(s); idx++ {
 		for widx, w := range words {
 			if len(s)-idx < len(w) {
 				continue
 			}
-			matched := true
-			for j := 0; j < len(w); j++ {
-				if w[j] != s[idx+j] {
-					matched = false
-					break
-				}
+			if w != s[idx:idx+len(w)] {
+				continue
 			}
-			if matched {
-				sidx[idx] = append(sidx[idx], widx)
-			}
+			sidx[idx] = append(sidx[idx], widx)
+
 		}
 	}
 
@@ -39,7 +41,27 @@ func findSubstring_invert(s string, words []string) []int {
 			return
 		}
 
+		if len(s)-startIdx < len(words)-len(wused) {
+			return
+		}
+
+		var wsetToUse []int
 		for _, widx := range wset {
+			if _, used := wused[widx]; used {
+				continue
+			}
+
+			if len(wsetToUse) > 0 {
+				lastWordToUse := words[wsetToUse[len(wsetToUse)-1]]
+				if lastWordToUse == words[widx] {
+					continue
+				}
+			}
+
+			wsetToUse = append(wsetToUse, widx)
+		}
+
+		for _, widx := range wsetToUse {
 			if _, used := wused[widx]; used {
 				continue
 			}
@@ -89,6 +111,22 @@ func check(a []int, b []int) bool {
 	return true
 }
 
+func makeIndices(c int) (idx []int) {
+	for i := 0; i < c; i++ {
+		idx = append(idx, i)
+	}
+
+	return idx
+}
+
+func makeWords(c int) (words []string) {
+	for i := 0; i < c; i++ {
+		words = append(words, "a")
+	}
+
+	return words
+}
+
 func main() {
 	fs := map[string]f{
 		"invert": findSubstring_invert,
@@ -102,6 +140,7 @@ func main() {
 		{"abc", []string{"abc"}, []int{0}},
 		{"barfoothefoobarman", []string{"foo", "bar"}, []int{0, 9}},
 		{"abc", []string{"abcd"}, []int{}},
+		{"aaa", []string{"a", "a"}, []int{0, 1}},
 		{
 			"wordgoodgoodgoodbestword",
 			[]string{"word", "good", "best", "good"},
@@ -112,6 +151,16 @@ func main() {
 			[]string{"word", "good", "best", "word"},
 			[]int{},
 		},
+		{
+			strings.Repeat("a", 1000000),
+			[]string{"a", "a", "a", "a"},
+			makeIndices(1000000 - 4 + 1),
+		},
+		{
+			strings.Repeat("a", 5000),
+			makeWords(5000),
+			[]int{0},
+		},
 	}
 
 	for name, f := range fs {
@@ -121,7 +170,9 @@ func main() {
 			if check(c.expected, rv) {
 				fmt.Printf("%d passed\n", idx)
 			} else {
-				fmt.Printf("%d failed: %v %v\n", idx, c.expected, rv)
+				fmt.Printf("%d failed\n", idx)
+				// fmt.Printf("%d failed: %v %v\n", idx, c.expected, rv)
+				break
 			}
 		}
 	}
