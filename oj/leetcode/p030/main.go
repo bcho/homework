@@ -94,6 +94,52 @@ func findSubstring_invert(s string, words []string) []int {
 	return rvs
 }
 
+func findSubstring_slide_window(s string, words []string) []int {
+	if len(words) < 1 {
+		return nil
+	}
+
+	wl := len(words[0])
+	if wl*len(words) > len(s) {
+		return nil
+	}
+
+	wordsCount := map[string]int{}
+	for _, word := range words {
+		wordsCount[word]++
+	}
+
+	var rv []int
+
+	for i := 0; i <= len(s)-wl*len(words); i++ {
+		windowEnd := i + wl*len(words)
+		usedWords := map[string]int{}
+		usedWindow := 0
+		for j := i; j < windowEnd; j += wl {
+			word := s[j : j+wl]
+			if _, valid := wordsCount[word]; !valid {
+				break
+			}
+			if c, usedBefore := usedWords[word]; usedBefore {
+				usedWords[word] = c + 1
+			} else {
+				usedWords[word] = 1
+			}
+
+			if usedWords[word] > wordsCount[word] {
+				break
+			}
+
+			usedWindow = usedWindow + 1
+		}
+		if usedWindow == len(words) {
+			rv = append(rv, i)
+		}
+	}
+
+	return rv
+}
+
 func check(a []int, b []int) bool {
 	if len(a) != len(b) {
 		return false
@@ -130,6 +176,7 @@ func makeWords(c int) (words []string) {
 func main() {
 	fs := map[string]f{
 		"invert": findSubstring_invert,
+		"slide":  findSubstring_slide_window,
 	}
 
 	cases := []struct {
@@ -170,8 +217,8 @@ func main() {
 			if check(c.expected, rv) {
 				fmt.Printf("%d passed\n", idx)
 			} else {
-				fmt.Printf("%d failed\n", idx)
-				// fmt.Printf("%d failed: %v %v\n", idx, c.expected, rv)
+				// fmt.Printf("%d failed\n", idx)
+				fmt.Printf("%d failed: %v %v\n", idx, c.expected, rv)
 				break
 			}
 		}
