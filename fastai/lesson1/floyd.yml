@@ -1,0 +1,22 @@
+# see: https://docs.floydhub.com/floyd_config
+# All supported configs:
+#
+machine: cpu
+env: tensorflow-1.12
+input:
+  - destination: pets
+    source: nwchen0/datasets/pets/1
+#description: this is a test
+#max_runtime: 3600
+command: python train.py --pet_data_dir=/floyd/input/pets --output_dir=/floyd/output
+
+# You can also define multiple tasks to use with --task argument:
+#
+#task:
+#  evaluate:
+#    machine: gpu
+#    command: python evaluate.py
+#
+#  serve:
+#    machine: cpu
+#    mode: serve

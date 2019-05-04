@@ -1,0 +1,6 @@
+tensorflow==1.13.1
+tensornets==0.4.0
+jupyter==1.0.0
+matplotlib==3.0.3
+Pillow==6.0.0
+dataclasses==0.6
