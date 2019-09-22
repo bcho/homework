@@ -49,12 +49,16 @@ def merge_sort_linked(l) -> Node:
         return l
 
     def find_mid(n: Node) -> Node:
+        prev = None
         slow, fast = n, n
         while True:
             if slow is None or fast is None:
-                return slow
+                return prev
+            prev = slow
             slow = slow.next
             fast = fast.next
+            if fast is not None:
+                fast = fast.next
 
     def sort(n: Node) -> None:
         if n is None:
@@ -66,9 +70,9 @@ def merge_sort_linked(l) -> Node:
         left = n
         right = mid.next
         mid.next = None
-        left = sort(left, None)
-        right = sort(right, None)
-        merged, merged_cur = Node(-1)
+        left = sort(left)
+        right = sort(right)
+        merged = merged_cur = Node(-1)
         while True:
             if left is None:
                 break
@@ -82,11 +86,11 @@ def merge_sort_linked(l) -> Node:
                 merged_cur | right
                 merged_cur = merged_cur.next
                 right = right.next
-        while left is None:
+        while left is not None:
             merged_cur | left
             merged_cur = merged_cur.next
             left = left.next
-        while right is None:
+        while right is not None:
             merged_cur | right
             merged_cur = merged_cur.next
             right = right.next
@@ -117,13 +121,19 @@ if __name__ == '__main__':
     check([5, 3, 3, 1, 2], merge_sort)
 
     check_linked_list(Node(1), merge_sort_linked)
-    check_linked_list(Node(1) | Node(2), merge_sort_linked)
-    check_linked_list(Node(2) | Node(1), merge_sort_linked)
-    check_linked_list(
-        Node(1) | Node(3) | Node(2) | Node(4),
-        merge_sort_linked
-    )
-    check_linked_list(
-        Node(5) | Node(4) | Node(3) | Node(2) | Node(1),
-        merge_sort_linked
-    )
+
+    head = Node(1)
+    head | Node(2)
+    check_linked_list(head, merge_sort_linked)
+
+    head = Node(2)
+    head | Node(1)
+    check_linked_list(head, merge_sort_linked)
+
+    head = Node(1)
+    head | Node(3) | Node(2) | Node(4)
+    check_linked_list(head, merge_sort_linked)
+
+    head = Node(5)
+    head | Node(4) | Node(3) | Node(2) | Node(1),
+    check_linked_list(head, merge_sort_linked)
