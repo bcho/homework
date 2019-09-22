@@ -62,6 +62,52 @@ def _check(items, fn):
     assert _items == items
 
 
+class Node:
+
+    def __init__(self, val: int, next: 'Node' = None):
+        self.val = val
+        self.next = next
+
+    def __or__(self, next: 'Node'):
+        self.next = next
+        return self.next
+
+
+def qsort_linked(head: Node) -> Node:
+
+    def sort(head: Node, end: Node):
+        if head is end or head.next is end:
+            return head
+        sentinel = Node(-1)
+        sentinel.next = head
+        p = head
+        prev, cur = head, head.next
+        while cur is not end:
+            if cur.val < p.val:
+                prev.next = cur.next
+                cur.next = sentinel.next
+                sentinel.next = cur
+                cur = prev.next
+            else:
+                prev = cur
+                cur = cur.next
+        sort(sentinel.next, p)
+        sort(p.next, end)
+
+        return sentinel.next
+
+    return sort(head, None)
+
+
+def _check_linked(head):
+    sorted_head = qsort_linked(head)
+    prev, cur = None, sorted_head
+    while cur is not None:
+        if prev is not None:
+            assert cur.val >= prev.val
+        cur = cur.next
+
+
 if __name__ == '__main__':
     for fn in (
         qsort_recursive,
@@ -72,3 +118,18 @@ if __name__ == '__main__':
         _check([1, 3], fn)
         _check([3, 1], fn)
         _check([1, 1, 2, 1], fn)
+
+    _check_linked(
+        Node(1)
+    )
+    head = Node(2)
+    head | Node(1)
+    _check_linked(head)
+
+    head = Node(1)
+    head | Node(2)
+    _check_linked(head)
+
+    head = Node(1)
+    head | Node(2) | Node(4) | Node(3)
+    _check_linked(head)
