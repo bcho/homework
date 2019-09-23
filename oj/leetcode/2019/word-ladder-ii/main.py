@@ -10,101 +10,49 @@ class Solution:
     ) -> List[List[str]]:
         from collections import deque
 
-        DEBUG = False
-
-        _diff_count = {}
-
-        def diff_count(a, b):
-            if a > b:
-                return diff_count(b, a)
-            if a == b:
-                return False
-            if (a, b) in _diff_count:
-                return _diff_count[(a, b)]
-
-            count = 0
+        def can_convert(a, b):
+            diff_count = 0
             for ac, bc in zip(a, b):
-                if ac == bc:
-                    continue
-                count += 1
-            _diff_count[(a, b)] = count
-            return _diff_count[(a, b)]
+                if ac != bc:
+                    diff_count += 1
+                if diff_count > 1:
+                    return False
+            return diff_count == 1
 
-        def can_convert_to(a, b):
-            return diff_count(a, b) == 1
+        word_list_set = set(wordList)
 
-        # find the shortest path from beginWord to endWord
-        def find_shortest_length():
-            inqueue_idxs = set()
-            to_visit = deque([
-                (idx, 1)
-                for idx, word in enumerate(wordList)
-                if can_convert_to(beginWord, word)
-            ])
-            while len(to_visit) > 0:
-                if DEBUG:
-                    print(f'before visit: {to_visit}')
+        found, min_size = False, -1
+        rv = []
+        pending = deque([
+            (word, [beginWord])
+            for word in wordList
+            if can_convert(word, beginWord)
+        ])
+        visited_words = set()
+        while len(pending) > 0:
+            word, paths = pending.popleft()
+            visited_words.add(word)
+            if found and len(paths) >= min_size:
+                continue
+            if word == endWord:
+                # found
+                paths = paths + [endWord]
+                rv.append(paths)
+                found, min_size = True, len(paths)
+                continue
 
-                idx, length = to_visit.popleft()
-                visiting_word = wordList[idx]
-                if DEBUG:
-                    print(f'visiting: {wordList[idx]}')
-                if wordList[idx] == endWord:
-                    if DEBUG:
-                        print(length)
-                    return length
-                for target_idx, target_word in enumerate(wordList):
-                    if target_idx in inqueue_idxs:
+            for idx in range(len(word)):
+                for ch in range(27):
+                    c = chr(ch + 97)
+                    if c == word[idx]:
                         continue
-                    if not can_convert_to(target_word, visiting_word):
+                    new_word = word[:idx] + c + word[idx+1:]
+                    if new_word not in word_list_set:
                         continue
-                    inqueue_idxs.add(target_idx)
-                    to_visit.append((target_idx, length + 1))
-
-            if DEBUG:
-                print('no path')
-
-            return float('inf')
-
-        def load_shortest_paths(shortest_length: int):
-            paths = []
-
-            def dfs(visited_idxs, path_idxs, visiting_idx):
-                if wordList[visiting_idx] == endWord:
-                    paths.append([beginWord] + [
-                        wordList[i]
-                        for i in path_idxs + [visiting_idx]
-                    ])
-                    return
-                visiting_word = wordList[visiting_idx]
-                diff_count_to_target = diff_count(endWord, visiting_word)
-                if diff_count_to_target + len(path_idxs) >= shortest_length:
-                    return
-                visited_idxs.add(visiting_idx)
-                for target_idx, target_word in enumerate(wordList):
-                    if target_idx in visited_idxs:
+                    if new_word in visited_words:
                         continue
-                    if not can_convert_to(target_word, visiting_word):
-                        continue
-                    dfs(visited_idxs, path_idxs + [visiting_idx], target_idx)
-                visited_idxs.remove(visiting_idx)
+                    pending.append((new_word, paths + [word]))
 
-            for idx, word in enumerate(wordList):
-                if not can_convert_to(beginWord, word):
-                    continue
-                dfs(set(), [], idx)
-
-            return paths
-
-        shortest_length = find_shortest_length()
-        if shortest_length > len(wordList):
-            # unable to convert
-            return []
-
-        rv = load_shortest_paths(shortest_length)
-        if DEBUG:
-            for path in rv:
-                print('->'.join(path))
         return rv
 
 
