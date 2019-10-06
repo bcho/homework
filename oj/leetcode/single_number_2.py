@@ -61,3 +61,32 @@ class InPlaceSolution:
                 seq = seq[:e]
             if (len(seq) - g) % 3 != 0:
                 seq = seq[g:]
+
+
+class CountBitsSolution:
+
+    def singleNumber(self, A):
+        bits = [0] * 32
+        for num in A:
+            for bit_idx in range(32):
+                bits[bit_idx] += num & (1 << bit_idx)
+
+        rv = 0
+        for bit_idx, bit_count in enumerate(bits):
+            if bit_count % 3 > 0:
+                rv |= 1 << bit_idx
+        if bits[-1] % 3 > 0:
+            # negative number
+            rv = rv - (1 << 32)
+        return rv
+
+
+class CircuitSolution:
+
+    def singleNumber(self, A):
+        a, b = 0, 0
+        for num in A:
+            na = (~a & b & num) | (a & ~b & ~num)
+            b = (~a & ~b & num) | (~a & b & ~num)
+            a = na
+        return b
